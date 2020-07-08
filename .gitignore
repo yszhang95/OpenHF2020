@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# Root-related files
+*.root
+*.pcm
+
+# CMSSW
+*CMSSW*
+
+# Plots
+*png
