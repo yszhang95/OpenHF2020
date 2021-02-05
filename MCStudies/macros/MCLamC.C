@@ -3,6 +3,16 @@
 #include "RooVoigtian.h"
 #include "RooDataSet.h"
 #include "RooDataHist.h"
+#include "RooPlot.h"
+#include "TFile.h"
+#include "RooWorkspace.h"
+#include "RooAddPdf.h"
+#include "TAxis.h"
+#include "TCanvas.h"
+
+#include "RooCBShapeDS.cxx"
+
+#pragma link C++ class RooExtCBShape+;
 
 using namespace RooFit;
 
@@ -130,16 +140,39 @@ void testFitVoigtian()
   auto data = voig.generate(Cand_Mass, 10000);
   fitVoigtian(*data, Cand_Mass);
 }
-void MCLamC()
+
+void fitRooCBShapeDS(RooAbsData& data, RooRealVar& Cand_Mass, RooWorkspace& ws)
 {
-  TFile* f = TFile::Open("output.root");
+  //RooRealVar Cand_Mass("Cand_Mass", "m_{K_{s}^{0}p} (GeV)", 2.12, 2.43);
+  Cand_Mass.setRange("cbDS", 2.15, 2.45);
+  RooRealVar mean("mean", "mean (GeV)", 2.29, 2.2, 2.36);
+  RooRealVar sigma("sigma", "sigma (GeV)", 0.04, 0.0, 0.1);
+  RooRealVar n1("n1", "n1 on left side", 3, 1,  100);
+  RooRealVar n2("n2", "n2 on left side", 3, 1, 100);
+  RooRealVar alpha1("alpha1", "alpha1 on left side", 1.2, 0, 5);
+  RooRealVar alpha2("alpha2", "alpha2 on left side", 1.2, 0, 5);
+  RooExtCBShape cbDS("cbDS", "Double-side Crystal Ball function", Cand_Mass, mean, sigma, alpha1, n1, alpha2, n2);
+  cbDS.fitTo(data, Range("cbDS"));
+  cbDS.fitTo(data);
+
+  ws.importClassCode(cbDS.IsA());
+  ws.import(cbDS);
+
+  drawFit(cbDS, data, Cand_Mass, "CBShapeDS.png");
+}
+
+void MCLamC(const char* input_file="")
+{
+  TFile* f = TFile::Open(input_file);
   RooWorkspace* workspace;
   f->GetObject("lamc", workspace);
+  f->Close();
   auto dataset = workspace->data("lamc");
   RooRealVar mass("Cand_Mass", "M_{pK^{0}_{s}} (GeV)", 2.13, 2.45);
   fitSingleGaussian(*dataset, mass);
   fitDoubleGaussian(*dataset, mass);
   fitVoigtian(*dataset, mass);
+  fitRooCBShapeDS(*dataset, mass, *workspace);
 
-  f->Close();
+  workspace->writeToFile("afterfit.root");
 }

@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Fri Jul  3 08:40:05 2020 by ROOT version 6.06/01
+// Tue Jul 21 15:27:49 2020 by ROOT version 6.06/01
 // from TTree ParticleTree/ParticleTree
-// found on file: /storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/200702_205733/0000/lambdacana_mc_10.root
+// found on file: /storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/200720_214651/0000/lambdacana_mc_10.root
 //////////////////////////////////////////////////////////
 
 #ifndef ParticleTree_h
@@ -47,25 +47,22 @@ public :
    Float_t         genWeight;
    vector<bool>    *evtSel;
    vector<bool>    *passHLT;
-   vector<bool>    *passHLTPrescaler;
    vector<bool>    *passL1;
-   vector<bool>    *passL1Prescaler;
-   vector<bool>    *validPrescale;
-   vector<unsigned char> *hltPDs;
-   vector<unsigned short> *hltPrescale;
-   vector<unsigned short> *l1Prescale;
    vector<bool>    *cand_matchGEN;
    vector<bool>    *cand_matchTRG0;
    vector<bool>    *cand_matchTRG1;
+   vector<bool>    *cand_momMatchGEN;
    vector<char>    *cand_charge;
    vector<int>     *cand_genPdgId;
    vector<int>     *cand_isSwap;
    vector<int>     *cand_pdgId;
    vector<unsigned char> *cand_status;
    vector<unsigned short> *cand_genIdx;
+   vector<unsigned short> *cand_momMatchIdx;
    vector<unsigned short> *cand_trkIdx;
    vector<float>   *cand_angle2D;
    vector<float>   *cand_angle3D;
+   vector<float>   *cand_dca;
    vector<float>   *cand_decayLength2D;
    vector<float>   *cand_decayLength3D;
    vector<float>   *cand_decayLengthError2D;
@@ -127,25 +124,22 @@ public :
    TBranch        *b_genWeight;   //!
    TBranch        *b_evtSel;   //!
    TBranch        *b_passHLT;   //!
-   TBranch        *b_passHLTPrescaler;   //!
    TBranch        *b_passL1;   //!
-   TBranch        *b_passL1Prescaler;   //!
-   TBranch        *b_validPrescale;   //!
-   TBranch        *b_hltPDs;   //!
-   TBranch        *b_hltPrescale;   //!
-   TBranch        *b_l1Prescale;   //!
    TBranch        *b_cand_matchGEN;   //!
    TBranch        *b_cand_matchTRG0;   //!
    TBranch        *b_cand_matchTRG1;   //!
+   TBranch        *b_cand_momMatchGEN;   //!
    TBranch        *b_cand_charge;   //!
    TBranch        *b_cand_genPdgId;   //!
    TBranch        *b_cand_isSwap;   //!
    TBranch        *b_cand_pdgId;   //!
    TBranch        *b_cand_status;   //!
    TBranch        *b_cand_genIdx;   //!
+   TBranch        *b_cand_momMatchIdx;   //!
    TBranch        *b_cand_trkIdx;   //!
    TBranch        *b_cand_angle2D;   //!
    TBranch        *b_cand_angle3D;   //!
+   TBranch        *b_cand_dca;   //!
    TBranch        *b_cand_decayLength2D;   //!
    TBranch        *b_cand_decayLength3D;   //!
    TBranch        *b_cand_decayLengthError2D;   //!
@@ -192,8 +186,6 @@ public :
    virtual ~ParticleTree();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
-   virtual Long64_t GetEntries();
-   virtual Long64_t GetEntriesFast();
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
    virtual void     Loop();
@@ -203,18 +195,17 @@ public :
 
 #endif
 
-#ifndef ParticleTree_cxx
-#define ParticleTree_cxx
+#ifdef ParticleTree_cxx
 ParticleTree::ParticleTree(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/200702_205733/0000/lambdacana_mc_10.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/200720_214651/0000/lambdacana_mc_10.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/200702_205733/0000/lambdacana_mc_10.root");
+         f = new TFile("/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/200720_214651/0000/lambdacana_mc_10.root");
       }
-      TDirectory * dir = (TDirectory*)f->Get("/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest/200702_205733/0000/lambdacana_mc_10.root:/lambdacAna_mc");
+      TDirectory * dir = (TDirectory*)f->Get("/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/200720_214651/0000/lambdacana_mc_10.root:/lambdacAna_mc");
       dir->GetObject("ParticleTree",tree);
 
    }
@@ -233,21 +224,6 @@ Int_t ParticleTree::GetEntry(Long64_t entry)
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-
-Long64_t ParticleTree::GetEntries()
-{
-// Read contents of entry.
-   if (!fChain) return 0;
-   return fChain->GetEntries();
-}
-
-Long64_t ParticleTree::GetEntriesFast()
-{
-// Read contents of entry.
-   if (!fChain) return 0;
-   return fChain->GetEntriesFast();
-}
-
 Long64_t ParticleTree::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
@@ -274,25 +250,22 @@ void ParticleTree::Init(TTree *tree)
    // Set object pointer
    evtSel = 0;
    passHLT = 0;
-   passHLTPrescaler = 0;
    passL1 = 0;
-   passL1Prescaler = 0;
-   validPrescale = 0;
-   hltPDs = 0;
-   hltPrescale = 0;
-   l1Prescale = 0;
    cand_matchGEN = 0;
    cand_matchTRG0 = 0;
    cand_matchTRG1 = 0;
+   cand_momMatchGEN = 0;
    cand_charge = 0;
    cand_genPdgId = 0;
    cand_isSwap = 0;
    cand_pdgId = 0;
    cand_status = 0;
    cand_genIdx = 0;
+   cand_momMatchIdx = 0;
    cand_trkIdx = 0;
    cand_angle2D = 0;
    cand_angle3D = 0;
+   cand_dca = 0;
    cand_decayLength2D = 0;
    cand_decayLength3D = 0;
    cand_decayLengthError2D = 0;
@@ -358,25 +331,22 @@ void ParticleTree::Init(TTree *tree)
    fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
    fChain->SetBranchAddress("evtSel", &evtSel, &b_evtSel);
    fChain->SetBranchAddress("passHLT", &passHLT, &b_passHLT);
-   fChain->SetBranchAddress("passHLTPrescaler", &passHLTPrescaler, &b_passHLTPrescaler);
    fChain->SetBranchAddress("passL1", &passL1, &b_passL1);
-   fChain->SetBranchAddress("passL1Prescaler", &passL1Prescaler, &b_passL1Prescaler);
-   fChain->SetBranchAddress("validPrescale", &validPrescale, &b_validPrescale);
-   fChain->SetBranchAddress("hltPDs", &hltPDs, &b_hltPDs);
-   fChain->SetBranchAddress("hltPrescale", &hltPrescale, &b_hltPrescale);
-   fChain->SetBranchAddress("l1Prescale", &l1Prescale, &b_l1Prescale);
    fChain->SetBranchAddress("cand_matchGEN", &cand_matchGEN, &b_cand_matchGEN);
    fChain->SetBranchAddress("cand_matchTRG0", &cand_matchTRG0, &b_cand_matchTRG0);
    fChain->SetBranchAddress("cand_matchTRG1", &cand_matchTRG1, &b_cand_matchTRG1);
+   fChain->SetBranchAddress("cand_momMatchGEN", &cand_momMatchGEN, &b_cand_momMatchGEN);
    fChain->SetBranchAddress("cand_charge", &cand_charge, &b_cand_charge);
    fChain->SetBranchAddress("cand_genPdgId", &cand_genPdgId, &b_cand_genPdgId);
    fChain->SetBranchAddress("cand_isSwap", &cand_isSwap, &b_cand_isSwap);
    fChain->SetBranchAddress("cand_pdgId", &cand_pdgId, &b_cand_pdgId);
    fChain->SetBranchAddress("cand_status", &cand_status, &b_cand_status);
    fChain->SetBranchAddress("cand_genIdx", &cand_genIdx, &b_cand_genIdx);
+   fChain->SetBranchAddress("cand_momMatchIdx", &cand_momMatchIdx, &b_cand_momMatchIdx);
    fChain->SetBranchAddress("cand_trkIdx", &cand_trkIdx, &b_cand_trkIdx);
    fChain->SetBranchAddress("cand_angle2D", &cand_angle2D, &b_cand_angle2D);
    fChain->SetBranchAddress("cand_angle3D", &cand_angle3D, &b_cand_angle3D);
+   fChain->SetBranchAddress("cand_dca", &cand_dca, &b_cand_dca);
    fChain->SetBranchAddress("cand_decayLength2D", &cand_decayLength2D, &b_cand_decayLength2D);
    fChain->SetBranchAddress("cand_decayLength3D", &cand_decayLength3D, &b_cand_decayLength3D);
    fChain->SetBranchAddress("cand_decayLengthError2D", &cand_decayLengthError2D, &b_cand_decayLengthError2D);
@@ -446,42 +416,4 @@ Int_t ParticleTree::Cut(Long64_t entry)
 // returns -1 otherwise.
    return 1;
 }
-
-void ParticleTree::Loop()
-{
-//   In a ROOT session, you can do:
-//      root> .L ParticleTree.C
-//      root> ParticleTree t
-//      root> t.GetEntry(12); // Fill t data members with entry number 12
-//      root> t.Show();       // Show values of entry 12
-//      root> t.Show(16);     // Read and show values of entry 16
-//      root> t.Loop();       // Loop on all entries
-//
-
-//     This is the loop skeleton where:
-//    jentry is the global entry number in the chain
-//    ientry is the entry number in the current Tree
-//  Note that the argument to GetEntry must be:
-//    jentry for TChain::GetEntry
-//    ientry for TTree::GetEntry and TBranch::GetEntry
-//
-//       To read only selected branches, Insert statements like:
-// METHOD1:
-//    fChain->SetBranchStatus("*",0);  // disable all branches
-//    fChain->SetBranchStatus("branchname",1);  // activate branchname
-// METHOD2: replace line
-//    fChain->GetEntry(jentry);       //read all branches
-//by  b_branchname->GetEntry(ientry); //read only this branch
-   if (fChain == 0) return;
-
-   Long64_t nentries = fChain->GetEntriesFast();
-
-   Long64_t nbytes = 0, nb = 0;
-   for (Long64_t jentry=0; jentry<nentries;jentry++) {
-      Long64_t ientry = LoadTree(jentry);
-      if (ientry < 0) break;
-      nb = fChain->GetEntry(jentry);   nbytes += nb;
-      // if (Cut(ientry) < 0) continue;
-   }
-}
-#endif // #ifndef ParticleTree_cxx
+#endif // #ifdef ParticleTree_cxx
