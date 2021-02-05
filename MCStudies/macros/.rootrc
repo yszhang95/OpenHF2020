@@ -1,0 +1,6 @@
+Root
+Unix.*.Root.MacroPath:      .
+Rint.Load:
+ACLiC.IncludePaths:     -I${OPENHF2020TOP}/Utilities/TreeReader -I${OPENHF2020TOP}/Utilities/Models -I. 
+ACLiC.BuildDir:         .compiles/
+ACLiC.LinkLibs:      3

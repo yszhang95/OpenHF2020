@@ -33,3 +33,19 @@
 
 # CMSSW_BASE
 CMSSW_*_*_*
+*/bin/*
+
+# Root-related files
+*.root
+*.pcm
+*.rootmap
+
+# CMSSW
+*CMSSW*
+
+# Plots
+*png
+
+# My special files
+ParticleTree.hh
+ParticleTree.C

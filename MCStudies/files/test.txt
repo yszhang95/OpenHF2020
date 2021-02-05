@@ -1,0 +1,1 @@
+/storage1/osg/stage_out/store/user/yousen/RiceHIN/pPb2016/LamCTree/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/LambdaC-KsPr_LCpT-5p9_PbP-EmbEPOS_8p16_Pythia8/VertexCompositeTree_lamc2ksppt5p9-Bst_lamCTest_20200720/200720_214651/0000/lambdacana_mc_9.root
