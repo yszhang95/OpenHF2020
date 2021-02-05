@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+# CMSSW_BASE
+CMSSW_*_*_*
