@@ -49,3 +49,4 @@ CMSSW_*_*_*
 # My special files
 ParticleTree.hh
 ParticleTree.C
+backup/
