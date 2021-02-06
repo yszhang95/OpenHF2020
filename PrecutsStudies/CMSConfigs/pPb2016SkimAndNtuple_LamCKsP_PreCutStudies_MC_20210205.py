@@ -17,29 +17,11 @@ process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v15'
 # Define the input source
 process.source = cms.Source("PoolSource",
    fileNames = cms.untracked.vstring(
-       'root://cmsxrootd.fnal.gov//store/hidata/PARun2016C/PAHighMultiplicity1/AOD/PromptReco-v1/000/285/480/00000/8C5BFB5F-20AF-E611-9E09-02163E0144B0.root',
-       'root://cmsxrootd.fnal.gov//store/hidata/PARun2016C/PAHighMultiplicity1/AOD/PromptReco-v1/000/285/480/00000/0C73EB2B-22AF-E611-85F1-02163E013657.root',
-       'root://cmsxrootd.fnal.gov//store/hidata/PARun2016C/PAHighMultiplicity1/AOD/PromptReco-v1/000/285/480/00000/4C0D189A-1BAF-E611-B5CA-FA163EAF1F45.root'
+     'root://cmsxrootd.fnal.gov///store/himc/pPb816Summer16DR/LambdaC-KsPr_LCpT-0p9_pPb-EmbEPOS_8p16_Pythia8/AODSIM/pPbEmb_80X_mcRun2_pA_v4-v1/90000/00F48C42-15A2-E711-8ABE-FA163EE6B4C8.root'
                                      ),
    inputCommands=cms.untracked.vstring('keep *')
 )
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
-
-# Trigger Selection
-# Comment out for the timing being assuming running on secondary
-# dataset with trigger bit selected already
-# Add trigger selection
-import HLTrigger.HLTfilters.hltHighLevel_cfi
-process.hltFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
-process.hltFilter.andOr = cms.bool(True)
-process.hltFilter.throw = cms.bool(False)
-process.hltFilter.HLTPaths = [
-    'HLT_PAFullTracks_Multiplicity120_v*', # High multiplicity
-    'HLT_PAFullTracks_Multiplicity150_v*', # High multiplicity
-    'HLT_PAFullTracks_Multiplicity185_part*', # High multiplicity
-    'HLT_PAFullTracks_Multiplicity250_v*', # High multiplicity
-    'HLT_PAL1MinimumBiasHF_OR_SinglePixelTrack_part*', # Minimum bias
-    ]
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 
 # Offlin selections
 # See https://github.com/davidlw/VertexCompositeAnalysis/blob/8_0_X/VertexCompositeProducer/python/hfCoincFilter_cff.py
@@ -47,22 +29,17 @@ process.hltFilter.HLTPaths = [
 # and https://github.com/davidlw/VertexCompositeAnalysis/blob/8_0_X/VertexCompositeProducer/test/pPbSkimAndTree2016_D0Both_BDT_NoPtY_cfg.py
 # VertexCompositeAnalysis package is needed
 process.load('VertexCompositeAnalysis.VertexCompositeProducer.collisionEventSelection_cff')
-process.colEvtSel = cms.Sequence(process.hfCoincFilter * process.primaryVertexFilterPA * process.NoScraping * process.olvFilter_pPb8TeV_dz1p0)
+process.colEvtSel = cms.Sequence(process.hfCoincFilter * process.primaryVertexFilterPA * process.NoScraping)
 
 # Event filter, used by end path and reconstruction path
 process.eventFilter = cms.Sequence(
-    process.hltFilter *
     process.colEvtSel
 )
 process.eventFilterStep = cms.Path(process.eventFilter)
 
-# Ntrkoffline
-process.load('VertexCompositeAnalysis.VertexCompositeProducer.ntrkUtils_cff')
-
 # Candidate production
 from VertexCompositeAnalysis.VertexCompositeProducer.generalParticles_cff import generalParticles
 process.kShort = generalParticles.clone(
-    vtxSortByTrkSize = cms.bool(False),
     pdgId = cms.int32(310),
     charge = cms.int32(0),
     doSwap = cms.bool(False),
@@ -95,11 +72,10 @@ process.kShort = generalParticles.clone(
     ]),
 )
 process.LambdaC = generalParticles.clone(
-    vtxSortByTrkSize = cms.bool(False),
     pdgId = cms.int32(4122),
     doSwap = cms.bool(False),
     width = cms.double(0.2),
-    preSelection = cms.string("pt<5.1 && pt > 2.9 && abs(eta)<1"),
+    preSelection = cms.string("pt<5.1 && pt > 2.9 && abs(y)<1"),
     preMassSelection = cms.string("abs(charge)==1"),
     finalSelection = cms.string(''),
 
@@ -118,21 +94,24 @@ process.LambdaC = generalParticles.clone(
 )
 
 # Define the analysis steps
-process.rereco_step = cms.Path(process.eventFilter * process.nTracks * process.kShort * process.LambdaC)
+#process.rereco_step = cms.Path(process.eventFilter * process.kShort * process.LambdaC)
+process.rereco_step = cms.Path( process.kShort * process.LambdaC)
 
 # Add the VertexComposite tree
-from VertexCompositeAnalysis.VertexCompositeAnalyzer.particle_tree_cff import particleAna
-process.lambdacAna = particleAna.clone(
+from VertexCompositeAnalysis.VertexCompositeAnalyzer.particle_tree_cff import particleAna_mc
+process.lambdacAna_mc = particleAna_mc.clone(
   recoParticles = cms.InputTag("LambdaC"),
-  selectEvents = cms.string("eventFilterStep"),
-  nTracksVMap = cms.untracked.InputTag('nTracks'),
+  genParticles = cms.untracked.InputTag("genParticles"),
+  selectEvents = cms.string(""),
   addSource    = cms.untracked.bool(False),
+  genPdgId     = cms.untracked.vuint32([4122, 310, 2212, 211]),
+  nTracksVMap = cms.untracked.InputTag(""),
   saveTree = cms.untracked.bool(False)
 )
 
 # Define the output
-process.TFileService = cms.Service("TFileService", fileName = cms.string('lambdacana.root'))
-process.p = cms.EndPath(process.lambdacAna)
+process.TFileService = cms.Service("TFileService", fileName = cms.string('lambdacana_mc.root'))
+process.p = cms.EndPath(process.lambdacAna_mc)
 
 # Define the process schedule
 process.schedule = cms.Schedule(
