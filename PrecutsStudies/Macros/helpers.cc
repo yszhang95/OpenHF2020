@@ -8,8 +8,10 @@
 
 using namespace std;
 
+enum class Direction {less, larger};
+
 array<unique_ptr<TGraphAsymmErrors>, 2>
-calEff(const TH1D* hS, const TH1D* hB)
+calEff(const TH1D* hS, const TH1D* hB, const Direction dir=Direction::larger)
 {
   auto n = hS->GetNbinsX();
 
@@ -30,10 +32,14 @@ calEff(const TH1D* hS, const TH1D* hB)
   double bAll = hB->IntegralAndError(0, n+1, bAllErr);
 
   for (int ibin=1; ibin<n+1; ibin++) {
+
+    auto start = dir == Direction::larger ?  ibin : 0;
+    auto end = dir == Direction::larger ? (n+1) : ibin;
+
     double s, serr;
     double b, berr;
-    s = hS->IntegralAndError(ibin, n+1, serr);
-    b = hB->IntegralAndError(ibin, n+1, berr);
+    s = hS->IntegralAndError(start, end, serr);
+    b = hB->IntegralAndError(start, end, berr);
 
     hIntegralS->SetBinContent(ibin, s);
     hIntegralS->SetBinError(ibin, serr);
@@ -52,10 +58,13 @@ calEff(const TH1D* hS, const TH1D* hB)
   gEff[0]->Divide(hIntegralS.get(), hIntegralSAll.get());
   gEff[1]->Divide(hIntegralB.get(), hIntegralBAll.get());
 
-  gEff[0]->SetName(hS->GetName());
-  gEff[1]->SetName(hB->GetName());
+  gEff[0]->SetName(TString(hS->GetName()).Replace(0, 1, "g"));
+  gEff[1]->SetName(TString(hB->GetName()).Replace(0, 1, "g"));
 
-  gEff[0]->SetTitle(hS->GetTitle());
-  gEff[1]->SetTitle(hB->GetTitle());
+  gEff[0]->SetTitle(Form("%s;%s;",
+        hS->GetTitle(),hS->GetXaxis()->GetTitle()));
+  gEff[1]->SetTitle(Form("%s;%s;",
+        hB->GetTitle(),hB->GetXaxis()->GetTitle()));
+
   return gEff;
 }

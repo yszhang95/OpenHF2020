@@ -4,13 +4,13 @@ import argparse
 
 parser = argparse.ArgumentParser(description=
 '''
-This is a script to create histograms used in next step.\n
-Requirements: RDataFrame and PyROOT on Python3\n
-Test platform: CentOS7\n
-               Python 3.6.8\n
-               GCC 4.8.5 20150623 (Red Hat 4.8.5-44)\n
+This is a script to create histograms used in next step.
+Requirements: RDataFrame and PyROOT on Python3
+Test platform: CentOS7
+               Python 3.6.8
+               GCC 4.8.5 20150623 (Red Hat 4.8.5-44)
                ROOT 6.22/06
-''')
+''', formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('sList', metavar='sList', type=str, nargs='?',
                         help='list of MC signal files')
 parser.add_argument('bList', metavar='bList', type=str, nargs='?',
@@ -51,8 +51,8 @@ for (k, v) in pTCut.items():
   hists["s"][k+"dca_pipi"] = dfSig.Filter(sCut).Histo1D(
       ("hSPt%d_dca_pipi" % ipt, "%s;DCA between Pi-Pi+ (cm);Counts" % k, 50, 0, 2), "cand_dau0_dca")
 
-  hists["s"][k+"vtxChi2_Ks"] = dfBkg.Filter(sCut).Histo1D(
-      ("hSPt%d_vtxChi2_Ks" % ipt, "%s;Ks Chi2/Ndf;Counts" % k, 50, 0, 1), "cand_dau0_vtxChi2")
+  hists["s"][k+"vtxChi2_Ks"] = dfSig.Filter(sCut).Histo1D(
+      ("hSPt%d_vtxChi2_Ks" % ipt, "%s;Ks Chi2/Ndf;Counts" % k, 50, 0, 10), "cand_dau0_vtxChi2")
 
   hists["s"][k+"dlSigKs"] = dfSig.Filter(sCut)\
       .Define("DLSig3DKs", "cand_dau0_decayLength3D/cand_dau0_decayLengthError3D")\
@@ -85,7 +85,7 @@ for (k, v) in pTCut.items():
       ("hBPt%d_dca_pipi" % ipt, "%s;DCA between Pi-Pi+ (cm);Counts" % k, 50, 0, 2), "cand_dau0_dca")
 
   hists["b"][k+"vtxChi2_Ks"] = dfBkg.Filter(sCut).Histo1D(
-      ("hBPt%d_vtxChi2_Ks" % ipt, "%s;Ks Chi2/Ndf;Counts" % k, 50, 0, 1), "cand_dau0_vtxChi2")
+      ("hBPt%d_vtxChi2_Ks" % ipt, "%s;Ks Chi2/Ndf;Counts" % k, 50, 0, 10), "cand_dau0_vtxChi2")
 
   hists["b"][k+"dlSigKs"] = dfBkg.Filter(sCut)\
       .Define("DLSig3DKs", "cand_dau0_decayLength3D/cand_dau0_decayLengthError3D")\
