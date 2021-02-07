@@ -1,0 +1,4 @@
+Root
+Unix.*.Root.MacroPath:      .
+Rint.Load:
+ACLiC.BuildDir:         .compiles/
