@@ -1,0 +1,410 @@
+// Original code can be found on 
+// https://github.com/root-project/root/blob/v6-06-00-patches/tutorials/tmva/TMVAClassification.C
+// Modified by Yousen Zhang, Rice University, US
+// Data: 2020 August 27
+//
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <string>
+#include <memory>
+#include <algorithm> 
+#include <functional> 
+#include <cctype>
+#include <locale>
+#include <sstream>
+
+#include "TChain.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TString.h"
+#include "TObjString.h"
+#include "TSystem.h"
+#include "TROOT.h"
+#include "THashList.h"
+#include "TFileCollection.h"
+
+#include "Riostream.h"
+#include "TString.h"
+#include "TPRegexp.h"
+#include "TClonesArray.h"
+#include "TObjString.h"
+
+
+#include "TMVA/Factory.h"
+#include "TMVA/Tools.h"
+
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+#include "TMVA/DataLoader.h"
+#endif
+
+using std::map;
+using std::string;
+using std::vector;
+using std::ifstream;
+using std::getline;
+using std::cout;
+using std::endl;
+using std::istringstream;
+
+// trim functions copied from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+        std::not1(std::ptr_fun<int, int>(std::isspace))));
+  return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+        std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+  return ltrim(rtrim(s));
+}
+
+map<string, vector<string>> readConfigs(std::string);
+
+map<string, TMVA::Types::EMVA> setupMethodCollection();
+
+map<string, TString> getPars(const TString&, const std::string&);
+
+int TMVAClassification(const map<string, vector<string>>& configs);
+
+int main( int argc, char** argv )
+{
+  // Select methods (don't look at this code - not of interest)
+  TString methodList; 
+  if( argc<2 ) {
+    std::cout << "Usage: tmvaClassfication configName ..." << std::endl;
+    //std::cout << "Options:" << std::endl;
+    //std::cout << "  -b, --batch :    run without graphics"<< std::endl;
+    return -1;
+  }
+
+  const auto& configs = readConfigs(argv[1]);
+
+  return TMVAClassification(configs);
+}
+
+map<string, vector<string>> readConfigs(std::string inputXML="../Configs/test.xml")
+{
+  map<string, vector<string>> configs;
+
+  TXMLEngine xml;
+  XMLDocPointer_t xmldoc =  xml.ParseFile(inputXML.c_str());
+  XMLNodePointer_t mainnode = xml.DocGetRootElement(xmldoc);
+  XMLNodePointer_t child = xml.GetChild(mainnode);
+
+  istringstream iStr; //string temp;
+
+  while(child != 0) {
+    const char* childname = xml.GetNodeName(child);
+    const char* content = xml.GetNodeContent(child);
+    child = xml.GetNext(child);
+
+    iStr.str(string(content));
+    const auto& has = configs.insert(
+        map<string, vector<string>>::value_type(
+          childname, vector<string>()));
+    for(string temp; getline(iStr, temp); ){
+      trim(temp);
+      if(!temp.size()) continue;
+      if(temp.at(0)=='#') continue;
+      configs.at(childname).push_back(temp);
+      temp.clear();
+    }
+    iStr.clear();
+  }
+  for (const auto& e : configs) {
+    cout << e.first << endl;
+    for (const auto& ee : e.second) {
+      cout << ee << endl;
+    }
+  }
+  xml.FreeDoc(xmldoc);
+  return configs;
+}
+
+map<string, TString> getPars(const TString& in, const std::string& type)
+{
+  map<string, TString> output;
+  if (type == "methods") {
+    TPRegexp r("(.*)\\? *(.*)\\? *(.*)");
+    TObjArray* subStrL = r.MatchS(in);
+    output["fullStr"] = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
+    output["method"] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
+    output["name"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
+    output["config"] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
+  } else
+    if (type.find("worange") != string::npos) {
+      TPRegexp r("(.*)\\? *(.*)\\? *(.*)\\? *(.)");
+      TObjArray* subStrL = r.MatchS(in);
+      output["fullStr"]     = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
+      output["variable"]    = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
+      output["description"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
+      output["unit"]        = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
+      output["type"]        = dynamic_cast<TObjString*>(subStrL->At(4))->GetString();
+    }
+  if (type.find("wrange") != string::npos) {
+    TPRegexp r("(.*)\\? *(.*)\\? *(.*)\\? *(.*)\\? *(.*)\\? *(.*)");
+    TObjArray* subStrL = r.MatchS(in);
+    output["fullStr"    ] = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
+    output["variable"   ] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
+    output["description"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
+    output["unit"       ] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
+    output["type"       ] = dynamic_cast<TObjString*>(subStrL->At(4))->GetString();
+
+    auto minStr = dynamic_cast<TObjString*>(subStrL->At(5))->GetString();
+    auto maxStr = dynamic_cast<TObjString*>(subStrL->At(6))->GetString();
+
+    TPRegexp num("\\s*(-?\\d+\\.?\\d*)\\s*");
+
+    TObjArray* minNum = num.MatchS(minStr);
+    if (minNum->GetLast()<0) {
+      output["minStr"] = "";
+      output["min"   ] = "";
+    } else {
+      output["minStr"] = dynamic_cast<TObjString*>(minNum->At(0))->GetString();
+      output["min"   ] = dynamic_cast<TObjString*>(minNum->At(1))->GetString();
+    }
+
+    TObjArray* maxNum = num.MatchS(maxStr);
+    if (maxNum->GetLast()<0) {
+      output["maxStr"] = "";
+      output["max"   ] = "";
+    } else {
+      output["maxStr"] = dynamic_cast<TObjString*>(maxNum->At(0))->GetString();
+      output["max"   ] = dynamic_cast<TObjString*>(maxNum->At(1))->GetString();
+    }
+  }
+  return output;
+}
+
+int TMVAClassification(const map<string, vector<string>>& configs)
+{
+  // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
+  // if you use your private .rootrc, or run from a different directory, please copy the
+  // corresponding lines from .rootrc
+
+  //---------------------------------------------------------------
+  // This loads the library
+  TMVA::Tools::Instance();
+
+  std::cout << std::endl;
+  std::cout << "==> Start TMVAClassification" << std::endl;
+
+  // ----------------------------------------------------------------------------------------------
+
+  // --- Here the preparation phase begins
+
+  // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
+  TString outfileName( "TMVA.root" );
+  TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
+
+  // Create the factory object. Later you can choose the methods
+  // whose performance you'd like to investigate. The factory is 
+  // the only TMVA object you have to interact with
+  //
+  // The first argument is the base of the name of all the
+  // weightfiles in the directory weight/
+  //
+  // The second argument is the output file for the training results
+  // All TMVA output can be suppressed by removing the "!" (not) in
+  // front of the "Silent" argument in the option string
+  TMVA::Factory *factory = new TMVA::Factory( "TMVAClassification", outputFile,
+      "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" );
+
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+  TMVA::DataLoader *dataloader=new TMVA::DataLoader("dataset");
+#else
+  auto dataloader = factory;
+#endif
+
+  // If you wish to modify default settings
+  // (please check "src/Config.h" to see all available global options)
+  //    (TMVA::gConfig().GetVariablePlotting()).fTimesRMS = 8.0;
+  //    (TMVA::gConfig().GetIONames()).fWeightFileDir = "myWeightDirectory";
+
+  // Define the input variables that shall be used for the MVA training
+  // note that you may also use variable expressions, such as: "3*var1/var2*abs(var3)"
+  // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
+
+  // varialbes without range specified
+  for (const auto& var : configs.at("training_variables_worange")) {
+    const auto pars = getPars(var, "training_variables_worange");
+    dataloader->AddVariable(pars.at("variable"),
+        pars.at("description"), pars.at("unit"), pars.at("type")[0]);
+  }
+  // varialbes with range specified
+  for (const auto& var : configs.at("training_variables_wrange")) {
+    const auto pars = getPars(var, "training_variables_wrange");
+    const double minValue = pars.at("min") == "" ?
+      std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
+    const double maxValue = pars.at("max") == "" ?
+      std::numeric_limits<double>::max() : std::stod(pars.at("max").Data());
+    dataloader->AddVariable(pars.at("variable"),
+        pars.at("description"), pars.at("unit"), pars.at("type")[0],
+        minValue, maxValue);
+  }
+
+  // You can add so-called "Spectator variables", which are not used in the MVA training,
+  // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
+  // input variables, the response values of all trained MVAs, and the spectator variables
+
+  // varialbes without range specified
+  for (const auto& var : configs.at("spectator_variables_worange")) {
+    const auto pars = getPars(var, "spectator_variables_worange");
+    dataloader->AddSpectator(pars.at("variable"),
+        pars.at("description"), pars.at("unit"), pars.at("type")[0]);
+  }
+  // varialbes with range specified
+  for (const auto& var : configs.at("spectator_variables_wrange")) {
+    const auto pars = getPars(var, "spectator_variables_wrange");
+    const double minValue = pars.at("min") == "" ?
+      std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
+    const double maxValue = pars.at("max") == "" ?
+      std::numeric_limits<double>::max() : std::stod(pars.at("max").Data());
+    dataloader->AddVariable(pars.at("variable"),
+        pars.at("description"), pars.at("unit"), pars.at("type")[0],
+        minValue, maxValue);
+  }
+
+  // Read training and test data
+  // (it is also possible to use ASCII format as input -> see TMVA Users Guide)
+  const auto signalFileList = configs.at("signalFileList").at(0);
+  const auto backgroundFileList = configs.at("backgroundFileList").at(0);
+
+  cout << "--- TMVAClassification       : Using signal file list:     " << signalFileList     << endl;
+  cout << "--- TMVAClassification       : Using background file list: " << backgroundFileList << endl;
+
+  // --- Register the training and test trees
+  TFileCollection fcSignal("signalFileCollection", "", signalFileList.c_str());
+  TFileCollection fcBackground("backgroundFileCollection", "", backgroundFileList.c_str());
+
+  auto signal = std::make_shared<TChain>("lambdacAna_mc/ParticleNTuple");
+  auto background = std::make_shared<TChain>("lambdacAna/ParticleNTuple");
+
+  signal->AddFileInfoList(fcSignal.GetList());
+  background->AddFileInfoList(fcBackground.GetList());
+
+  // global event weights per tree (see below for setting event-wise weights)
+  Double_t signalWeight     = 1.0;
+  Double_t backgroundWeight = 1.0;
+
+  // You can add an arbitrary number of signal or background trees
+  dataloader->AddSignalTree    ( signal.get(),     signalWeight     );
+  dataloader->AddBackgroundTree( background.get(), backgroundWeight );
+
+  // --- end of tree registration 
+
+  // Apply additional cuts on the signal and background samples (can be different)
+  std::string common_cuts;
+  for (const auto& cut : configs.at("common_cuts")) {
+    common_cuts += cut;
+    common_cuts += " && ";
+  }
+  if(common_cuts.size()>4) common_cuts.erase(common_cuts.size()-4, 4);
+  TCut mycuts = TCut(common_cuts.c_str());
+  TCut mycutb( (common_cuts + "&& abs(cand_mass-2.29)>0.15").c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
+
+  // Tell the factory how to use the training and testing events
+  //
+  // If no numbers of events are given, half of the events in the tree are used 
+  // for training, and the other half for testing:
+  //    factory->PrepareTrainingAndTestTree( mycut, "SplitMode=random:!V" );
+  // To also specify the number of testing events, use:
+  //    factory->PrepareTrainingAndTestTree( mycut,
+  //                                         "NSigTrain=3000:NBkgTrain=3000:NSigTest=3000:NBkgTest=3000:SplitMode=Random:!V" );
+  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
+      "SplitMode=Random:NormMode=NumEvents:!V" );
+
+  // ---- Book MVA methods
+  //
+  // Please lookup the various method configuration options in the corresponding cxx files, eg:
+  // src/MethoCuts.cxx, etc, or here: http://tmva.sourceforge.net/optionRef.html
+  // it is possible to preset ranges in the option string in which the cut optimisation should be done:
+  // "...:CutRangeMin[2]=-1:CutRangeMax[2]=1"...", where [2] is the third input variable
+
+  auto MethodCollection = setupMethodCollection();
+  for (const auto& m : configs.at("methods")) {
+    const auto method = getPars(m, "methods");
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+    factory->BookMethod(dataloader,
+        MethodCollection.at(method.at("method").Data()),
+        method.at("name"), method.at("config"));
+#else
+    factory->BookMethod(MethodCollection.at(method.at("method").Data()),
+        method.at("name"), method.at("config"));
+#endif
+  }
+
+  // ---- Now you can tell the factory to train, test, and evaluate the MVAs
+
+  // Train MVAs using the set of training events
+  factory->TrainAllMethods();
+
+  // ---- Evaluate all MVAs using the set of test events
+  factory->TestAllMethods();
+
+  // ----- Evaluate and compare performance of all configured MVAs
+  factory->EvaluateAllMethods();
+
+  // --------------------------------------------------------------
+
+  // Save the output
+  outputFile->Close();
+
+  std::cout << "==> Wrote root file: " << outputFile->GetName() << std::endl;
+  std::cout << "==> TMVAClassification is done!" << std::endl;
+
+  delete factory;
+
+  return 0;
+}
+
+map<string, TMVA::Types::EMVA> setupMethodCollection()
+{
+  map<string, TMVA::Types::EMVA> MethodCollection;
+  MethodCollection["Variable"       ] = TMVA::Types::kVariable       ;
+  MethodCollection["Cuts"           ] = TMVA::Types::kCuts           ;
+  MethodCollection["Likelihood"     ] = TMVA::Types::kLikelihood     ;
+  MethodCollection["PDERS"          ] = TMVA::Types::kPDERS          ;
+  MethodCollection["HMatrix"        ] = TMVA::Types::kHMatrix        ;
+  MethodCollection["Fisher"         ] = TMVA::Types::kFisher         ;
+  MethodCollection["KNN"            ] = TMVA::Types::kKNN            ;
+  MethodCollection["CFMlpANN"       ] = TMVA::Types::kCFMlpANN       ;
+  MethodCollection["TMlpANN"        ] = TMVA::Types::kTMlpANN        ;
+  MethodCollection["BDT"            ] = TMVA::Types::kBDT            ;
+  MethodCollection["DT"             ] = TMVA::Types::kDT             ;
+  MethodCollection["RuleFit"        ] = TMVA::Types::kRuleFit        ;
+  MethodCollection["SVM"            ] = TMVA::Types::kSVM            ;
+  MethodCollection["MLP"            ] = TMVA::Types::kMLP            ;
+  MethodCollection["BayesClassifier"]=  TMVA::Types::kBayesClassifier;
+  MethodCollection["FDA"            ] = TMVA::Types::kFDA            ;
+  MethodCollection["Boost"          ] = TMVA::Types::kBoost          ;
+  MethodCollection["PDEFoam"        ] = TMVA::Types::kPDEFoam        ;
+  MethodCollection["LD"             ] = TMVA::Types::kLD             ;
+  MethodCollection["Plugins"        ] = TMVA::Types::kPlugins        ;
+  MethodCollection["Category"       ] = TMVA::Types::kCategory       ;
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+  MethodCollection["DNN"            ] = TMVA::Types::kDNN            ;
+  MethodCollection["DL"             ] = TMVA::Types::kDL             ;
+  MethodCollection["PyKeras"        ] = TMVA::Types::kPyKeras        ;
+  MethodCollection["CrossValidation"] = TMVA::Types::kCrossValidation;
+#endif
+  MethodCollection["PyRandomForest" ] = TMVA::Types::kPyRandomForest ;
+  MethodCollection["PyAdaBoost"     ] = TMVA::Types::kPyAdaBoost     ;
+  MethodCollection["PyGTB"          ] = TMVA::Types::kPyGTB          ;
+  MethodCollection["C50"            ] = TMVA::Types::kC50            ;
+  MethodCollection["RSNNS"          ] = TMVA::Types::kRSNNS          ;
+  MethodCollection["RSVM"           ] = TMVA::Types::kRSVM           ;
+  MethodCollection["RXGB"           ] = TMVA::Types::kRXGB           ;
+  MethodCollection["MaxMethod"      ] = TMVA::Types::kMaxMethod      ;
+  return MethodCollection;
+}

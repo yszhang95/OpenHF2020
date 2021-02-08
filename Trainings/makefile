@@ -21,7 +21,8 @@ INCS = $(shell root-config --incdir)
 
 default : bin/tmvaClassfication
 
-bin/tmvaClassfication : src/tmvaClassfication.C 
+#bin/tmvaClassfication : src/tmvaClassfication.C 
+bin/tmvaClassfication : src/TMVAClassfication.cc
 	@echo -n "Building $@ ... "
 	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS))  $(shell root-config --libs) -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
 	@echo "Done"
