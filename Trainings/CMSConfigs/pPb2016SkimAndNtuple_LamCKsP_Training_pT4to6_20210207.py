@@ -21,7 +21,7 @@ process.source = cms.Source("PoolSource",
                                      ),
    inputCommands=cms.untracked.vstring('keep *')
 )
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10000))
 
 # Trigger Selection
 # Comment out for the timing being assuming running on secondary
@@ -68,7 +68,7 @@ process.kShort = generalParticles.clone(
 
     preSelection = cms.string(""),
     pocaSelection = cms.string("pt >= 0.0 && abs(rapidity) < 2.4 && userFloat('dca') < 1."),
-    postSelection = cms.string("useFloat('normChi2')<7"),
+    postSelection = cms.string("userFloat('normChi2')<7"),
     preMassSelection = cms.string(""),
     finalSelection = cms.string("cos(userFloat('angle3D'))>0.997 && abs(userFloat('lVtxSig'))>2.5"),
 
@@ -82,7 +82,7 @@ process.kShort = generalParticles.clone(
                      "&& quality('loose')"
                      "&& normalizedChi2<7.0"
                      "&& numberOfValidHits >=4"),
-                 finalSelection(
+                 finalSelection = cms.string(
                      "abs(userFloat('dxySig'))>1"
                      "&& abs(userFloat('dzSig'))>1")
                  ),
@@ -92,7 +92,7 @@ process.kShort = generalParticles.clone(
                      "&& quality('loose')"
                      "&& normalizedChi2<7.0"
                      "&& numberOfValidHits >=4"),
-                 finalSelection(
+                 finalSelection = cms.string(
                      "abs(userFloat('dxySig'))>1"
                      "&& abs(userFloat('dzSig'))>1")
                  ),
@@ -105,7 +105,7 @@ process.LambdaC = generalParticles.clone(
     width = cms.double(0.21),
     preSelection = cms.string("pt>3.9 && pt<6.1 && abs(y)<1.1"),
     preMassSelection = cms.string("abs(charge)==1"),
-    postSelection = cms.string("userFloat('vertexProb')>0.0001"),
+    postSelection = cms.string("userFloat('vertexProb')>0.000001"),
     finalSelection = cms.string(''),
 
     dEdxInputs = cms.vstring('dedxHarmonic2', 'dedxPixelHarmonic2'),
@@ -155,3 +155,7 @@ process.Flag_pileupVertexFilterCutGplus = cms.Path(process.pileUpFilter_pPb8TeV_
 eventFilterPaths = [ process.Flag_colEvtSel , process.Flag_hfCoincFilter , process.Flag_primaryVertexFilterPA , process.Flag_NoScraping , process.Flag_pileupVertexFilterCut , process.Flag_pileupVertexFilterCutGplus ]
 for P in eventFilterPaths:
     process.schedule.insert(0, P)
+
+process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",
+    ignoreTotal = cms.untracked.int32(1),
+)

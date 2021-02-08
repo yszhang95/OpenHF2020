@@ -68,7 +68,7 @@ process.kShort = generalParticles.clone(
 
     preSelection = cms.string(""),
     pocaSelection = cms.string("pt >= 0.0 && abs(rapidity) < 2.4 && userFloat('dca') < 1."),
-    postSelection = cms.string("useFloat('normChi2')<7"),
+    postSelection = cms.string("userFloat('normChi2')<7"),
     preMassSelection = cms.string(""),
     finalSelection = cms.string("cos(userFloat('angle3D'))>0.997 && abs(userFloat('lVtxSig'))>2.5"),
 
@@ -82,7 +82,7 @@ process.kShort = generalParticles.clone(
                      "&& quality('loose')"
                      "&& normalizedChi2<7.0"
                      "&& numberOfValidHits >=4"),
-                 finalSelection(
+                 finalSelection = cms.string(
                      "abs(userFloat('dxySig'))>1"
                      "&& abs(userFloat('dzSig'))>1")
                  ),
@@ -92,7 +92,7 @@ process.kShort = generalParticles.clone(
                      "&& quality('loose')"
                      "&& normalizedChi2<7.0"
                      "&& numberOfValidHits >=4"),
-                 finalSelection(
+                 finalSelection = cms.string(
                      "abs(userFloat('dxySig'))>1"
                      "&& abs(userFloat('dzSig'))>1")
                  ),
@@ -105,7 +105,7 @@ process.LambdaC = generalParticles.clone(
     width = cms.double(0.21),
     preSelection = cms.string("pt>5.9 && pt<8.1 && abs(y)<1.1"),
     preMassSelection = cms.string("abs(charge)==1"),
-    postSelection = cms.string("userFloat('vertexProb')>0.0001"),
+    postSelection = cms.string("userFloat('vertexProb')>0.000001"),
     finalSelection = cms.string(''),
 
     dEdxInputs = cms.vstring('dedxHarmonic2', 'dedxPixelHarmonic2'),
