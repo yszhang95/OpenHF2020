@@ -34,7 +34,7 @@
   <common_cuts>
     cand_pT &gt; 4.
     cand_pT &lt; 5.
-    cand_decayLength3D/cand_decayLengthError3D &gt; 5.
+    cand_dau0_decayLength3D/cand_dau0_decayLengthError3D &gt; 5.
     cos(cand_dau0_angle3D) &gt; 0.999
     cand_dau0_dca &lt; 0.5
   </common_cuts>
