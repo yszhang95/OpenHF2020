@@ -46,6 +46,9 @@ CMSSW_*_*_*
 # Plots
 *png
 
+# condor script
+*jdl
+
 # My special files
 ParticleTree.hh
 ParticleTree.C
