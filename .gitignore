@@ -54,4 +54,6 @@ ParticleTree.hh
 ParticleTree.C
 backup/
 Training/test/weights*/
+Training/test/dataset/
 *_dir/
+*plots/

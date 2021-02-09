@@ -9,7 +9,8 @@
 ###################################################################### 
 
 CXX = g++
-CCFLAGS = -O0 -ggdb -std=c++11 
+CCFLAGS = -O0 -ggdb
+CCFLAGS += $(shell root-config --auxcflags)
 
 
 LD = g++
@@ -21,7 +22,6 @@ INCS = $(shell root-config --incdir)
 
 default : bin/tmvaClassfication
 
-#bin/tmvaClassfication : src/tmvaClassfication.C 
 bin/tmvaClassfication : src/TMVAClassfication.cc
 	@echo -n "Building $@ ... "
 	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS))  $(shell root-config --libs) -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
