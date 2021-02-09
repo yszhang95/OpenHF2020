@@ -1,0 +1,49 @@
+<root>
+  <signalFileList>
+    ../Lists/MCSlimSignal_LamCpT0p9to6_y1p1.list
+  </signalFileList>
+
+  <backgroundFileList>
+    ../Lists/Background_LamCpT4to6_y1p1.list
+  </backgroundFileList>
+
+  <methods>
+    Cuts? CutsGA? H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95 
+    BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2
+    BDT? BDT? !H:!V:NTrees=850:MinNodeSize=2.5%:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20
+    BDT? BDTB? !H:!V:NTrees=400:BoostType=Bagging:SeparationType=GiniIndex:nCuts=20
+    BDT? BDTD? !H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20:VarTransform=Decorrelate
+    BDT? BDTF? !H:!V:NTrees=50:MinNodeSize=2.5%:UseFisherCuts:MaxDepth=3:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20
+  </methods>
+
+  <training_variables_worange>
+# Ks kienmatic
+    cand_dau0_pT? Ks pT? GeV ? F
+  </training_variables_worange>
+
+  <training_variables_wrange>
+# LamC topo-info
+    cand_vtxProb? vertex fit probability of Lc? ? F ? 0. ? 1.
+    cand_angle3D? 3D pointing angle of Lc? rad? F ? 0. ? 3.143593
+    cand_decayLength3D? 3D decay length w.r.t PV of Lc? cm? F ? 0. ? \ 
+    cand_dlsig3D := cand_decayLength3D/cand_decayLengthError3D? 3D decay length significance w.r.t PV of Lc? ? F ? 0. ? \ 
+# Ks kinematic
+    cand_dau0_eta? Ks eta? ? F ? -2.4 ? 2.4
+    cand_dau0_eta? Proton eta? ? F ? -2.4 ? 2.4
+    cand_dau0_pT? Ks pT? GeV ? F ? 0.7 ? \
+  </training_variables_worange>
+  </training_variables_wrange>
+
+  <spectator_variables_worange>
+    cand_pT? pT ? ? F
+  </spectator_variables_worange>
+
+  <spectator_variables_wrange>
+#empty
+  </spectator_variables_wrange>
+
+  <common_cuts>
+    cand_pT &gt; 4.
+    cand_pT &lt; 5.
+  </common_cuts>
+</root>

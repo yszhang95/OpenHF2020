@@ -34,6 +34,7 @@
 
 #include "TMVA/Factory.h"
 #include "TMVA/Tools.h"
+#include "TMVA/Config.h"
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
 #include "TMVA/DataLoader.h"
@@ -47,6 +48,9 @@ using std::getline;
 using std::cout;
 using std::endl;
 using std::istringstream;
+
+
+static int DEBUG = 0;
 
 // trim functions copied from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
 // trim from start
@@ -80,20 +84,25 @@ int main( int argc, char** argv )
 {
   // Select methods (don't look at this code - not of interest)
   TString methodList; 
-  if( argc<2 ) {
-    std::cout << "Usage: tmvaClassfication configName ..." << std::endl;
-    //std::cout << "Options:" << std::endl;
-    //std::cout << "  -b, --batch :    run without graphics"<< std::endl;
+  if( argc<2 || argc>3 ) {
+    std::cout << "Usage: tmvaClassfication configName [ DEBUG ]" << std::endl;
     return -1;
   }
 
-  const auto& configs = readConfigs(argv[1]);
+  if (argc==3 && string(argv[2]).size()) { DEBUG = 1; }
+
+  auto configs = readConfigs(argv[1]);
+  configs["outfileName"] = vector<string>(1, gSystem->BaseName(argv[1]));
+  auto pos = configs.at("outfileName").at(0).find(".xml");
+  if (pos!=string::npos) { (configs["outfileName"])[0].erase(pos, 4); }
+  if (configs.at("outfileName").at(0).size()) { (configs["outfileName"])[0].insert(0, "_"); }
 
   return TMVAClassification(configs);
 }
 
-map<string, vector<string>> readConfigs(std::string inputXML="../Configs/test.xml")
+map<string, vector<string>> readConfigs(std::string inputXML="test.xml")
 {
+  if (DEBUG) { cout << "\nStart readConfigs" << endl; }
   map<string, vector<string>> configs;
 
   TXMLEngine xml;
@@ -101,7 +110,7 @@ map<string, vector<string>> readConfigs(std::string inputXML="../Configs/test.xm
   XMLNodePointer_t mainnode = xml.DocGetRootElement(xmldoc);
   XMLNodePointer_t child = xml.GetChild(mainnode);
 
-  istringstream iStr; //string temp;
+  istringstream iStr;
 
   while(child != 0) {
     const char* childname = xml.GetNodeName(child);
@@ -121,18 +130,22 @@ map<string, vector<string>> readConfigs(std::string inputXML="../Configs/test.xm
     }
     iStr.clear();
   }
-  for (const auto& e : configs) {
-    cout << e.first << endl;
-    for (const auto& ee : e.second) {
-      cout << ee << endl;
+  if (DEBUG) {
+    for (const auto& e : configs) {
+      cout << e.first << endl;
+      for (const auto& ee : e.second) {
+        cout << ee << endl;
+      }
     }
   }
   xml.FreeDoc(xmldoc);
+  if (DEBUG) { cout << "End readConfigs\n" << endl; }
   return configs;
 }
 
 map<string, TString> getPars(const TString& in, const std::string& type)
 {
+  if (DEBUG) { cout << "\nStart getPars" << endl; }
   map<string, TString> output;
   if (type == "methods") {
     TPRegexp r("(.*)\\? *(.*)\\? *(.*)");
@@ -183,6 +196,10 @@ map<string, TString> getPars(const TString& in, const std::string& type)
       output["max"   ] = dynamic_cast<TObjString*>(maxNum->At(1))->GetString();
     }
   }
+  for (auto& e : output) { e.second = e.second.Strip(TString::kBoth); }
+  if (DEBUG) {for (const auto& e: output) { cout << e.second << endl; }}
+  if (DEBUG) { cout << "End getPars\n" << endl; }
+
   return output;
 }
 
@@ -204,8 +221,10 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // --- Here the preparation phase begins
 
   // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
-  TString outfileName( "TMVA.root" );
+  TString outfileName = "TMVA" + configs.at("outfileName").at(0) + ".root";
   TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
+
+  if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
 
   // Create the factory object. Later you can choose the methods
   // whose performance you'd like to investigate. The factory is 
@@ -221,7 +240,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
       "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" );
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
-  TMVA::DataLoader *dataloader=new TMVA::DataLoader("dataset");
+  TMVA::DataLoader *dataloader = new TMVA::DataLoader("dataset");
 #else
   auto dataloader = factory;
 #endif
@@ -231,6 +250,11 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   //    (TMVA::gConfig().GetVariablePlotting()).fTimesRMS = 8.0;
   //    (TMVA::gConfig().GetIONames()).fWeightFileDir = "myWeightDirectory";
 
+  if (configs.at("outfileName").at(0).size()) {
+    auto temp = configs.at("outfileName").at(0);
+    (TMVA::gConfig().GetIONames()).fWeightFileDir = "weights" + temp; //TString(temp.erase(0, 1).c_str());
+  }
+
   // Define the input variables that shall be used for the MVA training
   // note that you may also use variable expressions, such as: "3*var1/var2*abs(var3)"
   // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
@@ -238,12 +262,14 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // varialbes without range specified
   for (const auto& var : configs.at("training_variables_worange")) {
     const auto pars = getPars(var, "training_variables_worange");
+    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     dataloader->AddVariable(pars.at("variable"),
         pars.at("description"), pars.at("unit"), pars.at("type")[0]);
   }
   // varialbes with range specified
   for (const auto& var : configs.at("training_variables_wrange")) {
     const auto pars = getPars(var, "training_variables_wrange");
+    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     const double minValue = pars.at("min") == "" ?
       std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
     const double maxValue = pars.at("max") == "" ?
@@ -260,12 +286,14 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // varialbes without range specified
   for (const auto& var : configs.at("spectator_variables_worange")) {
     const auto pars = getPars(var, "spectator_variables_worange");
+    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     dataloader->AddSpectator(pars.at("variable"),
         pars.at("description"), pars.at("unit"), pars.at("type")[0]);
   }
   // varialbes with range specified
   for (const auto& var : configs.at("spectator_variables_wrange")) {
     const auto pars = getPars(var, "spectator_variables_wrange");
+    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     const double minValue = pars.at("min") == "" ?
       std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
     const double maxValue = pars.at("max") == "" ?
@@ -312,6 +340,8 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   if(common_cuts.size()>4) common_cuts.erase(common_cuts.size()-4, 4);
   TCut mycuts = TCut(common_cuts.c_str());
   TCut mycutb( (common_cuts + "&& abs(cand_mass-2.29)>0.15").c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
+  if (DEBUG) { cout << "Cut name:" << mycuts.GetName() << ", cut title: " << mycuts.GetTitle(); }
+  if (DEBUG) { cout << "Cut name:" << mycutb.GetName() << ", cut title: " << mycutb.GetTitle(); }
 
   // Tell the factory how to use the training and testing events
   //
@@ -334,6 +364,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   auto MethodCollection = setupMethodCollection();
   for (const auto& m : configs.at("methods")) {
     const auto method = getPars(m, "methods");
+    if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
     factory->BookMethod(dataloader,
         MethodCollection.at(method.at("method").Data()),
@@ -364,6 +395,9 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   std::cout << "==> TMVAClassification is done!" << std::endl;
 
   delete factory;
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+  delete dataloader;
+#endif
 
   return 0;
 }
