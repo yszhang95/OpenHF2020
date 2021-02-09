@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
+import os
+
 xmlFiles = [
     'topo4_CutsGA_BDT4.xml',
     'topo4_CutsOnKs_BDTG.xml',
     'topo4_dau3trans_BDTG.xml',
     'topo4_dau4_BDTG.xml',
     'topo8_BDTG.xml',
-    'topo8_dau3trans_BDTG.xml,'
+    'topo8_dau3trans_BDTG.xml'
 ]
 
 configSetup ='''universe = vanilla
@@ -22,6 +24,8 @@ Arguments = %s
 Initialdir = %s
 Queue
 ''' % (f, f.replace(".xml", "_dir"))
+    os.mkdir(f.replace(".xml", "_dir"))
+
 
 with open("submit.jdl", "w") as ofile:
     ofile.write(configSetup)

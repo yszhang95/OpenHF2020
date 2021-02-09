@@ -54,3 +54,4 @@ ParticleTree.hh
 ParticleTree.C
 backup/
 Training/test/weights*/
+*_dir/
