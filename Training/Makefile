@@ -20,9 +20,9 @@ LIBS = $(shell root-config --libdir)
 INCS = $(shell root-config --incdir)  
 
 
-default : bin/tmvaClassfication
+default : bin/TMVAClassification
 
-bin/tmvaClassfication : src/TMVAClassfication.cc
+bin/TMVAClassification: src/TMVAClassfication.cc
 	@echo -n "Building $@ ... "
 	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS))  $(shell root-config --libs) -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
 	@echo "Done"

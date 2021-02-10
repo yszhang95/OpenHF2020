@@ -57,3 +57,4 @@ Training/test/weights*/
 Training/test/dataset/
 *_dir/
 *plots/
+*NTrees/

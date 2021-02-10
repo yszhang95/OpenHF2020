@@ -104,7 +104,7 @@ int main( int argc, char** argv )
   // Select methods (don't look at this code - not of interest)
   TString methodList; 
   if( argc<2 || argc>3 ) {
-    std::cout << "Usage: tmvaClassfication configName [ DEBUG ]" << std::endl;
+    std::cout << "Usage: TMVAClassification configName [ DEBUG ]" << std::endl;
     return -1;
   }
 
