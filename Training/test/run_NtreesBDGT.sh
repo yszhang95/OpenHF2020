@@ -8,17 +8,17 @@ else
   echo '$OPENHF2020TOP is set to ' ${OPENHF2020TOP}
 fi
 
-if [[ ! -d NTrees ]]; then
-  mkdir NTrees
-  cd NTrees
+if [[ ! -d NTreesBDTG ]]; then
+  mkdir NTreesBDTG
+  cd NTreesBDTG
 else
-  cd NTrees
+  cd NTreesBDTG
 fi
 
-BaseDir="${OPENHF2020TOP}/Training/Configs/NTrees/"
-Configs=`ls ${OPENHF2020TOP}/Training/Configs/NTrees/`
+BaseDir="${OPENHF2020TOP}/Training/Configs/NTreesBDTG/"
+Configs=`ls ${OPENHF2020TOP}/Training/Configs/NTreesBDTG/`
 echo
-echo "Files under ${OPENHF2020TOP}/Training/Configs/NTrees/:"
+echo "Files under ${OPENHF2020TOP}/Training/Configs/NTreesBDTG/:"
 echo ${Configs[@]}
 echo
 

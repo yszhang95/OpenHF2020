@@ -58,3 +58,4 @@ Training/test/dataset/
 *_dir/
 *plots/
 *NTrees/
+*ShrinkageBDTG/

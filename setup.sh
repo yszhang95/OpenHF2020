@@ -1,1 +1,1 @@
-export OPENHF2020TOP=${PWD}
+export OPENHF2020TOP=`git rev-parse --show-toplevel`
