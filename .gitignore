@@ -60,4 +60,5 @@ Training/test/dataset/
 */test/*NTrees*/
 */test/*Depth*/
 */test/*Beta*/
+*/test/*Vars*/
 *ShrinkageBDTG/
