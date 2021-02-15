@@ -20,8 +20,8 @@ hists = [f.Get('Method_BDT/BDTA/MVA_BDTA_trainingRejBvsS')\
             for f in fs]
 c = r.TCanvas("cROC", "", 800, 600)
 hFrame = c.DrawFrame(0, 0, 1, 1);
-hFrame.SetTitle("Background rejection versus Signal efficiency;Background rejection;Signal efficiency")
-leg = r.TLegend(0.15, 0.15, 0.55, 0.45)
+hFrame.SetTitle("Background rejection versus Signal efficiency;Signal efficiency;Background rejection")
+leg = r.TLegend(0.12, 0.15, 0.57, 0.55)
 for (h, col, f) in zip(hists, colors, infiles):
     h.SetLineColor(col)
     h.Draw("SAME")
