@@ -45,6 +45,7 @@ CMSSW_*_*_*
 
 # Plots
 *png
+*pdf
 
 # condor script
 *jdl
@@ -62,3 +63,5 @@ Training/test/dataset/
 */test/*Beta*/
 */test/*Vars*/
 *ShrinkageBDTG/
+*/2017FlowMCRequest/
+*log
