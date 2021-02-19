@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# slim the ParticleNTuple, selecting entries with cand_matchGEN == True
 import ROOT as r
 fileName = '/eos/cms/store/group/phys_heavyions/yousen/RiceHIN/OpenHF2020_LamCKsP/MC/LambdaC-KsPr_LCpT-0p9_pPb-EmbEPOS_8p16_Pythia8/PA8TeV_pPb_LamCKsP0p9_LamCKsP_pT0p9to6_y1p0_MC_Training_20210207/Merged_PA8TeV_pPb_LamCKsP_pT0p9to6_y1p0_MC_Training_20210207.root'
 infile = r.TFile.Open(fileName)

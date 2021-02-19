@@ -1,0 +1,24 @@
+# Makefile
+CXXFLAGS=-std=c++11 -fPIC -I$(shell root-config --incdir)
+CXXFLAGS+=-I$(OPENHF2020TOP)/Utilities
+LDFLAGS=$(shell root-config --libs)
+CXX=g++
+
+LIB=lib
+TreeReaderDir=TreeReader
+
+.PHONY: all
+all: $(LIB) $(LIB)/libMyTreeReader.so
+
+$(LIB)/libMyTreeReader.so: $(TreeReaderDir)/ParticleTreeMC.cxx $(TreeReaderDir)/ParticleTree.cxx $(LIB)/MyTreeReaderDict.cxx
+	$(CXX) -shared -o $@ $(CXXFLAGS) $(LDFLAGS) $^
+
+$(LIB)/MyTreeReaderDict.cxx: $(TreeReaderDir)/ParticleTreeMC.hxx $(TreeReaderDir)/ParticleTree.hxx Linkdef.h
+	rootcling -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
+
+lib:
+	mkdir lib
+
+.PHONY: clean
+clean:
+	rm -r $(LIB)
