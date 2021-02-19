@@ -1,11 +1,11 @@
 # Makefile
+LIB=lib
+TreeReaderDir=TreeReader
+
 CXXFLAGS=-std=c++11 -fPIC -I$(shell root-config --incdir)
 CXXFLAGS+=-I$(OPENHF2020TOP)/Utilities
 LDFLAGS=$(shell root-config --libs)
 CXX=g++
-
-LIB=lib
-TreeReaderDir=TreeReader
 
 .PHONY: all
 all: $(LIB) $(LIB)/libMyTreeReader.so

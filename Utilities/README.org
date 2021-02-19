@@ -1,0 +1,104 @@
+#+TITLE: Instructions for user customised libraries
+* Compilation
+  Run
+  #+BEGIN_SRC: shell
+source ../setup.sh
+make
+  #+END_SRC
+  It will create a directory called ~lib~. Compiled libraries will be
+  put there.
+
+* Usage
+** Use libraries in ROOT prompt and cling
+   To make the ROOT prompt automatically load the library, you need to
+   prepend the path to ~lib~ to ~LD_LIBRARY_PATH~ on Linux. The script
+   ~setup.sh~ under the top directory of this repository can help you.
+   Run
+   #+BEGIN_SRC: shell
+source ../setup.sh --enable-lib
+   #+END_SRC
+   Remember that ~LD_LIBRARY_PATH~ variable has been modified. Thus
+   ~cmsRun~ possibly crashes. Do NOT use ~cmsRun~ anymore once you
+   execute the above command.
+
+   I made tests under two environment: ~ROOT 6.06/01~ and ~ROOT 6.22/06~.
+   The auto-completion won't work under ~ROOT 6.06/01~ while 
+   ~ROOT 6.22/06~ succeeds.
+
+** Compile your macros with libraries using ACLiC
+   Besides the setup mentioned in [[Use libraries in ROOT prompt and cling]],
+   you need to add following lines to ~.rootlogon.C~:
+   #+BEGIN_SRC: c++
+   // for compilation
+   gSystem->AddIncludePath("-I${OPENHF2020TOP}/Utilities/");
+   gSystem->AddLinkedLibs("-L${OPENHF2020TOP}/Utilities/lib -lMyTreeReader");
+   #+END_SRC
+   or in ~.rootrc~
+   #+BEGIN_SRC: shell
+ # Build options
+ ACLiC.BuildDir:        .compiles
+ ACLiC.IncludePaths:     -I$(OPENHF2020TOP)/Utilities
+   #+END_SRC
+   In this way, you can use ~libMyTreeReader~ like ROOT default libraries.
+
+   An *alternative* to ~.rootlogon.C~ is ~.rootrc~. In this
+   way, you do not need to modify ~$LD_LIBRARY_PATH~
+   system-wide, but in ROOT. Add these lines to local ~.rootrc~.
+   #+BEGIN_SRC: shell
+ # Search path for dynamic libraries
+ Unix.*.Root.DynamicPath:    .:$(OPENHF2020TOP)/Utilities/lib
+
+ # Build options
+ ACLiC.BuildDir:        .compiles
+ ACLiC.IncludePaths:     -I$(OPENHF2020TOP)/Utilities
+   #+END_SRC
+   But you need to call ~Load~ in your own macros/scripts (which will not be compiled),
+   or in ROOT prompt, 
+   #+BEGIN_SRC: c++
+   gSystem->Load("libMyTreeReader.so");
+   #+END_SRC
+   I personally write those compiled functions in a macro and use them in
+   a python script. Thus I need to include in python script:
+   #+BEGIN_SRC: python
+import ROOT
+ROOT.gSystem.Load("libMyTreeReader.so")
+ROOT.gROOT.LoadMacro("MyFunctioins.C++")
+   #+END_SRC
+   You may meet some errors about finding libraries in old ROOT versions.
+   I am not sure how to eliminate the errors, but the libraries will be
+   correctly loaded and you can use them normally.
+
+   Both these two ways rely on the value of ~${OPENHF2020TOP}~. To make it work,
+   do not forget to run
+   #+BEGIN_SRC: shell
+source ../setup.sh
+   #+END_SRC
+
+   I tried severl ways to avoid the system-wide change on ~${LD_LIBRARY_PATH}~
+   in ~.rootlogon.C~. But they failed. The tries includes:
+     #+BEGIN_SRC: c++
+{
+// attempt 1
+  gSystem->AddDynamicPath(gSystem->ExpandPathName("${OPENHF2020TOP}/Utilities/lib"));
+}
+{
+// attempt 2
+  gSystem->Setenv("LD_LIBRARY_PATH",
+       gSystem->ExpandPathName("${OPENHF2020TOP}/Utilities/lib:${LD_LIBRARY_PATH}"));
+}
+{
+// attempt 3
+  gSystem->AddDynamicPath(gSystem->ExpandPathName("${OPENHF2020TOP}/Utilities/lib"));
+  gSystem->Load("libMyTreeReader.so");
+}
+{
+// attempt 4
+  gSystem->Setenv("LD_LIBRARY_PATH",
+       gSystem->ExpandPathName("${OPENHF2020TOP}/Utilities/lib:${LD_LIBRARY_PATH}"));
+  gSystem->Load("libMyTreeReader.so");
+}
+{
+// attempt 5
+  gSystem->Load(gSystem->ExpandPathName("${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so"));
+}
+     #+END_SRC
