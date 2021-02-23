@@ -36,11 +36,12 @@ namespace MCMatch{
     bool MatchCriterion::match(const T& reco, const T& gen)
     {
       const auto dR = ROOT::Math::VectorUtil::DeltaR(reco, gen);
-      const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/gen.Pt();
+      //const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/gen.Pt();
+      const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/reco.Pt();
       return dR < _deltaR && dRelPt < _deltaRelPt;
     }
 
-  void genMultipleMatch(const TString& inputList)
+  void genLcMultipleMatch(const TString& inputList)
   {
     using std::cout;
     using std::endl;
@@ -288,6 +289,215 @@ namespace MCMatch{
     hKsReco->Write();
     hPGen->Write();
     hPReco->Write();
+    return;
+  }
+
+  void genKsMultipleMatch(const TString& inputList)
+  {
+    using std::cout;
+    using std::endl;
+    using std::vector;
+    using PtEtaPhiM_t = ROOT::Math::PtEtaPhiM4D<float>;
+
+    MatchCriterion  matchCriterion(0.03, 0.5);
+
+    TString basename(gSystem->BaseName(inputList));
+    const auto firstPos = basename.Index(".list");
+    basename.Replace(firstPos, 5, "_");
+
+    TFile ofile(basename+"effHists.root", "recreate");
+    std::unique_ptr<TH2D> hKsReco(new TH2D("hKsReco", ";pT (GeV);y;", 40, 0, 8, 10, -2.5, 2.5));
+    std::unique_ptr<TH2D> hKsGen(new TH2D("hKsGen", ";pT (GeV);y;", 40, 0, 8, 10, -2.5, 2.5));
+
+    TFileCollection tf("tf", "", inputList);
+    TChain t("ksAna_mc/ParticleTree");
+    t.AddFileInfoList(tf.GetList());
+    ParticleTreeMC p(&t);
+
+    auto nentries = p.GetEntries();
+    //auto nentries = 1000L;
+
+    cout << "Tree ksAna_mc/ParticleTree in " << inputList
+      << " has " << nentries << " entries." << endl;;
+
+    for (Long64_t ientry=0; ientry<nentries; ientry++) {
+      p.GetEntry(ientry);
+      auto gensize = p.gen_mass().size();
+      auto recosize = p.cand_mass().size();
+      //if(gensize == 0 || recosize == 0) continue;
+
+      auto pdgId = p.cand_pdgId();
+      auto charge = p.cand_charge();
+      auto gen_pdgId = p.gen_pdgId();
+      auto gen_charge = p.gen_charge();
+
+      auto dauIdxEvt = p.cand_dauIdx();
+      auto gen_dauIdxEvt = p.gen_dauIdx();
+
+      for (size_t ireco=0; ireco<recosize; ireco++) {
+        // begin Ks
+        if (pdgId[ireco] == 310) {
+          // reco daughters
+          bool matchGEN = false;
+          auto dauIdx = dauIdxEvt.at(ireco);
+          PtEtaPhiM_t recoPi0(
+              p.cand_pT()[dauIdx[0]],
+              p.cand_eta()[dauIdx[0]],
+              p.cand_phi()[dauIdx[0]],
+              p.cand_mass()[dauIdx[0]]
+              );
+          PtEtaPhiM_t recoPi1(
+              p.cand_pT()[dauIdx[1]],
+              p.cand_eta()[dauIdx[1]],
+              p.cand_phi()[dauIdx[1]],
+              p.cand_mass()[dauIdx[1]]
+              );
+          auto chargePi0 = charge[dauIdx[0]];
+          auto chargePi1 = charge[dauIdx[1]];
+          auto pdgIdPi0 = pdgId[dauIdx[0]];
+          auto pdgIdPi1 = pdgId[dauIdx[1]];
+
+          // reco-gen matching
+          for (size_t igen=0; igen<gensize; igen++) {
+            auto gen_dauIdx = gen_dauIdxEvt.at(igen);
+            if (abs(gen_pdgId[igen]) != 310) continue;
+            auto gen_chargePi0 = gen_charge[gen_dauIdx[0]];
+            auto gen_chargePi1 = gen_charge[gen_dauIdx[1]];
+            auto gen_pdgIdPi0 = abs(gen_pdgId[gen_dauIdx[0]]);
+            auto gen_pdgIdPi1 = abs(gen_pdgId[gen_dauIdx[1]]);
+
+            if (gen_pdgIdPi0 != pdgIdPi0
+                || gen_pdgIdPi1 != pdgIdPi1
+               ) continue;
+
+            PtEtaPhiM_t genPi0(
+                p.gen_pT()[gen_dauIdx[0]],
+                p.gen_eta()[gen_dauIdx[0]],
+                p.gen_phi()[gen_dauIdx[0]],
+                p.gen_mass()[gen_dauIdx[0]]
+                );
+            PtEtaPhiM_t genPi1(
+                p.gen_pT()[gen_dauIdx[1]],
+                p.gen_eta()[gen_dauIdx[1]],
+                p.gen_phi()[gen_dauIdx[1]],
+                p.gen_mass()[gen_dauIdx[1]]
+                );
+            bool matchPi0(false); bool matchPi1(false);
+            if (gen_chargePi0 == chargePi0) {
+              matchPi0 = matchCriterion.match(recoPi0, genPi0);
+              matchPi1 = matchCriterion.match(recoPi1, genPi1);
+            } else {
+              matchPi0 = matchCriterion.match(recoPi0, genPi1);
+              matchPi1 = matchCriterion.match(recoPi1, genPi0);
+            }
+            matchGEN = matchPi0 && matchPi1;
+            if (matchGEN) {
+              hKsReco->Fill(p.cand_pT()[ireco], p.cand_y()[ireco]);
+              break;
+            }
+          }
+        } // end Ks
+      }
+
+      for (size_t igen=0; igen<gensize; igen++) {
+        auto gen_dauIdx = gen_dauIdxEvt.at(igen);
+        // begin Ks
+        if (abs(gen_pdgId[igen]) == 310) {
+          //auto gen_chargeKs = gen_charge[gen_dauIdx[0]];
+          //auto gen_chargeProton = gen_charge[gen_dauIdx[1]];
+          auto gen_pdgIdPi0 = abs(gen_pdgId[gen_dauIdx[0]]);
+          auto gen_pdgIdPi1 = abs(gen_pdgId[gen_dauIdx[1]]);
+          auto gen_momIdx = p.gen_momIdx()[igen][0];
+          if (gen_pdgIdPi0 == 211 && gen_pdgIdPi1 == 211)
+            hKsGen->Fill(p.gen_pT()[igen], p.gen_y()[igen]);
+        } // end Ks
+      }
+    }
+    ofile.cd();
+    hKsGen->Write();
+    hKsReco->Write();
+    return;
+  }
+  void genStableKsMultipleMatch(const TString& inputList)
+  {
+    using std::cout;
+    using std::endl;
+    using std::vector;
+    using PtEtaPhiM_t = ROOT::Math::PtEtaPhiM4D<float>;
+
+    MatchCriterion  matchCriterion(0.03, 0.5);
+
+    TString basename(gSystem->BaseName(inputList));
+    const auto firstPos = basename.Index(".list");
+    basename.Replace(firstPos, 5, "_");
+
+    TFile ofile(basename+"effHists.root", "recreate");
+    std::unique_ptr<TH2D> hKsReco(new TH2D("hKsReco", ";pT (GeV);y;", 40, 0, 8, 10, -2.5, 2.5));
+    std::unique_ptr<TH2D> hKsGen(new TH2D("hKsGen", ";pT (GeV);y;", 40, 0, 8, 10, -2.5, 2.5));
+
+    TFileCollection tf("tf", "", inputList);
+    TChain t("ksAna_mc/ParticleTree");
+    t.AddFileInfoList(tf.GetList());
+    ParticleTreeMC p(&t);
+
+    auto nentries = p.GetEntries();
+    //auto nentries = 1000L;
+
+    cout << "Tree ksAna_mc/ParticleTree in " << inputList
+      << " has " << nentries << " entries." << endl;;
+
+    for (Long64_t ientry=0; ientry<nentries; ientry++) {
+      p.GetEntry(ientry);
+      auto gensize = p.gen_mass().size();
+      auto recosize = p.cand_mass().size();
+      //if(gensize == 0 || recosize == 0) continue;
+
+      auto pdgId = p.cand_pdgId();
+      auto charge = p.cand_charge();
+      auto gen_pdgId = p.gen_pdgId();
+      auto gen_charge = p.gen_charge();
+
+      for (size_t ireco=0; ireco<recosize; ireco++) {
+        // begin Ks
+        if (pdgId[ireco] == 310) {
+          // reco daughters
+          bool matchGEN = false;
+          PtEtaPhiM_t p4_recoKs (
+              p.cand_pT()[ireco],
+              p.cand_eta()[ireco],
+              p.cand_phi()[ireco],
+              p.cand_mass()[ireco]
+          );
+
+          // reco-gen matching
+          for (size_t igen=0; igen<gensize; igen++) {
+            if (abs(gen_pdgId[igen]) != 310) continue;
+            PtEtaPhiM_t p4_genKs (
+              p.gen_pT()[igen],
+              p.gen_eta()[igen],
+              p.gen_phi()[igen],
+              p.gen_mass()[igen]
+            );
+
+            matchGEN = matchCriterion.match(p4_recoKs, p4_genKs);
+            if (matchGEN) {
+              hKsReco->Fill(p.cand_pT()[ireco], p.cand_y()[ireco]);
+              break;
+            }
+          }
+        } // end Ks
+      }
+
+      for (size_t igen=0; igen<gensize; igen++) {
+        // begin Ks
+        if (abs(gen_pdgId[igen]) == 310) {
+            hKsGen->Fill(p.gen_pT()[igen], p.gen_y()[igen]);
+        } // end Ks
+      }
+    }
+    ofile.cd();
+    hKsGen->Write();
+    hKsReco->Write();
     return;
   }
 };
