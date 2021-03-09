@@ -10,10 +10,18 @@ CXX=g++
 .PHONY: all
 all: $(LIB) $(LIB)/libMyTreeReader.so
 
-$(LIB)/libMyTreeReader.so: $(TreeReaderDir)/ParticleTreeMC.cxx $(TreeReaderDir)/ParticleTree.cxx $(LIB)/MyTreeReaderDict.cxx
+$(LIB)/libMyTreeReader.so: \
+	$(TreeReaderDir)/ParticleTreeMC2.cxx \
+	$(TreeReaderDir)/ParticleTreeMC.cxx \
+	$(TreeReaderDir)/ParticleTree.cxx \
+	$(LIB)/MyTreeReaderDict.cxx
 	$(CXX) -shared -o $@ $(CXXFLAGS) $(LDFLAGS) $^
 
-$(LIB)/MyTreeReaderDict.cxx: $(TreeReaderDir)/ParticleTreeMC.hxx $(TreeReaderDir)/ParticleTree.hxx Linkdef.h
+$(LIB)/MyTreeReaderDict.cxx: \
+	$(TreeReaderDir)/ParticleTreeMC2.hxx \
+	$(TreeReaderDir)/ParticleTreeMC.hxx \
+	$(TreeReaderDir)/ParticleTree.hxx \
+	Linkdef.h
 	rootcling -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
 
 lib:

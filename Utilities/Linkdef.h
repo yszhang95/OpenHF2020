@@ -6,5 +6,6 @@
 
 #pragma link C++ class ParticleTree+;
 #pragma link C++ class ParticleTreeMC+;
+#pragma link C++ class ParticleTreeMC2+;
 
 #endif

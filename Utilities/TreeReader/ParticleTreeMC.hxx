@@ -48,6 +48,8 @@ class ParticleTreeMC : public ParticleTree {
     std::vector<std::vector<unsigned short>>& gen_dauIdx() const { return *_gen_dauIdx; }
     std::vector<std::vector<unsigned short>>& gen_momIdx() const { return *_gen_momIdx; }
     std::vector<std::vector<unsigned int>>& gen_candIdx() const { return *_gen_candIdx; }
+  protected:
+    virtual void     Init(TTree *tree);
 
   private:
     TTree          *fChain;   //!pointer to the analyzed TTree or TChain
@@ -111,7 +113,6 @@ class ParticleTreeMC : public ParticleTree {
     TBranch        *b_gen_momIdx;   //!
     TBranch        *b_gen_candIdx;   //!
 
-    virtual void     Init(TTree *tree);
 };
 
 #endif
