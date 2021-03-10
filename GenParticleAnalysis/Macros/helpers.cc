@@ -161,7 +161,7 @@ namespace MCMatch{
         const auto mass = p.cand_mass()[ireco];
         const bool inPeak = std::abs(mass - pdgMass) < 1 * width;
         const bool inWidePeak = std::abs(mass - pdgMass) < 2 * width;
-        const bool inSide = std::abs(mass - pdgMass) > 4 * width;
+        const bool inSide = std::abs(mass - pdgMass) > 5 * width;
         //  collect daughters in peak and side regions at first
         //  find the intersection and remove the intersection
         for (const auto idx : dauIdxEvt.at(ireco)) {
@@ -261,7 +261,7 @@ namespace MCMatch{
           std::vector<unsigned int> momIdxVec;
           std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
               std::back_inserter(momIdxVec),
-              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) > 5 * width; }
               );
           const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
               [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
@@ -385,7 +385,7 @@ namespace MCMatch{
           std::vector<unsigned int> momIdxVec;
           std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
               std::back_inserter(momIdxVec),
-              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) > 5 * width; }
               );
           const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
               [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
