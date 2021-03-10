@@ -30,7 +30,7 @@ namespace MCMatch{
   using std::cout;
   using std::endl;
   using std::vector;
-  using PtEtaPhiM_t = ROOT::Math::PtEtaPhiM4D<float>;
+  using PtEtaPhiM_t = ROOT::Math::PtEtaPhiM4D<double>;
   using Hist1DMaps = std::map<std::string, std::unique_ptr<TH1D>>;
   using Hist2DMaps = std::map<std::string, std::unique_ptr<TH2D>>;
   using Hist3DMaps = std::map<std::string, std::unique_ptr<TH3D>>;
@@ -64,28 +64,40 @@ namespace MCMatch{
       const float phi1, const float phi2)
   { return 0; }
 
-  void genKsMatchInfo(const TString& inputList)
+  void genKsMatchInfo(const TString& inputList, TString type, const bool useRaw=false)
   {
+    type.ToLower();
+    bool sortByPt, sortByR;
+    if (type == "dpt") sortByPt = true;
+    else if (type == "dr") sortByR = true;
+    else { cout << "Wrong input variable for sort type" << endl; return; }
+
     TString basename(gSystem->BaseName(inputList));
     const auto firstPos = basename.Index(".list");
     basename.Replace(firstPos, 5, "_");
-    cout << "Will create " << basename+"effHists.root" << endl;
-    TFile ofile(basename+"KsMatch.root", "recreate");
+
+    basename += sortByPt ? "sortBydPt" : "";
+    basename += sortByR  ? "sortBydR"  : "";
+    basename += useRaw   ? "_KsInfoPrefit.root"  : "_KsInfoPostfit.root";
+    TFile ofile(basename, "recreate");
+    cout << "Created " << ofile.GetName() << endl;
 
     Hist3DMaps h3RecoGenPeak, h3RecoGenSide;
+
     h3RecoGenPeak["pi+"] = std::move(std::unique_ptr<TH3D>( new TH3D(
-            "hPeakChi2vsdPtvsdR_PiP", "peak #pi^+;#DeltaR;(p_T^{reco}-p_T^{gen})/p_T^{gen};#chi^2",
+            "hPeakChi2vsdPtvsdR_PiP", "peak #pi^{+};#DeltaR;(p_{T}^{reco}-p_{T}^{gen})/p_{T}^{gen};#chi^{2}",
             100, 0, 1.0, 10, 0., 0.5, 20, 0., 10)));
     h3RecoGenPeak["pi-"] = std::move(std::unique_ptr<TH3D>( new TH3D(
-            "hPeakChi2vsdPtvsdR_PiM", "peak #pi^-;#DeltaR;(p_T^{reco}-p_T^{gen})/p_T^{gen};#chi^2",
+            "hPeakChi2vsdPtvsdR_PiM", "peak #pi^{-};#DeltaR;(p_{T}^{reco}-p_{T}^{gen})/p_{T}^{gen};#chi^{2}",
             100, 0, 1.0, 10, 0., 0.5, 20, 0., 10)));
     h3RecoGenSide["pi+"] = std::move(std::unique_ptr<TH3D>( new TH3D(
-            "hSideChi2vsdPtvsdR_PiP", "side #pi^+;#DeltaR;(p_T^{reco}-p_T^{gen})/p_T^{gen};#chi^2",
+            "hSideChi2vsdPtvsdR_PiP", "side #pi^{+};#DeltaR;(p_{T}^{reco}-p_{T}^{gen})/p_{T}^{gen};#chi^{2}",
             100, 0, 1.0, 10, 0., 0.5, 20, 0., 10)));
     h3RecoGenSide["pi-"] = std::move(std::unique_ptr<TH3D>( new TH3D(
-            "hSideChi2vsdPtvsdR_PiM", "side #pi^-;#DeltaR;(p_T^{reco}-p_T^{gen})/p_T^{gen};#chi^2",
+            "hSideChi2vsdPtvsdR_PiM", "side #pi^{-};#DeltaR;(p_{T}^{reco}-p_{T}^{gen})/p_{T}^{gen};#chi^{2}",
             100, 0, 1.0, 10, 0., 0.5, 20, 0., 10)));
-    std::unique_ptr<TH1D> hmass(new TH1D("hKsMass", "K_S^0;Mass_{#pi^{+}#pi^{-}} (GeV);Entries", 100, 0.4, 0.6));
+
+    std::unique_ptr<TH1D> hmass(new TH1D("hKsMass", "K_{S}^{0};M_{#pi^{+}#pi^{-}} (GeV);Entries", 100, 0.4, 0.6));
 
     TFileCollection tf("tf", "", inputList);
     TChain t("lambdacAna_mc/ParticleTree");
@@ -126,6 +138,8 @@ namespace MCMatch{
           passDxySig = passDxySig && std::abs(p.trk_xyDCASignificance()[p.cand_trkIdx().at(dIdx)]) > 1.;
         }
         if (! (passDzSig && passDxySig)) continue;
+
+        // Lambda cross check
         ROOT::Math::PtEtaPhiM4D<double> pi1(
             p.cand_pTDau().at(ireco).at(0),
             p.cand_etaDau().at(ireco).at(0),
@@ -138,15 +152,12 @@ namespace MCMatch{
             p.cand_phiDau().at(ireco).at(1),
             p.cand_massDau().at(ireco).at(1)
             );
-        if (pi1.P() > pi1.P()) pi1.SetM(0.938272013);
+        if (pi1.P() > pi2.P()) pi1.SetM(0.938272013);
         else pi2.SetM(0.938272013);
         ROOT::Math::PxPyPzE4D<double> total(pi1.x()+pi2.x(),
             pi1.y()+pi2.y(), pi1.z()+pi2.z(), pi1.E() + pi2.E());
-        //auto total(pi1);
-        //total = total+pi2;
-        //total += pi2;
-
         if ( std::abs(total.M() - 1.115683)< 0.01) continue;
+
         const auto mass = p.cand_mass()[ireco];
         const bool inPeak = std::abs(mass - pdgMass) < 1 * width;
         const bool inWidePeak = std::abs(mass - pdgMass) < 2 * width;
@@ -180,44 +191,46 @@ namespace MCMatch{
       for (const auto idx : piInPeak) {
         // reco should be done with fit values
         // need to find its mom
-        const auto momIdx = p.cand_momIdx().at(idx).at(0);
-        if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
-        size_t iDau=0;
-        for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
-          if (dauIdxEvt.at(momIdx).at(iDau) == idx)
-            break;
-        }
         PtEtaPhiM_t reco(
-            p.cand_pTDau().at(momIdx).at(iDau),
-            p.cand_etaDau().at(momIdx).at(iDau),
-            p.cand_phiDau().at(momIdx).at(iDau),
-            p.cand_massDau().at(momIdx).at(iDau)
+            p.cand_pT().at(idx),
+            p.cand_eta().at(idx),
+            p.cand_phi().at(idx),
+            p.cand_mass().at(idx)
             );
+        if (!useRaw) {
+          std::vector<unsigned int> momIdxVec;
+          std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
+              std::back_inserter(momIdxVec),
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              );
+          const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
+              [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
+              );
+          if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
+          size_t iDau=0;
+          for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
+            if (dauIdxEvt.at(momIdx).at(iDau) == idx)
+              break;
+          }
+          reco = PtEtaPhiM_t (
+              p.cand_pTDau().at(momIdx).at(iDau),
+              p.cand_etaDau().at(momIdx).at(iDau),
+              p.cand_phiDau().at(momIdx).at(iDau),
+              p.cand_massDau().at(momIdx).at(iDau)
+              );
+        }
         const auto recoCharge = charge.at(idx);
 
         float dRMin = std::numeric_limits<float>::max();
+        float dRelPtMin = std::numeric_limits<float>::max();
         piInfoInPeak[idx] = size_t(-1);
         for (size_t genIdx=0; genIdx<gensize; ++genIdx) {
           // check stable or not
           if (p.gen_status().at(genIdx) != 1) continue;
-          //cout << (int)p.gen_status().at(genIdx) << endl;
           // check charge
           if (recoCharge != gen_charge.at(genIdx)) continue;
           // check mother ID
           const auto gen_momIdx = p.gen_momIdx().at(genIdx).at(0);
-
-          /*
-          if (p.gen_pdgId().at(gen_momIdx) == 4122) {
-            for (const auto genDauIdx : p.gen_dauIdx().at(gen_momIdx)) {
-              cout << p.gen_pdgId().at(genDauIdx) << endl;
-              if (p.gen_pdgId().at(genDauIdx) == 310) {
-                for (const auto genGDauIdx : p.gen_dauIdx().at(genDauIdx)) {
-                  cout << p.gen_pdgId().at(genGDauIdx) << endl;
-                }
-              }
-            }
-          }
-          */
           if (std::abs(p.gen_pdgId().at(gen_momIdx)) != 310) continue;
 
           PtEtaPhiM_t gen(
@@ -227,8 +240,10 @@ namespace MCMatch{
               p.gen_mass()[genIdx]
               );
           const auto dR = ROOT::Math::VectorUtil::DeltaR(reco, gen);
-          // closet particle by dR
-          if (dR < dRMin) { piInfoInPeak[idx] = genIdx; dRMin = dR; }
+          const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/gen.Pt();
+          // closet particle by dR or dPt
+          if (sortByR && dR < dRMin) { piInfoInPeak[idx] = genIdx; dRMin = dR; }
+          if (sortByPt && dRelPt < dRelPtMin) { piInfoInPeak[idx] = genIdx; dRelPtMin = dRelPt; }
         }
       }
       //   end peak
@@ -236,22 +251,38 @@ namespace MCMatch{
       for (const auto idx : piInSide) {
         // reco should be done with fit values
         // need to find its mother particle
-        const auto momIdx = p.cand_momIdx().at(idx).at(0);
-        if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
-        size_t iDau=0;
-        for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
-          if (dauIdxEvt.at(momIdx).at(iDau) == idx)
-            break;
-        }
         PtEtaPhiM_t reco(
-            p.cand_pTDau().at(momIdx).at(iDau),
-            p.cand_etaDau().at(momIdx).at(iDau),
-            p.cand_phiDau().at(momIdx).at(iDau),
-            p.cand_massDau().at(momIdx).at(iDau)
+            p.cand_pT().at(idx),
+            p.cand_eta().at(idx),
+            p.cand_phi().at(idx),
+            p.cand_mass().at(idx)
             );
+        if (!useRaw) {
+          std::vector<unsigned int> momIdxVec;
+          std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
+              std::back_inserter(momIdxVec),
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              );
+          const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
+              [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
+              );
+          if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
+          size_t iDau=0;
+          for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
+            if (dauIdxEvt.at(momIdx).at(iDau) == idx)
+              break;
+          }
+          reco = PtEtaPhiM_t (
+              p.cand_pTDau().at(momIdx).at(iDau),
+              p.cand_etaDau().at(momIdx).at(iDau),
+              p.cand_phiDau().at(momIdx).at(iDau),
+              p.cand_massDau().at(momIdx).at(iDau)
+              );
+        }
         const auto recoCharge = charge.at(idx);
 
         float dRMin = std::numeric_limits<float>::max();
+        float dRelPtMin = std::numeric_limits<float>::max();
         piInfoInSide[idx] = size_t(-1);
         for (size_t genIdx=0; genIdx<gensize; ++genIdx) {
           // check stable or not
@@ -261,20 +292,6 @@ namespace MCMatch{
           if (recoCharge != gen_charge.at(genIdx)) continue;
           // check mother ID
           const auto gen_momIdx = p.gen_momIdx().at(genIdx).at(0);
-          /*
-          cout <<(int) p.gen_pdgId().at(gen_momIdx)<< endl;
-          cout << (int) p.gen_pdgId().at(genIdx) << endl;
-          if (p.gen_pdgId().at(gen_momIdx) == 4122) {
-            for (const auto genDauIdx : p.gen_dauIdx().at(gen_momIdx)) {
-              cout << p.gen_pdgId().at(genDauIdx) << endl;
-              if (p.gen_pdgId().at(genDauIdx) == 310) {
-                for (const auto genGDauIdx : p.gen_dauIdx().at(genDauIdx)) {
-                  cout << p.gen_pdgId().at(genGDauIdx) << endl;
-                }
-              }
-            }
-          }
-          */
           if (std::abs(p.gen_pdgId().at(gen_momIdx)) != 310) continue;
 
           PtEtaPhiM_t gen(
@@ -284,9 +301,10 @@ namespace MCMatch{
               p.gen_mass()[genIdx]
               );
           const auto dR = ROOT::Math::VectorUtil::DeltaR(reco, gen);
-          //cout << dR << endl;
-          // closet particle by dR
-          if (dR < dRMin) { piInfoInSide[idx] = genIdx; dRMin = dR; }
+          const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/gen.Pt();
+          // closet particle by dR or dPt
+          if (sortByR && dR < dRMin) { piInfoInPeak[idx] = genIdx; dRMin = dR; }
+          if (sortByPt && dRelPt < dRelPtMin) { piInfoInPeak[idx] = genIdx; dRelPtMin = dRelPt; }
         }
       }
       //   end side
@@ -296,19 +314,38 @@ namespace MCMatch{
         const auto idx = e.first;
         const auto genIdx = e.second;
         if (genIdx == size_t(-1)) { /* std::cerr << "piInfoInPeak: genIdx == size_t(-1), no PiPi found" << endl;*/ continue; }
-        const auto momIdx = p.cand_momIdx().at(idx).at(0);
-        if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
-        size_t iDau=0;
-        for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
-          if (dauIdxEvt.at(momIdx).at(iDau) == idx)
-            break;
-        }
         PtEtaPhiM_t reco(
-            p.cand_pTDau().at(momIdx).at(iDau),
-            p.cand_etaDau().at(momIdx).at(iDau),
-            p.cand_phiDau().at(momIdx).at(iDau),
-            p.cand_massDau().at(momIdx).at(iDau)
+            p.cand_pT().at(idx),
+            p.cand_eta().at(idx),
+            p.cand_phi().at(idx),
+            p.cand_mass().at(idx)
             );
+        if (!useRaw) {
+          std::vector<unsigned int> momIdxVec;
+          std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
+              std::back_inserter(momIdxVec),
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              );
+          const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
+              [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
+              );
+          if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
+          size_t iDau=0;
+          bool found = false;
+          for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
+            if (dauIdxEvt.at(momIdx).at(iDau) == idx) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) continue;
+          reco = PtEtaPhiM_t (
+              p.cand_pTDau().at(momIdx).at(iDau),
+              p.cand_etaDau().at(momIdx).at(iDau),
+              p.cand_phiDau().at(momIdx).at(iDau),
+              p.cand_massDau().at(momIdx).at(iDau)
+              );
+        }
         PtEtaPhiM_t gen(
             p.gen_pT()[genIdx],
             p.gen_eta()[genIdx],
@@ -334,27 +371,38 @@ namespace MCMatch{
       }
       // end peak
       // begin side
-      //cout << "size" << piInfoInSide.size() << endl;
-      //cout << "gensize" << gensize << endl;
       for (const auto& e : piInfoInSide) {
         const auto idx = e.first;
         const auto genIdx = e.second;
-        //cout << idx << endl;
-        //cout << genIdx << endl;
         if (genIdx == size_t(-1)) { /*std::cerr << "piInfoInSide: genIdx == size_t(-1)" << endl;*/ continue; }
-        const auto momIdx = p.cand_momIdx().at(idx).at(0);
-        if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
-        size_t iDau=0;
-        for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
-          if (dauIdxEvt.at(momIdx).at(iDau) == idx)
-            break;
-        }
         PtEtaPhiM_t reco(
-            p.cand_pTDau().at(momIdx).at(iDau),
-            p.cand_etaDau().at(momIdx).at(iDau),
-            p.cand_phiDau().at(momIdx).at(iDau),
-            p.cand_massDau().at(momIdx).at(iDau)
+            p.cand_pT().at(idx),
+            p.cand_eta().at(idx),
+            p.cand_phi().at(idx),
+            p.cand_mass().at(idx)
             );
+        if (!useRaw) {
+          std::vector<unsigned int> momIdxVec;
+          std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
+              std::back_inserter(momIdxVec),
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              );
+          const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
+              [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
+              );
+          if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
+          size_t iDau=0;
+          for ( ; iDau<dauIdxEvt.at(momIdx).size(); ++iDau) {
+            if (dauIdxEvt.at(momIdx).at(iDau) == idx)
+              break;
+          }
+          reco = PtEtaPhiM_t (
+              p.cand_pTDau().at(momIdx).at(iDau),
+              p.cand_etaDau().at(momIdx).at(iDau),
+              p.cand_phiDau().at(momIdx).at(iDau),
+              p.cand_massDau().at(momIdx).at(iDau)
+              );
+        }
         PtEtaPhiM_t gen(
             p.gen_pT()[genIdx],
             p.gen_eta()[genIdx],
@@ -407,7 +455,7 @@ namespace MCMatch{
             10, 0., 0.1, 20, 0., 1.0 )));
     matchedLcdPt["pi+"] = std::move(std::unique_ptr<TH2D> (new TH2D("hmatchLc_pip_dPtvsdR", "match Lc p3;dR;dRelPt;Entries",
             10, 0., 0.1, 20, 0., 1.0 )));
-    matchedLcdPt["pi-"] = std::move(std::unique_ptr<TH2D> (new TH2D("hmatchLc_pim_dPtvsdR", "match Lc p3;dR;dRelpt;Entries",
+    matchedLcdPt["pi-"] = std::move(std::unique_ptr<TH2D> (new TH2D("hmatchLc_pim_dPtvsdR", "match Lc p3;dR;dRelPt;Entries",
             10, 0., 0.1, 32, 0., 1.0 )));
 
     peakLcChi2["proton"] = std::move(std::unique_ptr<TH2D> (new TH2D("hpeakLc_proton_chi2vsdR", "match FS, Lc peak;dR;chi2;Entries",
@@ -420,7 +468,7 @@ namespace MCMatch{
             10, 0., 0.1, 20, 0., 1.0 )));
     peakLcdPt["pi+"] = std::move(std::unique_ptr<TH2D> (new TH2D("hpeakLc_pip_dPtvsdR", "match FS, Lc peak;dR;dRelPt;Entries",
             10, 0., 0.1, 20, 0., 1.0 )));
-    peakLcdPt["pi-"] = std::move(std::unique_ptr<TH2D> (new TH2D("hpeakLc_pim_dPtvsdR", "match FS, Lc peak;dR;dRelpt;Entries",
+    peakLcdPt["pi-"] = std::move(std::unique_ptr<TH2D> (new TH2D("hpeakLc_pim_dPtvsdR", "match FS, Lc peak;dR;dRelPt;Entries",
             10, 0., 0.1, 32, 0., 1.0 )));
 
     sideLcChi2["proton"] = std::move(std::unique_ptr<TH2D> (new TH2D("hsideLc_proton_chi2vsdR", "match FS, Lc side;dR;chi2;Entries",
@@ -433,7 +481,7 @@ namespace MCMatch{
             10, 0., 0.1, 20, 0., 1.0 )));
     sideLcdPt["pi+"] = std::move(std::unique_ptr<TH2D> (new TH2D("hsideLc_pip_dPtvsdR", "match FS, Lc side;dR;dRelPt;Entries",
             10, 0., 0.1, 20, 0., 1.0 )));
-    sideLcdPt["pi-"] = std::move(std::unique_ptr<TH2D> (new TH2D("hsideLc_pim_dPtvsdR", "match FS, Lc side;dR;dRelpt;Entries",
+    sideLcdPt["pi-"] = std::move(std::unique_ptr<TH2D> (new TH2D("hsideLc_pim_dPtvsdR", "match FS, Lc side;dR;dRelPt;Entries",
             10, 0., 0.1, 32, 0., 1.0 )));
 
     std::map<std::string, std::unique_ptr<TH1D>> matchedLcMass;
