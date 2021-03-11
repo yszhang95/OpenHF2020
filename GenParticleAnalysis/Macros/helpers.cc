@@ -10,17 +10,18 @@
 #include "Math/GenVector/PxPyPzE4D.h"
 #include "Math/GenVector/LorentzVector.h"
 #include "Math/GenVector/PtEtaPhiM4D.h"
-//#include "Math/GenVector/PtEtaPhiE4D.h"
 #include "Math/GenVector/VectorUtil.h"
 #include "Math/SVector.h"
 #include "Math/SMatrix.h"
 #include "TMath.h"
+
 #include "TChain.h"
 #include "TFileCollection.h"
 #include "THashList.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
+#include "TNtuple.h"
 #include "TString.h"
 #include "TSystem.h"
 
@@ -64,10 +65,10 @@ namespace MCMatch{
       const float phi1, const float phi2)
   { return 0; }
 
-  void genKsMatchInfo(const TString& inputList, TString type, const bool useRaw=false)
+  void genKsMatchInfo(const TString& inputList, TString type, const bool useRaw=false, const bool saveNtuple=false)
   {
     type.ToLower();
-    bool sortByPt, sortByR;
+    bool sortByPt(false), sortByR(false);
     if (type == "dpt") sortByPt = true;
     else if (type == "dr") sortByR = true;
     else { cout << "Wrong input variable for sort type" << endl; return; }
@@ -98,6 +99,19 @@ namespace MCMatch{
             100, 0, 1.0, 10, 0., 0.5, 20, 0., 10)));
 
     std::unique_ptr<TH1D> hmass(new TH1D("hKsMass", "K_{S}^{0};M_{#pi^{+}#pi^{-}} (GeV);Entries", 100, 0.4, 0.6));
+    std::unique_ptr<TH1D> hmassMatch(new TH1D("hKsMassMatch", "K_{S}^{0};M_{#pi^{+}#pi^{-}} (GeV);Entries", 100, 0.4, 0.6));
+
+    std::unique_ptr<TNtuple> tp(new TNtuple("Ks", "Peak",
+                      "PiPt:PiEta:PiPhi:" // 3
+                      "PiFitPt:PiFitEta:PiFitPhi:" // 3
+                      "PiGenPt:PiGenEta:PiGenPhi:" // 3
+                      "KsPt:KsEta:KsPhi:KsMass:" // 4
+                      "KsChi2:KsDL:KsDLErr:" // 3
+                      "KsGenPt:KsGenEta:KsGenPhi:KsGenMass:" // 4
+                      "dR:dPt:Chi2:" // 3
+                      "isHP:trkNChi2:trkPtErr:trkDxySig:trkDzSig:trkNHits" // 6
+                      //, std::numeric_limits<int>::max());
+      ));
 
     TFileCollection tf("tf", "", inputList);
     TChain t("lambdacAna_mc/ParticleTree");
@@ -105,11 +119,12 @@ namespace MCMatch{
     ParticleTreeMC2 p(&t);
 
     auto nentries = p.GetEntries();
+    //auto nentries = 5000L;
     cout << "Tree lambdacAna_mc/ParticleTree in " << inputList
       << " has " << nentries << " entries." << endl;;
 
     const float width = 0.005;
-    const float pdgMass = 0.49367;
+    const float pdgMass = 0.497611;
 
     for (Long64_t ientry=0; ientry<nentries; ientry++) {
       if (ientry % 50000 == 0) cout << "pass " << ientry << endl;
@@ -156,7 +171,12 @@ namespace MCMatch{
         else pi2.SetM(0.938272013);
         ROOT::Math::PxPyPzE4D<double> total(pi1.x()+pi2.x(),
             pi1.y()+pi2.y(), pi1.z()+pi2.z(), pi1.E() + pi2.E());
-        if ( std::abs(total.M() - 1.115683)< 0.01) continue;
+        if ( std::abs(total.M() - 1.115683)< 0.01) { continue; }
+        pi1.SetM(0.000511);
+        pi2.SetM(0.000511);
+        ROOT::Math::PxPyPzE4D<double> ee(pi1.x()+pi2.x(),
+            pi1.y()+pi2.y(), pi1.z()+pi2.z(), pi1.E() + pi2.E());
+        if ( ee.M() <0.2 ) { /* cout << "reject one" << endl */; continue; }
 
         const auto mass = p.cand_mass()[ireco];
         const bool inPeak = std::abs(mass - pdgMass) < 1 * width;
@@ -170,6 +190,7 @@ namespace MCMatch{
           if (inSide) piInSide.insert(idx);
         }
         hmass->Fill(mass);
+        if(p.cand_matchGEN().at(ireco)) hmassMatch->Fill(mass);
         // end Ks
       }
       // std::set is a sorted container
@@ -287,7 +308,6 @@ namespace MCMatch{
         for (size_t genIdx=0; genIdx<gensize; ++genIdx) {
           // check stable or not
           if (p.gen_status().at(genIdx) != 1) continue;
-          //cout << (int)p.gen_status().at(genIdx) << endl;
           // check charge
           if (recoCharge != gen_charge.at(genIdx)) continue;
           // check mother ID
@@ -303,14 +323,17 @@ namespace MCMatch{
           const auto dR = ROOT::Math::VectorUtil::DeltaR(reco, gen);
           const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/gen.Pt();
           // closet particle by dR or dPt
-          if (sortByR && dR < dRMin) { piInfoInPeak[idx] = genIdx; dRMin = dR; }
-          if (sortByPt && dRelPt < dRelPtMin) { piInfoInPeak[idx] = genIdx; dRelPtMin = dRelPt; }
+          if (sortByR && dR < dRMin) { piInfoInSide[idx] = genIdx; dRMin = dR; }
+          if (sortByPt && dRelPt < dRelPtMin) { piInfoInSide[idx] = genIdx; dRelPtMin = dRelPt; }
         }
       }
       //   end side
       // compute dynamic info
       // begin peak
       for (const auto& e : piInfoInPeak) {
+        float ntupleInfoPeak[29] = {0};
+        size_t ivar = 0;
+
         const auto idx = e.first;
         const auto genIdx = e.second;
         if (genIdx == size_t(-1)) { /* std::cerr << "piInfoInPeak: genIdx == size_t(-1), no PiPi found" << endl;*/ continue; }
@@ -320,13 +343,19 @@ namespace MCMatch{
             p.cand_phi().at(idx),
             p.cand_mass().at(idx)
             );
+        // "PiPt:PiEta:PiPhi:" // 3
+        ntupleInfoPeak[ivar++] = reco.Pt();
+        ntupleInfoPeak[ivar++] = reco.Eta();
+        ntupleInfoPeak[ivar++] = reco.Phi();
+
+        size_t momIdx = p.cand_momIdx().at(idx).at(0);
         if (!useRaw) {
           std::vector<unsigned int> momIdxVec;
           std::copy_if(p.cand_momIdx().at(idx).begin(), p.cand_momIdx().at(idx).end(),
               std::back_inserter(momIdxVec),
-              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1 * width; }
+              [&](unsigned int i) -> bool { return std::abs(p.cand_mass().at(i) - pdgMass) < 1. * width; }
               );
-          const auto momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
+          momIdx = *std::min_element(momIdxVec.begin(), momIdxVec.end(),
               [&](unsigned int i, unsigned int j)->bool{ return p.cand_vtxProb().at(i) < p.cand_vtxProb().at(j); }
               );
           if (!dauIdxEvt.at(momIdx).size()) { std::cerr << "dauIdxEvt.at(momIdx): no daughter found!" << endl; return; }
@@ -339,12 +368,16 @@ namespace MCMatch{
             }
           }
           if (!found) continue;
+          // "PiFitPt:PiFitEta:PiFitPhi:" // 3
           reco = PtEtaPhiM_t (
               p.cand_pTDau().at(momIdx).at(iDau),
               p.cand_etaDau().at(momIdx).at(iDau),
               p.cand_phiDau().at(momIdx).at(iDau),
               p.cand_massDau().at(momIdx).at(iDau)
               );
+          ntupleInfoPeak[ivar++] = reco.Pt();
+          ntupleInfoPeak[ivar++] = reco.Eta();
+          ntupleInfoPeak[ivar++] = reco.Phi();
         }
         PtEtaPhiM_t gen(
             p.gen_pT()[genIdx],
@@ -352,6 +385,28 @@ namespace MCMatch{
             p.gen_phi()[genIdx],
             p.gen_mass()[genIdx]
             );
+        // "PiGenPt:PiGenEta:PiGenPhi:" // 3
+        ntupleInfoPeak[ivar++] = gen.Pt();
+        ntupleInfoPeak[ivar++] = gen.Eta();
+        ntupleInfoPeak[ivar++] = gen.Phi();
+
+        // "KsPt:KsEta:KsPhi:KsMass:" // 4
+        ntupleInfoPeak[ivar++]  = p.cand_pT().at(momIdx);
+        ntupleInfoPeak[ivar++] = p.cand_eta().at(momIdx);
+        ntupleInfoPeak[ivar++] = p.cand_phi().at(momIdx);
+        ntupleInfoPeak[ivar++] = p.cand_mass().at(momIdx);
+        // "KsChi2:KsDL:KsDLErr:" // 3
+        ntupleInfoPeak[ivar++] = p.cand_vtxChi2().at(momIdx);
+        ntupleInfoPeak[ivar++] = p.cand_decayLength3D().at(momIdx);
+        ntupleInfoPeak[ivar++] = p.cand_decayLengthError3D().at(momIdx);
+
+        // "KsGenPt:KsGenEta:KsGenPhi:KsGenMass" // 4
+        const auto gen_momIdx = p.gen_momIdx().at(genIdx).at(0);
+        ntupleInfoPeak[ivar++] = p.gen_pT().at(gen_momIdx);
+        ntupleInfoPeak[ivar++] = p.gen_eta().at(gen_momIdx);
+        ntupleInfoPeak[ivar++] = p.gen_phi().at(gen_momIdx);
+        ntupleInfoPeak[ivar++] = p.gen_mass().at(gen_momIdx);
+
         const auto dR = ROOT::Math::VectorUtil::DeltaR(reco, gen);
         const auto dRelPt = TMath::Abs(gen.Pt() - reco.Pt())/gen.Pt();
 
@@ -366,8 +421,24 @@ namespace MCMatch{
         // difference
         const auto diffParameters = genParameters - recoParameters;
         const auto chi2 = ROOT::Math::Dot(diffParameters * errorMatrix, diffParameters)/5.;
+
+        // "dR:dPt:Chi2:" // 3
+        ntupleInfoPeak[ivar++] = dR;
+        ntupleInfoPeak[ivar++] = dRelPt;
+        ntupleInfoPeak[ivar++] = chi2;
+
+        //"isHP:trkNChi2:trkPtErr:trkDxySig:trkDzSig:trkNHits"); // 6
+        const auto trkIdx = p.cand_trkIdx().at(idx);
+        ntupleInfoPeak[ivar++] = static_cast<float>(p.trk_isHP().at(trkIdx));
+        ntupleInfoPeak[ivar++] = p.trk_nChi2().at(trkIdx);
+        ntupleInfoPeak[ivar++] = p.trk_pTErr().at(trkIdx);
+        ntupleInfoPeak[ivar++] = p.trk_xyDCASignificance().at(trkIdx);
+        ntupleInfoPeak[ivar++] = p.trk_zDCASignificance().at(trkIdx);
+        ntupleInfoPeak[ivar++] = static_cast<float>(p.trk_nHit().at(trkIdx));
+
         if (charge.at(idx) ==  1) h3RecoGenPeak["pi+"]->Fill(dR, dRelPt, chi2);
         if (charge.at(idx) == -1) h3RecoGenPeak["pi-"]->Fill(dR, dRelPt, chi2);
+        if (!useRaw && saveNtuple) tp->Fill(ntupleInfoPeak);
       }
       // end peak
       // begin side
@@ -432,6 +503,8 @@ namespace MCMatch{
     for (const auto& e : h3RecoGenPeak) e.second->Write();
     for (const auto& e : h3RecoGenSide) e.second->Write();
     hmass->Write();
+    hmassMatch->Write();
+    tp->Write();
   }
 
   void genLcMatchInfo(const TString& inputList)
