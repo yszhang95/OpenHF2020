@@ -54,6 +54,128 @@ namespace MCMatch{
       return dR < _deltaR && dRelPt < _deltaRelPt;
     }
 
+  int genLamInXiMass(const TString& inputList, const TString& treeDir, Long64_t nentries=-1, TString type="")
+  {
+    type.ToLower();
+    bool sortByPt(false), sortByR(false);
+    if (type == "dpt") sortByPt = true;
+    else if (type == "dr") sortByR = true;
+    else if (type != "") { cout << "Wrong input variable for sort type" << endl; return -1; }
+    TString basename(gSystem->BaseName(inputList));
+    const auto firstPos = basename.Index(".list");
+    basename.Replace(firstPos, 5, "_");
+    basename += Form("%s%lld_", treeDir.Data(), nentries);
+
+    basename += sortByPt ? "sortBydPt_" : "";
+    basename += sortByR  ? "sortBydR_"  : "";
+    basename += "LamInXiMassHists.root";
+    TFile ofile(basename, "recreate");
+    cout << "Created " << ofile.GetName() << endl;
+
+    std::unique_ptr<TH1D> hLamMass(new TH1D("hLamMass", "#Lambda/#bar{#Lambda},  S+B;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 1.06, 1.16));
+    Hist1DMaps hLamMassMatch;
+    hLamMassMatch["dR0.03"]= std::move(std::unique_ptr<TH1D>(
+          new TH1D("hLamMassMatch0p03", "#Lambda/#bar{#Lambda}, matching p3, dR<0.03;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 1.06, 1.16)));
+    hLamMassMatch["dR0.10"]= std::move(std::unique_ptr<TH1D>(
+          new TH1D("hLamMassMatch0p10", "#Lambda/#bar{#Lambda}, matching p3, dR<0.10;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 1.06, 1.16)));
+    TFileCollection tf("tf", "", inputList);
+    TChain t(treeDir+"/ParticleTree");
+    t.AddFileInfoList(tf.GetList());
+    ParticleTreeMC p(&t);
+
+    if(nentries < 0) nentries = p.GetEntries();
+    cout << "Tree lambdacAna_mc/ParticleTree in " << inputList
+      << " has " << nentries << " entries." << endl;;
+
+    const float width = 0.005;
+    //const float pdgMass = 0.497611;
+    const float pdgMass = 1.115683;
+
+    map<string, MatchCriterion>  matchCriterion;
+    matchCriterion.insert(map<string, MatchCriterion>::value_type("dR0.03", MatchCriterion(0.03, 0.5)));
+    matchCriterion.insert(map<string, MatchCriterion>::value_type("dR0.10", MatchCriterion(0.10, 0.5)));
+
+    for (Long64_t ientry=0; ientry<nentries; ientry++) {
+      if (ientry % 50000 == 0) cout << "pass " << ientry << endl;
+      p.GetEntry(ientry);
+      auto gensize = p.gen_mass().size();
+      auto recosize = p.cand_mass().size();
+
+      auto pdgId = p.cand_pdgId();
+      auto gen_pdgId = p.gen_pdgId();
+
+      for (size_t ireco=0; ireco<recosize; ireco++) {
+        // begin Lam
+        if (pdgId[ireco] == 3122) {
+          // reco daughters
+          map<string, bool> matchGEN;
+          matchGEN.insert(map<string, bool>::value_type("dR0.03", false));
+          matchGEN.insert(map<string, bool>::value_type("dR0.10", false));
+
+          PtEtaPhiM_t recoLam (
+                p.cand_pT()[ireco],
+                p.cand_eta()[ireco],
+                p.cand_phi()[ireco],
+                p.cand_mass()[ireco]
+                );
+          // topo cut
+          if (p.cand_decayLength3D()[ireco]/p.cand_decayLengthError3D()[ireco]<12) continue;
+
+          // Lambda cross check
+          ROOT::Math::PtEtaPhiM4D<double> dau0(
+              p.cand_pTDau().at(ireco).at(0),
+              p.cand_etaDau().at(ireco).at(0),
+              p.cand_phiDau().at(ireco).at(0),
+              p.cand_massDau().at(ireco).at(0)
+              );
+          ROOT::Math::PtEtaPhiM4D<double> dau1(
+              p.cand_pTDau().at(ireco).at(1),
+              p.cand_etaDau().at(ireco).at(1),
+              p.cand_phiDau().at(ireco).at(1),
+              p.cand_massDau().at(ireco).at(1)
+              );
+          // proton must have larger momentum
+          if (dau0.P() > dau1.P()) continue;
+          dau1.SetM(0.13957018);
+          ROOT::Math::PxPyPzE4D<double> total(dau0.x()+dau1.x(),
+              dau0.y()+dau1.y(), dau0.z()+dau1.z(), dau0.E() + dau1.E());
+          if ( std::abs(total.M() - 0.497614)< 0.02) { continue; }
+          // dielectron cross check
+          dau0.SetM(0.000511);
+          dau1.SetM(0.000511);
+          ROOT::Math::PxPyPzE4D<double> ee(dau0.x()+dau1.x(),
+              dau0.y()+dau1.y(), dau0.z()+dau1.z(), dau0.E() + dau1.E());
+          if ( ee.M() <0.2 ) { /* cout << "reject one" << endl */; continue; }
+
+          // reco-gen matching
+          for (size_t igen=0; igen<gensize; igen++) {
+            if (abs(gen_pdgId[igen]) != 3122) continue;
+            PtEtaPhiM_t genLam (
+                p.gen_pT()[igen],
+                p.gen_eta()[igen],
+                p.gen_phi()[igen],
+                p.gen_mass()[igen]
+                );
+            for (auto& e : matchCriterion) {
+              if(!matchGEN.at(e.first)) matchGEN[e.first] = e.second.match(recoLam, genLam);
+            }
+            bool done = true;
+            for (const auto& e : matchGEN) done = done && e.second;
+            if(done) break;
+          }
+          for (const auto& e: matchGEN) {
+            if (e.second) hLamMassMatch[e.first]->Fill(recoLam.M());
+          }
+          hLamMass->Fill(recoLam.M());
+        } // end Lam
+      }
+    }
+    ofile.cd();
+    ofile.Write();
+    return 0;
+  }
+
+
   int genLamMass(const TString& inputList, const TString& treeDir, Long64_t nentries=-1, TString type="")
   {
     type.ToLower();
@@ -72,12 +194,12 @@ namespace MCMatch{
     TFile ofile(basename, "recreate");
     cout << "Created " << ofile.GetName() << endl;
 
-    std::unique_ptr<TH1D> hLamMass(new TH1D("hLamMass", "#Lambda/#bar{#Lambda},  S+B;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 0.4, 0.6));
+    std::unique_ptr<TH1D> hLamMass(new TH1D("hLamMass", "#Lambda/#bar{#Lambda},  S+B;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 1.06, 1.16));
     Hist1DMaps hLamMassMatch;
     hLamMassMatch["dR0.03"]= std::move(std::unique_ptr<TH1D>(
-          new TH1D("hLamMassMatch0p03", "#Lambda/#bar{#Lambda}, matching p3, dR<0.03;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 0.4, 0.6)));
+          new TH1D("hLamMassMatch0p03", "#Lambda/#bar{#Lambda}, matching p3, dR<0.03;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 1.06, 1.16)));
     hLamMassMatch["dR0.10"]= std::move(std::unique_ptr<TH1D>(
-          new TH1D("hLamMassMatch0p10", "#Lambda/#bar{#Lambda}, matching p3, dR<0.10;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 0.4, 0.6)));
+          new TH1D("hLamMassMatch0p10", "#Lambda/#bar{#Lambda}, matching p3, dR<0.10;M_{#pi^{+}#pi^{-}} (GeV);Events", 200, 1.06, 1.16)));
     TFileCollection tf("tf", "", inputList);
     TChain t(treeDir+"/ParticleTree");
     t.AddFileInfoList(tf.GetList());
