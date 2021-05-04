@@ -319,6 +319,7 @@ void NTuple::initNTuple()
     t->Branch(Form("cand_dau%d_matchGEN", iDau), &cand_dau_matchGEN[iDau]);
     t->Branch(Form("cand_dau%d_isSwap", iDau), &cand_dau_isSwap[iDau]);
 
+    t->Branch(Form("cand_dau%d_charge", iDau), &cand_dau_charge[iDau]);
     t->Branch(Form("cand_dau%d_eta", iDau), &cand_dau_eta[iDau]);
     //    t->Branch(Form("cand_dau%d_y", iDau), &cand_dau_y[iDau]);
     //    t->Branch(Form("cand_dau%d_p", iDau), &cand_dau_p[iDau]);
@@ -362,6 +363,7 @@ void NTuple::initNTuple()
     t->Branch(Form("cand_gdau%d_matchGEN", iGDau), &cand_gdau_matchGEN[iGDau]);
     t->Branch(Form("cand_gdau%d_isSwap", iGDau), &cand_gdau_isSwap[iGDau]);
 
+    t->Branch(Form("cand_gdau%d_charge", iGDau), &cand_gdau_charge[iGDau]);
     t->Branch(Form("cand_gdau%d_eta", iGDau), &cand_gdau_eta[iGDau]);
     t->Branch(Form("cand_gdau%d_mass", iGDau), &cand_gdau_mass[iGDau]);
     t->Branch(Form("cand_gdau%d_pT", iGDau), &cand_gdau_pT[iGDau]);

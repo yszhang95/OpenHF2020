@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import ROOT as r
-r.gROOT.LoadMacro('genMatch.cc+')
+r.gROOT.LoadMacro('../genMatch.cc+')
 
 Ks = r.Particle(310)
 Ks.selfConj(True);
