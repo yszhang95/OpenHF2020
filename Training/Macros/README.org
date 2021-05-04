@@ -1,0 +1,21 @@
+
+* Legacy codes for weak decay particles
+** Usage
+   Legacy codes are under ~legacy~. See examples in ~legacy/match.py~.
+*** Find Lambda in Xi
+    Use ~genLamInXiMass~.
+*** Find Lambda candidate
+    Use ~genLamMass~.
+*** Find Kshort candidate
+    Use ~genKsMass~ or ~genKsMultipleMatch~, or ~genKsSingleMatch~,
+    or ~genStableKsMultipleMatch~.
+*** Find LambdaC candidate
+**** One candidate can match multiple times
+     Use ~genLcMultipleMatch~.
+**** One candidate can only be used once
+* Lambda_C n-tuple reproduction
+** Codes
+   We need use ~genMatch.cc~. Examples of configuration can be found in
+   ~run.py~.
+** Test
+   Test macros are under ~testRecoGenMatch~. Run ~bash test.sh~.
