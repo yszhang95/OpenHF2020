@@ -1,14 +1,14 @@
 <root>
   <signalFileList>
-    ../Lists/MCSlimSignal_LamCpT0p9to6_y1p1.list
+    testmc.list
   </signalFileList>
 
   <backgroundFileList>
-    ../Lists/Background_LamCpT4to6_y1p1.list
+    test.list
   </backgroundFileList>
 
   <methods>
-    Cuts? CutsGA? H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95 
+#    Cuts? CutsGA? H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95 
     BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2
   </methods>
 

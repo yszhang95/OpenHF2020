@@ -3,34 +3,16 @@
 // Modified by Yousen Zhang, Rice University, US
 // Data: 2020 August 27
 //
-#include <cstdlib>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <string>
-#include <memory>
-#include <algorithm> 
-#include <functional> 
-#include <cctype>
-#include <locale>
-#include <sstream>
 
 #include "TChain.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TString.h"
-#include "TObjString.h"
 #include "TSystem.h"
 #include "TROOT.h"
 #include "THashList.h"
 #include "TFileCollection.h"
 
 #include "Riostream.h"
-#include "TString.h"
-#include "TPRegexp.h"
-#include "TClonesArray.h"
-#include "TObjString.h"
-
 
 #include "TMVA/Factory.h"
 #include "TMVA/Tools.h"
@@ -40,62 +22,15 @@
 #include "TMVA/DataLoader.h"
 #endif
 
+#include "functions.h"
+
 using std::map;
 using std::string;
 using std::vector;
 using std::ifstream;
-using std::getline;
 using std::cout;
 using std::endl;
 using std::istringstream;
-
-
-static int DEBUG = 0;
-
-// trim functions copied from https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-// trim from start (in place)
-static inline void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
-}
-
-// trim from both ends (in place)
-static inline void trim(std::string &s) {
-    ltrim(s);
-    rtrim(s);
-}
-
-// trim from start (copying)
-static inline std::string ltrim_copy(std::string s) {
-    ltrim(s);
-    return s;
-}
-
-// trim from end (copying)
-static inline std::string rtrim_copy(std::string s) {
-    rtrim(s);
-    return s;
-}
-
-// trim from both ends (copying)
-static inline std::string trim_copy(std::string s) {
-    trim(s);
-    return s;
-}
-
-map<string, vector<string>> readConfigs(std::string);
-
-map<string, TMVA::Types::EMVA> setupMethodCollection();
-
-map<string, TString> getPars(const TString&, const std::string&);
 
 int TMVAClassification(const map<string, vector<string>>& configs);
 
@@ -117,109 +52,6 @@ int main( int argc, char** argv )
   if (configs.at("outfileName").at(0).size()) { (configs["outfileName"])[0].insert(0, "_"); }
 
   return TMVAClassification(configs);
-}
-
-map<string, vector<string>> readConfigs(std::string inputXML="test.xml")
-{
-  if (DEBUG) { cout << "\nStart readConfigs" << endl; }
-  map<string, vector<string>> configs;
-
-  TXMLEngine xml;
-  XMLDocPointer_t xmldoc =  xml.ParseFile(inputXML.c_str());
-  XMLNodePointer_t mainnode = xml.DocGetRootElement(xmldoc);
-  XMLNodePointer_t child = xml.GetChild(mainnode);
-
-  istringstream iStr;
-
-  while(child != 0) {
-    const char* childname = xml.GetNodeName(child);
-    const char* content = xml.GetNodeContent(child);
-    child = xml.GetNext(child);
-
-    iStr.str(string(content));
-    const auto& has = configs.insert(
-        map<string, vector<string>>::value_type(
-          childname, vector<string>()));
-    for(string temp; getline(iStr, temp); ){
-      trim(temp);
-      if(!temp.size()) continue;
-      if(temp.at(0)=='#') continue;
-      configs.at(childname).push_back(temp);
-      temp.clear();
-    }
-    iStr.clear();
-  }
-  if (DEBUG) {
-    for (const auto& e : configs) {
-      cout << e.first << endl;
-      for (const auto& ee : e.second) {
-        cout << ee << endl;
-      }
-    }
-  }
-  xml.FreeDoc(xmldoc);
-  if (DEBUG) { cout << "End readConfigs\n" << endl; }
-  return configs;
-}
-
-map<string, TString> getPars(const TString& in, const std::string& type)
-{
-  if (DEBUG) { cout << "\nStart getPars" << endl; }
-  map<string, TString> output;
-  if (type == "methods") {
-    TPRegexp r("(.*)\\? *(.*)\\? *(.*)");
-    TObjArray* subStrL = r.MatchS(in);
-    output["fullStr"] = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
-    output["method"] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
-    output["name"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
-    output["config"] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
-  } else
-    if (type.find("worange") != string::npos) {
-      TPRegexp r("(.*)\\? *(.*)\\? *(.*)\\? *(.)");
-      TObjArray* subStrL = r.MatchS(in);
-      output["fullStr"]     = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
-      output["variable"]    = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
-      output["description"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
-      output["unit"]        = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
-      output["type"]        = dynamic_cast<TObjString*>(subStrL->At(4))->GetString();
-    }
-  if (type.find("wrange") != string::npos) {
-    TPRegexp r("(.*)\\? *(.*)\\? *(.*)\\? *(.*)\\? *(.*)\\? *(.*)");
-    TObjArray* subStrL = r.MatchS(in);
-    output["fullStr"    ] = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
-    output["variable"   ] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
-    output["description"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
-    output["unit"       ] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
-    output["type"       ] = dynamic_cast<TObjString*>(subStrL->At(4))->GetString();
-
-    auto minStr = dynamic_cast<TObjString*>(subStrL->At(5))->GetString();
-    auto maxStr = dynamic_cast<TObjString*>(subStrL->At(6))->GetString();
-
-    TPRegexp num("\\s*(-?\\d+\\.?\\d*)\\s*");
-
-    TObjArray* minNum = num.MatchS(minStr);
-    if (minNum->GetLast()<0) {
-      output["minStr"] = "";
-      output["min"   ] = "";
-    } else {
-      output["minStr"] = dynamic_cast<TObjString*>(minNum->At(0))->GetString();
-      output["min"   ] = dynamic_cast<TObjString*>(minNum->At(1))->GetString();
-    }
-
-    TObjArray* maxNum = num.MatchS(maxStr);
-    if (maxNum->GetLast()<0) {
-      output["maxStr"] = "";
-      output["max"   ] = "";
-    } else {
-      output["maxStr"] = dynamic_cast<TObjString*>(maxNum->At(0))->GetString();
-      output["max"   ] = dynamic_cast<TObjString*>(maxNum->At(1))->GetString();
-    }
-  }
-  for (auto& e : output) { e.second = e.second.Strip(TString::kBoth); }
-  if (DEBUG) {for (const auto& e: output) { cout << e.second << endl; }}
-  if (DEBUG) { cout << "End getPars\n" << endl; }
-
-  return output;
 }
 
 int TMVAClassification(const map<string, vector<string>>& configs)
@@ -280,14 +112,14 @@ int TMVAClassification(const map<string, vector<string>>& configs)
 
   // varialbes without range specified
   for (const auto& var : configs.at("training_variables_worange")) {
-    const auto pars = getPars(var, "training_variables_worange");
+    const auto pars = getTrainPars(var, "training_variables_worange");
     if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     dataloader->AddVariable(pars.at("variable"),
         pars.at("description"), pars.at("unit"), pars.at("type")[0]);
   }
   // varialbes with range specified
   for (const auto& var : configs.at("training_variables_wrange")) {
-    const auto pars = getPars(var, "training_variables_wrange");
+    const auto pars = getTrainPars(var, "training_variables_wrange");
     if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     const double minValue = pars.at("min") == "" ?
       std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
@@ -304,14 +136,14 @@ int TMVAClassification(const map<string, vector<string>>& configs)
 
   // varialbes without range specified
   for (const auto& var : configs.at("spectator_variables_worange")) {
-    const auto pars = getPars(var, "spectator_variables_worange");
+    const auto pars = getTrainPars(var, "spectator_variables_worange");
     if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     dataloader->AddSpectator(pars.at("variable"),
         pars.at("description"), pars.at("unit"), pars.at("type")[0]);
   }
   // varialbes with range specified
   for (const auto& var : configs.at("spectator_variables_wrange")) {
-    const auto pars = getPars(var, "spectator_variables_wrange");
+    const auto pars = getTrainPars(var, "spectator_variables_wrange");
     if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     const double minValue = pars.at("min") == "" ?
       std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
@@ -382,7 +214,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
 
   auto MethodCollection = setupMethodCollection();
   for (const auto& m : configs.at("methods")) {
-    const auto method = getPars(m, "methods");
+    const auto method = getTrainPars(m, "methods");
     if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
     factory->BookMethod(dataloader,
@@ -419,45 +251,4 @@ int TMVAClassification(const map<string, vector<string>>& configs)
 #endif
 
   return 0;
-}
-
-map<string, TMVA::Types::EMVA> setupMethodCollection()
-{
-  map<string, TMVA::Types::EMVA> MethodCollection;
-  MethodCollection["Variable"       ] = TMVA::Types::kVariable       ;
-  MethodCollection["Cuts"           ] = TMVA::Types::kCuts           ;
-  MethodCollection["Likelihood"     ] = TMVA::Types::kLikelihood     ;
-  MethodCollection["PDERS"          ] = TMVA::Types::kPDERS          ;
-  MethodCollection["HMatrix"        ] = TMVA::Types::kHMatrix        ;
-  MethodCollection["Fisher"         ] = TMVA::Types::kFisher         ;
-  MethodCollection["KNN"            ] = TMVA::Types::kKNN            ;
-  MethodCollection["CFMlpANN"       ] = TMVA::Types::kCFMlpANN       ;
-  MethodCollection["TMlpANN"        ] = TMVA::Types::kTMlpANN        ;
-  MethodCollection["BDT"            ] = TMVA::Types::kBDT            ;
-  MethodCollection["DT"             ] = TMVA::Types::kDT             ;
-  MethodCollection["RuleFit"        ] = TMVA::Types::kRuleFit        ;
-  MethodCollection["SVM"            ] = TMVA::Types::kSVM            ;
-  MethodCollection["MLP"            ] = TMVA::Types::kMLP            ;
-  MethodCollection["BayesClassifier"]=  TMVA::Types::kBayesClassifier;
-  MethodCollection["FDA"            ] = TMVA::Types::kFDA            ;
-  MethodCollection["Boost"          ] = TMVA::Types::kBoost          ;
-  MethodCollection["PDEFoam"        ] = TMVA::Types::kPDEFoam        ;
-  MethodCollection["LD"             ] = TMVA::Types::kLD             ;
-  MethodCollection["Plugins"        ] = TMVA::Types::kPlugins        ;
-  MethodCollection["Category"       ] = TMVA::Types::kCategory       ;
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
-  MethodCollection["DNN"            ] = TMVA::Types::kDNN            ;
-  MethodCollection["DL"             ] = TMVA::Types::kDL             ;
-  MethodCollection["PyKeras"        ] = TMVA::Types::kPyKeras        ;
-  MethodCollection["CrossValidation"] = TMVA::Types::kCrossValidation;
-#endif
-  MethodCollection["PyRandomForest" ] = TMVA::Types::kPyRandomForest ;
-  MethodCollection["PyAdaBoost"     ] = TMVA::Types::kPyAdaBoost     ;
-  MethodCollection["PyGTB"          ] = TMVA::Types::kPyGTB          ;
-  MethodCollection["C50"            ] = TMVA::Types::kC50            ;
-  MethodCollection["RSNNS"          ] = TMVA::Types::kRSNNS          ;
-  MethodCollection["RSVM"           ] = TMVA::Types::kRSVM           ;
-  MethodCollection["RXGB"           ] = TMVA::Types::kRXGB           ;
-  MethodCollection["MaxMethod"      ] = TMVA::Types::kMaxMethod      ;
-  return MethodCollection;
 }

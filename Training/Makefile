@@ -22,11 +22,14 @@ INCS = $(shell root-config --incdir)
 
 default : bin/TMVAClassification
 
-bin/TMVAClassification: src/TMVAClassfication.cc
-	@echo -n "Building $@ ... "
-	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS))  $(shell root-config --libs) -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
-	@echo "Done"
+bin/TMVAClassification: bin/TMVAClassification.o bin/functions.o
+	@echo -n "Linking $@ ..."
+	$(CXX) $(CCFLAGS) $^ -Iinclude $(shell root-config --libs) -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
 
+bin/%.o: src/%.cc
+	@echo -n "Building $@ ... "
+	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -Iinclude -g -c -o $@
+	@echo "Done"
 
 clean: 
 	rm -f *.o	$(BINS)
