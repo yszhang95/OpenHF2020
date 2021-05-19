@@ -5,6 +5,8 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <vector>
+#include <array>
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -14,8 +16,11 @@
 #include <sstream>
 
 #include "TString.h"
+#include "TF1.h"
 
 #include "TMVA/Types.h"
+
+#include "Ana/TreeHelpers.h"
 
 static int DEBUG = 0;
 
@@ -64,4 +69,22 @@ std::map<std::string, TMVA::Types::EMVA> setupMethodCollection();
 
 std::map<std::string, TString> getTrainPars(const TString&, const std::string&);
 
+std::map<std::string, TString> getAppPars(const TString&, const std::string&);
+
+struct MVAHelper
+{
+  const static size_t NMAX = 100;
+  size_t NVAR;
+  std::array<TF1*, NMAX> fvar;
+  std::array<TF1*, NMAX> fspec;
+  std::array<float, NMAX> vars;
+  std::array<float, NMAX> specs;
+  explicit MVAHelper(std::vector<std::map<std::string, TString>>,
+                     std::vector<std::map<std::string, TString>>);
+  MVAHelper(const MVAHelper&) = delete;
+  ~MVAHelper();
+  void GetValues( NTuple&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&);
+};
+
+std::vector<TString> splitTString(const TString& in, const char* delimiter);
 #endif

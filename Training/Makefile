@@ -20,15 +20,21 @@ LIBS = $(shell root-config --libdir)
 INCS = $(shell root-config --incdir)  
 
 
-default : bin/TMVAClassification
+default : bin/TMVAClassification bin/TMVAClassificationApp
+
+bin/TMVAClassificationApp: bin/TMVAClassificationApp.o bin/functions.o
+	@echo -n "Linking $@ ... "
+	$(CXX) $(CCFLAGS) $^ $(shell root-config --libs) -L$(OPENHF2020TOP)/Utilities/lib \
+		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
 
 bin/TMVAClassification: bin/TMVAClassification.o bin/functions.o
-	@echo -n "Linking $@ ..."
-	$(CXX) $(CCFLAGS) $^ -Iinclude $(shell root-config --libs) -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
+	@echo -n "Linking $@ ... "
+	$(CXX) $(CCFLAGS) $^ $(shell root-config --libs) -L$(OPENHF2020TOP)/Utilities/lib \
+		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
 
 bin/%.o: src/%.cc
 	@echo -n "Building $@ ... "
-	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -Iinclude -g -c -o $@
+	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -Iinclude -I$(OPENHF2020TOP)/Utilities  -g -c -o $@
 	@echo "Done"
 
 clean: 

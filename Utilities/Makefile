@@ -14,6 +14,8 @@ $(LIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/ParticleTreeMC2.cxx \
 	$(TreeReaderDir)/ParticleTreeMC.cxx \
 	$(TreeReaderDir)/ParticleTree.cxx \
+	Ana/Common.cc \
+	Ana/TreeHelpers.cc \
 	$(LIB)/MyTreeReaderDict.cxx
 	$(CXX) -shared -o $@ $(CXXFLAGS) $(LDFLAGS) $^
 

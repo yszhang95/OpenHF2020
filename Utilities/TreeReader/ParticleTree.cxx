@@ -19,6 +19,7 @@ ParticleTree::ParticleTree(TTree *tree) : fChain(tree)
 
 ParticleTree::~ParticleTree()
 {
+  std::cout << "Delete ParticleTree" << std::endl;
   if (!fChain) return;
   delete fChain->GetCurrentFile();
   fChain = nullptr;

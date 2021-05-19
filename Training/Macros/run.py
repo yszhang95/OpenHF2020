@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import ROOT as r
 r.gROOT.LoadMacro('genMatch.cc+')
+r.gSystem.Load('${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so')
+a = r.gSystem.Load('libGenVector.so')
+print a
 
 Ks = r.Particle(310)
 Ks.selfConj(True);
