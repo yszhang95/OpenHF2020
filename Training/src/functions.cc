@@ -232,7 +232,7 @@ MVAHelper::~MVAHelper()
   for (auto& f : fspec) delete f;
 }
 
-void MVAHelper::GetValues(NTuple& t,
+void MVAHelper::GetValues(MyNTuple& t,
                           const vector<vector<TString>>& trainingVars,
                           const vector<vector<TString>>& spectatorVars)
 {

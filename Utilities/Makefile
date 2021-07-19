@@ -1,11 +1,13 @@
 # Makefile
 LIB=lib
 TreeReaderDir=TreeReader
+Ana=Ana
 
-CXXFLAGS=-std=c++11 -fPIC -I$(shell root-config --incdir)
+CXXFLAGS=$(shell root-config --cflags)
 CXXFLAGS+=-I$(OPENHF2020TOP)/Utilities
-LDFLAGS=$(shell root-config --libs)
-CXX=g++
+LDFLAGS=$(shell root-config --ldflags)
+LDFLAGS+=$(shell root-config --libs)
+CXX=$(shell root-config --cxx)
 
 .PHONY: all
 all: $(LIB) $(LIB)/libMyTreeReader.so
@@ -14,20 +16,32 @@ $(LIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/ParticleTreeMC2.cxx \
 	$(TreeReaderDir)/ParticleTreeMC.cxx \
 	$(TreeReaderDir)/ParticleTree.cxx \
-	Ana/Common.cc \
-	Ana/TreeHelpers.cc \
+	$(Ana)/Common.cc \
+	$(Ana)/TreeHelpers.cc \
 	$(LIB)/MyTreeReaderDict.cxx
-	$(CXX) -shared -o $@ $(CXXFLAGS) $(LDFLAGS) $^
+	@echo "Generating shared library..."
+	$(CXX) -shared -fPIC -o $@ $(CXXFLAGS) $(LDFLAGS) $^
+	@echo "Done..."
+	@echo
+
 
 $(LIB)/MyTreeReaderDict.cxx: \
 	$(TreeReaderDir)/ParticleTreeMC2.hxx \
 	$(TreeReaderDir)/ParticleTreeMC.hxx \
 	$(TreeReaderDir)/ParticleTree.hxx \
+	$(Ana)/Common.h \
+	$(Ana)/TreeHelpers.h \
 	Linkdef.h
+	@echo "Generating dictionary..."
 	rootcling -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
+	@echo "Done..."
+	@echo
 
 lib:
-	mkdir lib
+	@echo "Creating directory lib"
+	@mkdir lib
+	@echo "done"
+	@echo
 
 .PHONY: clean
 clean:

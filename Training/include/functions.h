@@ -83,7 +83,7 @@ struct MVAHelper
                      std::vector<std::map<std::string, TString>>);
   MVAHelper(const MVAHelper&) = delete;
   ~MVAHelper();
-  void GetValues( NTuple&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&);
+  void GetValues( MyNTuple&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&);
 };
 
 std::vector<TString> splitTString(const TString& in, const char* delimiter);

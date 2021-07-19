@@ -8,19 +8,18 @@
 # Code   : Example usage for TMVA analyses                           #
 ###################################################################### 
 
-CXX = g++
-CCFLAGS = -O0 -ggdb
-CCFLAGS += $(shell root-config --auxcflags)
+CXX=$(shell root-config --cxx)
+CCFLAGS = -O0
+CCFLAGS += $(shell root-config --cflags)
 
+LDFLAGS=$(shell root-confi --libs)
 
-LD = g++
-LDFLAGS = 
 
 LIBS = $(shell root-config --libdir) 
 INCS = $(shell root-config --incdir)  
 
 
-default : bin/TMVAClassification bin/TMVAClassificationApp
+default : bin bin/TMVAClassification bin/TMVAClassificationApp
 
 bin/TMVAClassificationApp: bin/TMVAClassificationApp.o bin/functions.o
 	@echo -n "Linking $@ ... "
@@ -37,5 +36,12 @@ bin/%.o: src/%.cc
 	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -Iinclude -I$(OPENHF2020TOP)/Utilities  -g -c -o $@
 	@echo "Done"
 
+bin:
+	@echo "Creating directory bin"
+	@mkdir bin 
+	@echo "Done"
+	@echo
+
+.PHONY: clean
 clean: 
-	rm -f *.o	$(BINS)
+	rm -r $(BIN)

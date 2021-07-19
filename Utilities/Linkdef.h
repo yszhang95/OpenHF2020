@@ -9,5 +9,4 @@
 #pragma link C++ class ParticleTreeMC2+;
 
 #pragma link C++ class MatchCriterion+;
-#pragma link C++ class PtEtaPhiM_t;
 #endif

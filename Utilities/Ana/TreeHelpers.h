@@ -60,9 +60,10 @@ class MatchCriterion {
     float _deltaRelPt;
 };
 
-struct NTuple
+struct MyNTuple
 {
   TTree* t;
+
   //  Event info
   //  UChar_t         nPV;
   //  UShort_t        BXNb;
@@ -78,6 +79,9 @@ struct NTuple
   //  Float_t         bestvtxX;
   //  Float_t         bestvtxY;
   //  Float_t         bestvtxZ;
+  UInt_t           cand_nMVA;
+  Float_t         cand_MVA[100];
+
   Bool_t          cand_matchGEN;
 
   Char_t          cand_charge;
@@ -174,7 +178,7 @@ struct NTuple
   Float_t         trk_gdau_xyDCASignificance[100];
   Float_t         trk_gdau_zDCASignificance[100];
 
-  NTuple(TTree* t) : t(t)
+  MyNTuple(TTree* t) : t(t)
   {
     if (!t) {
       std::cerr << "[ERROR] Nullptr of TTree is given to NTuple!" << std::endl;
@@ -184,14 +188,17 @@ struct NTuple
     for (auto& ngdau : dauHasNGDau) {
       ngdau = 0;
     }
+    cand_nMVA = 0;
   }
-  ~NTuple()
+  ~MyNTuple()
   {
     std::cout << "Delete NTuple" << std::endl;
   }
+  void  initMVABranches(const std::vector<TString>&);
   void  initNTuple();
   void  setNDau(const unsigned short, const unsigned short, unsigned short const*);
   Int_t fillNTuple();
+  bool  setMVAValues(const std::vector<float>&);
   bool  retrieveTreeInfo(ParticleTree&, Long64_t);
   float value(const TString& s);
 };

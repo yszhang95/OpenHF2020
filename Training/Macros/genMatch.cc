@@ -68,7 +68,7 @@ int genMatchFS(const TString& inputList, const TString& treeDir,
   ofile.mkdir(treeDir);
   ofile.cd(treeDir);
   TTree tt("ParticleNTuple", "ParticleNTuple");
-  NTuple ntp(&tt);
+  MyNTuple ntp(&tt);
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();

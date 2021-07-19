@@ -3,6 +3,8 @@
 #endif
 
 #ifdef TreeHelpers_H
+using std::vector;
+
 bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTreeMC& p,
                      const bool isFirstGen)
 {
@@ -90,7 +92,7 @@ PtEtaPhiM_t getGenP4(size_t idx, const ParticleTreeMC& p)
             );
 }
 
-void NTuple::setNDau(const unsigned short ndau,
+void MyNTuple::setNDau(const unsigned short ndau,
                      const unsigned short ngdau,
                      const unsigned short* dauNGDau)
 {
@@ -101,7 +103,15 @@ void NTuple::setNDau(const unsigned short ndau,
   }
 }
 
-void NTuple::initNTuple()
+void MyNTuple::initMVABranches(const vector<TString>& methods)
+{
+  cand_nMVA = methods.size();
+  for(size_t i=0; i<cand_nMVA; i++) {
+    t->Branch(methods.at(i).Data(), &cand_MVA[i]);
+  }
+}
+
+void MyNTuple::initNTuple()
 {
   if (!nDau) {
     std::cerr << "[ERROR] NTuple::nDau is zero."
@@ -109,6 +119,7 @@ void NTuple::initNTuple()
               << std::endl;
     return;
   }
+  // mva
   // particle level
   t->Branch("cand_charge", &cand_charge);
   t->Branch("cand_eta", &cand_eta);
@@ -204,16 +215,23 @@ void NTuple::initNTuple()
     t->Branch(Form("trk_gdau%d_pTErr", iGDau), &trk_gdau_pTErr[iGDau]);
     t->Branch(Form("trk_gdau%d_xyDCASignificance", iGDau), &trk_gdau_xyDCASignificance[iGDau]);
     t->Branch(Form("trk_gdau%d_zDCASignificance", iGDau), &trk_gdau_zDCASignificance[iGDau]);
-
   } // end granddaughter level
 }
 
-Int_t NTuple::fillNTuple()
+Int_t MyNTuple::fillNTuple()
 {
   return t->Fill();
 }
 
-bool NTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
+bool MyNTuple::setMVAValues(const std::vector<float>& vals)
+{
+  for (size_t i=0; i<vals.size(); i++) {
+    this->cand_MVA[i] = vals[i];
+  }
+  return true;
+}
+
+bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 {
   this->cand_pT     = p.cand_pT().at(it);
   this->cand_eta    = p.cand_eta().at(it);
@@ -329,7 +347,7 @@ bool NTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
   return true;
 }
 
-float NTuple::value(const TString& s)
+float MyNTuple::value(const TString& s)
 {
   if (s == "cand_angle2D") return this->cand_angle2D;
   if (s == "cand_angle3D") return this->cand_angle3D;

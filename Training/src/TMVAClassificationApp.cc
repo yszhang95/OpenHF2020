@@ -168,6 +168,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
    // Book method(s)
   auto MethodCollection = setupMethodCollection();
   vector<TString> methodNames;
+  vector<TString> methodNames_copy;
   for (const auto& m : configs.at("methods")) {
     const auto method = getAppPars(m, "methods");
     if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
@@ -176,6 +177,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
     auto pos = postfix.Index(".xml");
     postfix.Remove(pos, 4);
     TString weightfile = dir + "_" + postfix + "/" + prefix + TString("_") + methodName + TString(".weights.xml");
+    methodNames_copy.push_back(methodName);
     methodName += " method";
     reader->BookMVA( methodName, weightfile );
     methodNames.push_back(methodName);
@@ -201,9 +203,10 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
   TTree tt("ParticleNTuple", "ParticleNTuple");
-  NTuple ntp(&tt);
+  MyNTuple ntp(&tt);
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
+  ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
 
   if(nentries < 0) nentries = p.GetEntries();
@@ -218,15 +221,18 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // - You can use the same variables as above which is slightly faster,
   //   but of course you can use different ones and copy the values inside the event loop
   //
+    vector<float> mvaValues(methodNames.size(), -1);
     for (size_t ireco=0; ireco<recosize; ireco++) {
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle_id)) {
         ntp.retrieveTreeInfo(p, ireco);
         helper.GetValues(ntp, allTrainVars, allSpectatorVars);
-        for (const auto& methodName : methodNames) {
-          reader->EvaluateMVA(methodName);
+        for (size_t i=0; i<methodNames.size(); i++) {
+          const auto& methodName = methodNames.at(i);
+          mvaValues[i] = reader->EvaluateMVA(methodName);
         }
-        //         ntp.fillNTuple();
+        ntp.setMVAValues(mvaValues);
+        ntp.fillNTuple();
       }
     }
   }
