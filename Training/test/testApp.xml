@@ -1,0 +1,28 @@
+<root>
+  <training_variables>
+    cand_vtxChi2? [0]? cand_vtxChi2
+    cand_vtxProb? [0]? cand_vtxProb
+    cand_angle3D? [0]? cand_angle3D
+    cand_decayLength3D? [0]? cand_decayLength3D
+    cand_dlsig3D := cand_decayLength3D/cand_decayLengthError3D? [0]/[1]? cand_decayLength3D:cand_decayLengthError3D
+  </training_variables>
+  <spectator_variables>
+    cand_pT? [0] ? cand_pT
+  </spectator_variables>
+  <outfileName>
+    testApp
+  </outfileName>
+  <outputDir>
+    ./
+  </outputDir>
+  <trainXML>
+    test.xml
+  </trainXML>
+  <treeInfo>
+    testApp.list ? lambdacAna_mc  ? 4122 ? 10
+  </treeInfo>
+  <methods>
+#    Cuts? CutsGA? H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95 
+    BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2
+  </methods>
+</root>

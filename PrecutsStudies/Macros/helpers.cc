@@ -31,7 +31,7 @@ calEff(const TH1D* hS, const TH1D* hB, const Direction dir=Direction::larger)
   double sAll = hS->IntegralAndError(0, n+1, sAllErr);
   double bAll = hB->IntegralAndError(0, n+1, bAllErr);
 
-  for (int ibin=1; ibin<n+1; ibin++) {
+  for (int ibin=0; ibin<=n+1; ibin++) {
 
     auto start = dir == Direction::larger ?  ibin : 0;
     auto end = dir == Direction::larger ? (n+1) : ibin;

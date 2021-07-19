@@ -1,0 +1,41 @@
+<root>
+  <signalFileList>
+    ${OPENHF2020TOP}/Training/Lists/MCSlimSignal_LamCpT0p9to6_y1p1.list
+  </signalFileList>
+
+  <backgroundFileList>
+    ${OPENHF2020TOP}/Training/Lists/Background_LamCpT4to6_y1p1.list
+  </backgroundFileList>
+
+  <methods>
+    BDT? BDTG? !H:!V:NTrees=50:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2
+  </methods>
+
+  <training_variables_worange>
+#empty
+  </training_variables_worange>
+
+  <training_variables_wrange>
+# LamC topo-info
+    cand_vtxProb? vertex fit probability of Lc? ? F ? 0. ? 1.
+    cand_angle3D? 3D pointing angle of Lc? rad? F ? 0. ? 3.143593
+    cand_decayLength3D? 3D decay length w.r.t PV of Lc? cm? F ? 0. ? \
+    cand_dlsig3D := cand_decayLength3D/cand_decayLengthError3D? 3D decay length significance w.r.t PV of Lc? ? F ? 0. ? \
+  </training_variables_wrange>
+
+  <spectator_variables_worange>
+    cand_pT? pT ? ? F
+  </spectator_variables_worange>
+
+  <spectator_variables_wrange>
+#empty
+  </spectator_variables_wrange>
+
+  <common_cuts>
+    cand_pT &gt; 4.
+    cand_pT &lt; 5.
+    cand_dau0_decayLength3D/cand_dau0_decayLengthError3D &gt; 5.
+    cos(cand_dau0_angle3D) &gt; 0.999
+    cand_dau0_dca &lt; 0.5
+  </common_cuts>
+</root>

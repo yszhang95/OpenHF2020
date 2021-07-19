@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
-import ROOT as r
+import argparse
 
+parser = argparse.ArgumentParser(description=
+'''
+This is a script in step 2.
+It makes use of histograms created in step 1 and
+generate efficiency histograms in used step 3.
+Requirements: RDataFrame and PyROOT on Python3
+Test platform: CentOS7
+               Python 3.6.8
+               GCC 4.8.5 20150623 (Red Hat 4.8.5-44)
+               ROOT 6.22/06
+''', formatter_class=argparse.RawTextHelpFormatter)
+
+args = parser.parse_args()
+
+import ROOT as r
 r.gROOT.LoadMacro("helpers.cc+")
 
 f = r.TFile.Open("outputHists.root")

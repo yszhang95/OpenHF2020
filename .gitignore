@@ -45,6 +45,7 @@ CMSSW_*_*_*
 
 # Plots
 *png
+*pdf
 
 # condor script
 *jdl
@@ -54,4 +55,15 @@ ParticleTree.hh
 ParticleTree.C
 backup/
 Training/test/weights*/
+Training/test/dataset/
 *_dir/
+*plots/
+*/test/*NTrees*/
+*/test/*Depth*/
+*/test/*Beta*/
+*/test/*Vars*/
+*ShrinkageBDTG/
+*/2017FlowMCRequest/
+*log
+*lib*
+*~
