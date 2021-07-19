@@ -4,7 +4,6 @@ import argparse
 
 parser = argparse.ArgumentParser(description=
 '''
-<<<<<<< HEAD
 This is a script in step 1.
 It aims to create histograms used in step 2.
 Requirements: RDataFrame and PyROOT on Python3
