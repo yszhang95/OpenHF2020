@@ -1,0 +1,66 @@
+* README
+** How the sub-repository is designed
+*** include
+    ~include~ directory hosts necessary declarations of functions used in ~src~.
+*** src
+    ~src~ hosts all sources files.
+*** Macros
+    ~Macros~ host simple root macros for n-tuple productions and other stuffs.
+*** Others
+** How the codes are designed.
+*** include and src
+**** functions.h
+     It includes several functions.
+
+     ~trim~-s are for trimming leading/trailing whitespaces.
+
+     ~readConfigs~ will phrase the ~xml~ file which is an input of TMVA classification and application.
+
+     ~setupMethodCollection~ will create a map between string to TMVA enumeration.
+
+     ~getTrainPars~ will return a map of string and ~TString~. The typical values of key strings are: ~fullStr~, ~method~, ~name~...
+     It takes the string to phrase as the first argument and the which way of phrasing as the second argument.
+
+     ~getAppPars~ will return similar output to ~getTrainpars~.
+
+     ~MVAHelper~ will help users convert the string-format input in TMVA configuration file to float values.
+     It takes two vectors of maps as input, for the training variables and spectator variables. Each element of the vector
+     contains the necessary information (string-formatted) for ~~TF1~ object creation. Two arrays of ~TF1~ will be constructed.
+     It has a member function called ~GetValues~, taking the a helper structure and two 2D vectors of ~TString~ as inputs.
+     Users need to construct the 2D vectors starting from the output of ~getAppPars~ and ~splitTString~.
+
+     ~splitTString~ split the ~TString~ using the user-specific delimiter.
+
+**** functions.cc
+     See ~function.h~.
+
+**** TMVAClassification.cc
+     This is the source code of the binary ~TMVAClassification~. Users need to provide the name of configuration file.
+
+**** TMVAClassificationApp.cc
+     This is the source code of the binary ~TMVAClassificationApp~. Users need to provide the name of configuration file.
+
+*** Macros
+
+**** genMatchFS.cc
+     This script contain a function, ~genMatchFS~. It takes several input arguments.
+     - input file list :: this is the a plain text file. Each line represents the name of a ROOT file.
+     - tree directory :: this is the directory under which the new tree will be saved.
+     - particle :: this particle is in class of ~Particle~ which is defined in ~Utilities/Ana/Common.h~.
+                   It saves the decay chain of particle of interest. It can also associate the
+                   vector index to help users conveniently read out the generator particle information.
+     - kinematic cuts :: candidates in ~TTree~ need to satisfy the kinematic cuts. Currently it is not
+                         implemented in the code.
+     - n entries :: number of entries users want to read.
+     - only save matched candidates :: Yes or No.
+     - type :: sort by dPt or dR. Not implemented right now.
+
+     This macro will save the MC candidate into a new file with an n-tuple. The process consists of two steps:
+     1. Matching all the final-state particles in generator level and reconstructed level. Only the particles
+        from the particle of interest (e.g. $\Lambda_C$) in generator level are considered in the process of
+        gen-reco matching. If there is one
+     2. After having the set of final state particles, the daughters of candidates will be checked if they
+        are in the set of matched final state particles. If so, the candidate will be marked as "matched".
+        There are other things remaining before saving this candidate: to check if the particle can also
+        be constructed as $\Lambda/\bar{\Lambda}$ and photon conversions. Finally, the candidate will
+        be saved.
