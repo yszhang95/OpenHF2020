@@ -5,6 +5,7 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class ParticleTree+;
+#pragma link C++ class ParticleTreeData+;
 #pragma link C++ class ParticleTreeMC+;
 #pragma link C++ class ParticleTreeMC2+;
 

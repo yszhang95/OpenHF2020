@@ -15,6 +15,7 @@ all: $(LIB) $(LIB)/libMyTreeReader.so
 $(LIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/ParticleTreeMC2.cxx \
 	$(TreeReaderDir)/ParticleTreeMC.cxx \
+	$(TreeReaderDir)/ParticleTreeData.cxx \
 	$(TreeReaderDir)/ParticleTree.cxx \
 	$(Ana)/Common.cc \
 	$(Ana)/TreeHelpers.cc \
@@ -28,6 +29,7 @@ $(LIB)/libMyTreeReader.so: \
 $(LIB)/MyTreeReaderDict.cxx: \
 	$(TreeReaderDir)/ParticleTreeMC2.hxx \
 	$(TreeReaderDir)/ParticleTreeMC.hxx \
+	$(TreeReaderDir)/ParticleTreeData.hxx \
 	$(TreeReaderDir)/ParticleTree.hxx \
 	$(Ana)/Common.h \
 	$(Ana)/TreeHelpers.h \

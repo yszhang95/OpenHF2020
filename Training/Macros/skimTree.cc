@@ -20,7 +20,7 @@
 #include "TString.h"
 #include "TSystem.h"
 
-#include "TreeReader/ParticleTree.hxx"
+#include "TreeReader/ParticleTreeData.hxx"
 #include "Ana/Common.h"
 #include "Ana/TreeHelpers.h"
 
@@ -68,7 +68,7 @@ int skimTree(const TString& inputList, const TString& treeDir,
   TFileCollection tf("tf", "", inputList);
   TChain t(treeDir+"/ParticleTree");
   t.AddFileInfoList(tf.GetList());
-  ParticleTree p(&t);
+  ParticleTreeData p(&t);
 
   if(nentries < 0) nentries = p.GetEntries();
   cout << "Tree " << treeDir << "/ParticleTree in " << inputList

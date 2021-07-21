@@ -14,7 +14,6 @@ kinsCut = r.KineCut(0., 1000., 0., 1000)
 
 ts = r.TStopwatch()
 ts.Start()
-#r.genMatchFS('lc.list', 'lambdacAna_mc', 'LambdaCKsProton', '', LambdaC, kinsCut, -1, True)
-r.skimTree('lc.list', 'lambdacAna_mc', 'LambdaCKsProton', '/eos/cms/store/group/phys_heavyions/yousen/RiceHIN/OpenHF2020_LamCKsP/MC/', LambdaC, kinsCut, 500)
+r.skimTree('lc.list', 'lambdacAna', 'LambdaCKsProton', '.', LambdaC, kinsCut, -1)
 ts.Stop()
 ts.Print()

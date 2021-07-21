@@ -22,6 +22,8 @@ class ParticleTreeMC : public ParticleTree {
     ParticleTreeMC(TTree *tree=0);
     virtual ~ParticleTreeMC();
 
+  bool isMC() const { return true; }
+
     Int_t           Ntrkgen() const { return _Ntrkgen; }
     Float_t         genWeight() const{ return _genWeight; }
     Float_t         pTHat() const { return _pTHat;}

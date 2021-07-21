@@ -28,6 +28,8 @@ class ParticleTree {
     virtual Bool_t   Notify();
     virtual void     Show(Long64_t entry = -1);
 
+  virtual bool isMC() const = 0;
+
     UChar_t        nPV() const { return _nPV; }
     UShort_t       BXNb() const { return _BXNb; }
     UShort_t       Ntrkoffline() const { return _Ntrkoffline; }
