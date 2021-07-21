@@ -66,7 +66,6 @@ private:
   std::vector<float>   *_hltTotalLumi;
 
 
-
   // List of branches
   TBranch        *b_pileup;   //!
   TBranch        *b_rawInstLumi;   //!

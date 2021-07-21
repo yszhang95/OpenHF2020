@@ -87,6 +87,9 @@ int genMatchFS(const TString& inputList, const TString& treeDir,
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
     p.GetEntry(ientry);
+    // check pileup filter
+    if (!p.evtSel().at(4)) continue;
+
     // reco-gen matching
     const auto gensize = p.gen_mass().size();
     const auto recosize = p.cand_mass().size();

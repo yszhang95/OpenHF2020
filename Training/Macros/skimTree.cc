@@ -61,6 +61,7 @@ int skimTree(const TString& inputList, const TString& treeDir,
   ofile.cd(treeDir);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
+  ntp.isMC = false;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();
@@ -77,6 +78,9 @@ int skimTree(const TString& inputList, const TString& treeDir,
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
     p.GetEntry(ientry);
+
+    // check pileup filter
+    if (!p.evtSel().at(4)) continue;
 
     const auto recosize = p.cand_mass().size();
 
@@ -107,6 +111,7 @@ int skimTree(const TString& inputList, const TString& treeDir,
         if ( ee.M() <0.2 ) { continue; }
 
         // retrieve other information
+        ntp.hltRecordLumi = p.hltRecordLumi().at(0); // 0 means high multiplicity 185
         ntp.retrieveTreeInfo(p, ireco);
         // fill this entry
         ntp.fillNTuple();

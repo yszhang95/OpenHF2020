@@ -120,6 +120,8 @@ void MyNTuple::initNTuple()
     return;
   }
   // mva
+  // lumi
+  if (!isMC) t->Branch("hltRecordLumi", &hltRecordLumi);
   // particle level
   t->Branch("cand_charge", &cand_charge);
   t->Branch("cand_eta", &cand_eta);
@@ -128,8 +130,10 @@ void MyNTuple::initNTuple()
   t->Branch("cand_pT", &cand_pT);
   t->Branch("cand_phi", &cand_phi);
 
-  t->Branch("cand_matchGEN", &cand_matchGEN);
-  t->Branch("cand_isSwap", &cand_isSwap);
+  if (isMC) {
+    t->Branch("cand_matchGEN", &cand_matchGEN);
+    t->Branch("cand_isSwap", &cand_isSwap);
+  }
 
   t->Branch("cand_vtxChi2", &cand_vtxChi2);
   t->Branch("cand_vtxProb", &cand_vtxProb);
@@ -152,8 +156,10 @@ void MyNTuple::initNTuple()
 
   // daughter level
   for (unsigned short iDau=0; iDau<nDau; ++iDau) {
-    t->Branch(Form("cand_dau%d_matchGEN", iDau), &cand_dau_matchGEN[iDau]);
-    t->Branch(Form("cand_dau%d_isSwap", iDau), &cand_dau_isSwap[iDau]);
+    if (isMC) {
+      t->Branch(Form("cand_dau%d_matchGEN", iDau), &cand_dau_matchGEN[iDau]);
+      t->Branch(Form("cand_dau%d_isSwap", iDau), &cand_dau_isSwap[iDau]);
+    }
 
     t->Branch(Form("cand_dau%d_charge", iDau), &cand_dau_charge[iDau]);
     t->Branch(Form("cand_dau%d_eta", iDau), &cand_dau_eta[iDau]);
@@ -196,8 +202,10 @@ void MyNTuple::initNTuple()
   } // end daughter level
   // granddaughter level
   for (unsigned short iGDau=0; iGDau<nGDau; ++iGDau) {
-    t->Branch(Form("cand_gdau%d_matchGEN", iGDau), &cand_gdau_matchGEN[iGDau]);
-    t->Branch(Form("cand_gdau%d_isSwap", iGDau), &cand_gdau_isSwap[iGDau]);
+    if (isMC) {
+      t->Branch(Form("cand_gdau%d_matchGEN", iGDau), &cand_gdau_matchGEN[iGDau]);
+      t->Branch(Form("cand_gdau%d_isSwap", iGDau), &cand_gdau_isSwap[iGDau]);
+    }
 
     t->Branch(Form("cand_gdau%d_charge", iGDau), &cand_gdau_charge[iGDau]);
     t->Branch(Form("cand_gdau%d_eta", iGDau), &cand_gdau_eta[iGDau]);

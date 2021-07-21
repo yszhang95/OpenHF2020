@@ -64,6 +64,8 @@ struct MyNTuple
 {
   TTree* t;
 
+  bool   isMC;
+
   //  Event info
   //  UChar_t         nPV;
   //  UShort_t        BXNb;
@@ -79,7 +81,9 @@ struct MyNTuple
   //  Float_t         bestvtxX;
   //  Float_t         bestvtxY;
   //  Float_t         bestvtxZ;
-  UInt_t           cand_nMVA;
+  Float_t         hltRecordLumi;
+
+  UInt_t          cand_nMVA;
   Float_t         cand_MVA[100];
 
   Bool_t          cand_matchGEN;
