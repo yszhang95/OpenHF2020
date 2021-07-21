@@ -45,7 +45,9 @@
 **** genMatchFS.cc
      This script contain a function, ~genMatchFS~. It takes several input arguments.
      - input file list :: this is the a plain text file. Each line represents the name of a ROOT file.
-     - tree directory :: this is the directory under which the new tree will be saved.
+     - tree directory :: this is the name of ~TDirectory~ where the tree is under inside ~TFile~.
+     - postfix :: the postfix/suffix of the output ROOT file.
+     - output directory :: this is the directory under which the new tree will be saved.
      - particle :: this particle is in class of ~Particle~ which is defined in ~Utilities/Ana/Common.h~.
                    It saves the decay chain of particle of interest. It can also associate the
                    vector index to help users conveniently read out the generator particle information.

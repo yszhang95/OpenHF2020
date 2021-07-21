@@ -63,7 +63,7 @@ bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTreeMC&
   return sameChain;
 }
 
-PtEtaPhiM_t getRecoP4(size_t idx, const ParticleTreeMC& p)
+PtEtaPhiM_t getRecoP4(size_t idx, const ParticleTree& p)
 {
   return PtEtaPhiM_t (
             p.cand_pT()[idx],
@@ -72,7 +72,7 @@ PtEtaPhiM_t getRecoP4(size_t idx, const ParticleTreeMC& p)
             p.cand_mass()[idx]
             );
 }
-PtEtaPhiM_t getRecoDauP4(size_t idx, size_t idau, const ParticleTreeMC& p)
+PtEtaPhiM_t getRecoDauP4(size_t idx, size_t idau, const ParticleTree& p)
 {
   return PtEtaPhiM_t (
             p.cand_pTDau()[idx].at(idau),

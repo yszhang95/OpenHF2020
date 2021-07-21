@@ -31,9 +31,9 @@ typedef ROOT::Math::PtEtaPhiMVector PtEtaPhiM_t;
 bool checkDecayChain(Particle&, unsigned short,
                      const ParticleTreeMC&, const bool isFirstGen=true);
 
-PtEtaPhiM_t getRecoP4(size_t, const ParticleTreeMC&);
+PtEtaPhiM_t getRecoP4(size_t, const ParticleTree&);
 
-PtEtaPhiM_t getRecoDauP4(size_t, size_t, const ParticleTreeMC&);
+PtEtaPhiM_t getRecoDauP4(size_t, size_t, const ParticleTree&);
 
 PtEtaPhiM_t getGenP4(size_t, const ParticleTreeMC&);
 
