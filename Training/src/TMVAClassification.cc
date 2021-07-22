@@ -78,7 +78,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
 
   // Create the factory object. Later you can choose the methods
-  // whose performance you'd like to investigate. The factory is 
+  // whose performance you'd like to investigate. The factory is
   // the only TMVA object you have to interact with
   //
   // The first argument is the base of the name of all the
@@ -180,6 +180,9 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   dataloader->AddSignalTree    ( signal.get(),     signalWeight     );
   dataloader->AddBackgroundTree( background.get(), backgroundWeight );
 
+  dataloader->SetSignalWeightExpression("weight");
+  dataloader->SetBackgroundWeightExpression("weight");
+
   // --- end of tree registration 
 
   // Apply additional cuts on the signal and background samples (can be different)
@@ -190,7 +193,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   }
   if(common_cuts.size()>4) common_cuts.erase(common_cuts.size()-4, 4);
   TCut mycuts = TCut(common_cuts.c_str());
-  TCut mycutb( (common_cuts + "&& abs(cand_mass-2.29)>0.15").c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
+  TCut mycutb( (common_cuts + "&& abs(cand_mass-2.29)>0.15 && abs(cand_mass-2.29)<0.20").c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
   if (DEBUG) { cout << "Cut name:" << mycuts.GetName() << ", cut title: " << mycuts.GetTitle(); }
   if (DEBUG) { cout << "Cut name:" << mycutb.GetName() << ", cut title: " << mycutb.GetTitle(); }
 
@@ -202,8 +205,10 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // To also specify the number of testing events, use:
   //    factory->PrepareTrainingAndTestTree( mycut,
   //                                         "NSigTrain=3000:NBkgTrain=3000:NSigTest=3000:NBkgTest=3000:SplitMode=Random:!V" );
-  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
-      "SplitMode=Random:NormMode=NumEvents:!V" );
+  //  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
+  //  "nTest_Signal=1:nTest_Background=1:SplitMode=Random:NormMode=NumEvents:!V" );
+  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb, configs.at("dataloader_config").at(0));
+
 
   // ---- Book MVA methods
   //
