@@ -6,7 +6,7 @@ parser.add_argument('--maxEvents', dest='maxEvents', help='number of events', ty
 parser.add_argument('--treeDir', dest='treeDir', help='TDirectory for ParticleTree', type=str, default='lambdacAna_mc')
 parser.add_argument('--outdir', dest='outdir', help='output directory', type=str, default='.')
 parser.add_argument('--suffix', dest='suffix', help='suffix', type=str, default='LamCKsP')
-parser.add_argument('--saveMatchedOnly', dest='saveMatchedOnly', help='only save matched if true', type=bool, default=True)
+parser.add_argument('--saveMatchedOnly', dest='saveMatchedOnly', help='only save matched if true', type=lambda x: (str(x).lower() == 'true'), default=True)
 args = parser.parse_args()
 
 print ('The input file list is', args.inputList)

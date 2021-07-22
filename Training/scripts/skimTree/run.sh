@@ -27,6 +27,7 @@ if [[ "$2" = "MC" ]]; then
 elif [[ "$2" = "data" ]]; then
   Exe="skimTree.py"
 fi
+echo "./OpenHF2020/Training/Macros/${Exe} -i $3"
 ./OpenHF2020/Training/Macros/${Exe} -i $3
 
 ls
@@ -41,5 +42,30 @@ elif [[ "$2" = "data" ]]; then
 fi
 OutFile="${FileNameHead}_${FileNameTail}${TreeDir}_AllEntries_LamCKsP.root"
 
+UseLumi=""
+Weight=""
+if [[ "$2" = "MC" ]]; then
+  UseLumi="False"
+  Boost="${FileNameHead#MC_}"
+  if [[ "$Boost" = "pPb" ]]; then
+    Weight="1"
+  elif [[ "$Boost" = "Pbp" ]]; then
+    Weight="1.7865"
+  fi
+elif [[ "$2" = "data" ]]; then
+  UseLumi="False"
+  Boost="${FileNameHead#data_}"
+  if [[ "$Boost" = "pPb" ]]; then
+    Weight="1"
+  elif [[ "$Boost" = "Pbp" ]]; then
+    Weight="1.8363662425527623"
+  fi
+fi
+
+echo "./OpenHF2020/Training/Macros/addWeight.py -i $OutFile --treeDir ${TreeDir} --weight ${Weight} --uselumi ${UseLumi}"
+./OpenHF2020/Training/Macros/addWeight.py -i $OutFile --treeDir ${TreeDir} --weight ${Weight} --uselumi ${UseLumi}
+OutWeightedFile="${FileNameHead}_${FileNameTail}${TreeDir}_AllEntries_LamCKsP_weighted.root"
+
 xrdcp -f ${OutFile} ${4}/${OutFile}
+xrdcp -f ${OutWeightedFile} ${4}/${OutWeightedFile}
 echo "Finished"
