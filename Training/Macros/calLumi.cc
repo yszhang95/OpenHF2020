@@ -31,7 +31,7 @@ using std::vector;
 using std::string;
 using std::map;
 
-int skimTree(const TString& inputList, const TString& treeDir,
+float calLumi(const TString& inputList, const TString& treeDir,
                const TString& postfix, const TString& outDir,
                Long64_t nentries=-1)
 {
@@ -74,5 +74,5 @@ int skimTree(const TString& inputList, const TString& treeDir,
   } // end loop
   ofile.close();
   cout << "Accumulated luminosity is " << accLumi << " ub^-1" << endl;
-  return 0;
+  return accLumi;
 }
