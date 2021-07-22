@@ -67,3 +67,5 @@ Training/test/dataset/
 *log
 *lib*
 *~
+*.compiles*
+*lists*
