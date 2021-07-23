@@ -282,7 +282,7 @@ int TMVACrossValidation(const map<string, vector<string>>& configs)
   std::cout << "==> Wrote root file: " << outputFile->GetName() << std::endl;
   std::cout << "==> TMVACrossValidation is done!" << std::endl;
 
-  delete dataloader;
+  // delete dataloader; // it seems that this line will lead to crash
 
   return 0;
 }
