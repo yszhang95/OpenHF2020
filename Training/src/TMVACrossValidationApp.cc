@@ -156,13 +156,13 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   for (size_t ivar=0; ivar!=spectatorVars.size(); ivar++) {
     const auto& pars = spectatorVars.at(ivar);
     // hard code, temporary use
-    if (pars.at("spectator_vars") != "eventID")
+    if (pars.at("spectator_vars") != "eventID := eventID % 8096")
       reader->AddSpectator(pars.at("spectator_vars"), &helper.specs[ivar]);
   }
 
   // hard code here, temporary use
   int eventID = 0;
-  reader->AddSpectator("eventID", &eventID);
+  reader->AddSpectator("eventID := eventID % 8096", &eventID);
 
   // ---- Book MVA methods
   //
