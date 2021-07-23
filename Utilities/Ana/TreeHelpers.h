@@ -66,6 +66,8 @@ struct MyNTuple
 
   bool   isMC;
 
+  bool   dropDau;
+
   //  Event info
   //  UChar_t         nPV;
   //  UShort_t        BXNb;
@@ -193,6 +195,7 @@ struct MyNTuple
       ngdau = 0;
     }
     cand_nMVA = 0;
+    dropDau = false;
   }
   ~MyNTuple()
   {

@@ -216,6 +216,7 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   outputFile.cd(treeDir);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
+  ntp.dropDau = true; // hard code, temporary use
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);

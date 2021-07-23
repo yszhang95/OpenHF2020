@@ -147,83 +147,85 @@ void MyNTuple::initNTuple()
   t->Branch("cand_pseudoDecayLengthError2D", &cand_pseudoDecayLengthError2D);
   t->Branch("cand_pseudoDecayLengthError3D", &cand_pseudoDecayLengthError3D);
 
-  for (unsigned short iDau=0; iDau<nDau; ++iDau) {
-    t->Branch(Form("cand_etaDau%d", iDau), &cand_etaDau[iDau]);
-    t->Branch(Form("cand_massDau%d", iDau), &cand_massDau[iDau]);
-    t->Branch(Form("cand_pTDau%d", iDau), &cand_pTDau[iDau]);
-    t->Branch(Form("cand_phiDau%d", iDau), &cand_phiDau[iDau]);
-  }
-
-  // daughter level
-  for (unsigned short iDau=0; iDau<nDau; ++iDau) {
-    if (isMC) {
-      t->Branch(Form("cand_dau%d_matchGEN", iDau), &cand_dau_matchGEN[iDau]);
-      t->Branch(Form("cand_dau%d_isSwap", iDau), &cand_dau_isSwap[iDau]);
+  if (dropDau) {
+    for (unsigned short iDau=0; iDau<nDau; ++iDau) {
+      t->Branch(Form("cand_etaDau%d", iDau), &cand_etaDau[iDau]);
+      t->Branch(Form("cand_massDau%d", iDau), &cand_massDau[iDau]);
+      t->Branch(Form("cand_pTDau%d", iDau), &cand_pTDau[iDau]);
+      t->Branch(Form("cand_phiDau%d", iDau), &cand_phiDau[iDau]);
     }
 
-    t->Branch(Form("cand_dau%d_charge", iDau), &cand_dau_charge[iDau]);
-    t->Branch(Form("cand_dau%d_eta", iDau), &cand_dau_eta[iDau]);
-    //    t->Branch(Form("cand_dau%d_y", iDau), &cand_dau_y[iDau]);
-    //    t->Branch(Form("cand_dau%d_p", iDau), &cand_dau_p[iDau]);
-    t->Branch(Form("cand_dau%d_mass", iDau), &cand_dau_mass[iDau]);
-    t->Branch(Form("cand_dau%d_pT", iDau), &cand_dau_pT[iDau]);
-    t->Branch(Form("cand_dau%d_phi", iDau), &cand_dau_phi[iDau]);
-
-    unsigned short gDauOffset = 0;
-    if (dauHasNGDau[iDau]) {
-      t->Branch(Form("cand_dau%d_vtxChi2", iDau), &cand_dau_vtxChi2[iDau]);
-      t->Branch(Form("cand_dau%d_vtxProb", iDau), &cand_dau_vtxProb[iDau]);
-      t->Branch(Form("cand_dau%d_angle2D", iDau), &cand_dau_angle2D[iDau]);
-      t->Branch(Form("cand_dau%d_angle3D", iDau), &cand_dau_angle3D[iDau]);
-      t->Branch(Form("cand_dau%d_dca", iDau), &cand_dau_dca[iDau]);
-      t->Branch(Form("cand_dau%d_decayLength2D", iDau), &cand_dau_decayLength2D[iDau]);
-      t->Branch(Form("cand_dau%d_decayLength3D", iDau), &cand_dau_decayLength3D[iDau]);
-      t->Branch(Form("cand_dau%d_decayLengthError2D", iDau), &cand_dau_decayLengthError2D[iDau]);
-      t->Branch(Form("cand_dau%d_decayLengthError3D", iDau), &cand_dau_decayLengthError3D[iDau]);
-      t->Branch(Form("cand_dau%d_pseudoDecayLengthError2D", iDau), &cand_dau_pseudoDecayLengthError2D[iDau]);
-      t->Branch(Form("cand_dau%d_pseudoDecayLengthError3D", iDau), &cand_dau_pseudoDecayLengthError3D[iDau]);
-      for (unsigned short iGDau=0; iGDau<dauHasNGDau[iDau]; ++iGDau) {
-        t->Branch(Form("cand_dau%d_massDau%d", iDau, iGDau), &cand_dau_massDau[iDau][iGDau]);
-        t->Branch(Form("cand_dau%d_pTDau%d", iDau, iGDau), &cand_dau_pTDau[iDau][iGDau]);
-        t->Branch(Form("cand_dau%d_etaDau%d", iDau, iGDau), &cand_dau_etaDau[iDau][iGDau]);
-        t->Branch(Form("cand_dau%d_phiDau%d", iDau, iGDau), &cand_dau_phiDau[iDau][iGDau]);
+    // daughter level
+    for (unsigned short iDau=0; iDau<nDau; ++iDau) {
+      if (isMC) {
+        t->Branch(Form("cand_dau%d_matchGEN", iDau), &cand_dau_matchGEN[iDau]);
+        t->Branch(Form("cand_dau%d_isSwap", iDau), &cand_dau_isSwap[iDau]);
       }
-    } else {
-      t->Branch(Form("trk_dau%d_isHP", iDau), &trk_dau_isHP[iDau]);
-      t->Branch(Form("trk_dau%d_nHit", iDau), &trk_dau_nHit[iDau]);
-      t->Branch(Form("trk_dau%d_dEdx_dedxHarmonic2", iDau), &trk_dau_dEdx_dedxHarmonic2[iDau]);
-      t->Branch(Form("trk_dau%d_dEdx_dedxPixelHarmonic2", iDau), &trk_dau_dEdx_dedxPixelHarmonic2[iDau]);
-      t->Branch(Form("trk_dau%d_nChi2", iDau), &trk_dau_nChi2[iDau]);
-      t->Branch(Form("trk_dau%d_pTErr", iDau), &trk_dau_pTErr[iDau]);
-      t->Branch(Form("trk_dau%d_xyDCASignificance", iDau), &trk_dau_xyDCASignificance[iDau]);
-      t->Branch(Form("trk_dau%d_zDCASignificance", iDau), &trk_dau_zDCASignificance[iDau]);
-    }
-    gDauOffset += dauHasNGDau[iDau];
-  } // end daughter level
-  // granddaughter level
-  for (unsigned short iGDau=0; iGDau<nGDau; ++iGDau) {
-    if (isMC) {
-      t->Branch(Form("cand_gdau%d_matchGEN", iGDau), &cand_gdau_matchGEN[iGDau]);
-      t->Branch(Form("cand_gdau%d_isSwap", iGDau), &cand_gdau_isSwap[iGDau]);
-    }
 
-    t->Branch(Form("cand_gdau%d_charge", iGDau), &cand_gdau_charge[iGDau]);
-    t->Branch(Form("cand_gdau%d_eta", iGDau), &cand_gdau_eta[iGDau]);
-    t->Branch(Form("cand_gdau%d_mass", iGDau), &cand_gdau_mass[iGDau]);
-    t->Branch(Form("cand_gdau%d_pT", iGDau), &cand_gdau_pT[iGDau]);
-    // t->Branch(Form("cand_gdau%d_p", iGDau), &cand_gdau_p[iGDau]);
-    t->Branch(Form("cand_gdau%d_phi", iGDau), &cand_gdau_phi[iGDau]);
-    // t->Branch(Form("cand_gdau%d_y", iGDau), &cand_gdau_y[iGDau]);
+      t->Branch(Form("cand_dau%d_charge", iDau), &cand_dau_charge[iDau]);
+      t->Branch(Form("cand_dau%d_eta", iDau), &cand_dau_eta[iDau]);
+      //    t->Branch(Form("cand_dau%d_y", iDau), &cand_dau_y[iDau]);
+      //    t->Branch(Form("cand_dau%d_p", iDau), &cand_dau_p[iDau]);
+      t->Branch(Form("cand_dau%d_mass", iDau), &cand_dau_mass[iDau]);
+      t->Branch(Form("cand_dau%d_pT", iDau), &cand_dau_pT[iDau]);
+      t->Branch(Form("cand_dau%d_phi", iDau), &cand_dau_phi[iDau]);
 
-    t->Branch(Form("trk_gdau%d_isHP", iGDau), &trk_gdau_isHP[iGDau]);
-    t->Branch(Form("trk_gdau%d_nHit", iGDau), &trk_gdau_nHit[iGDau]);
-    t->Branch(Form("trk_gdau%d_dEdx_dedxHarmonic2", iGDau), &trk_gdau_dEdx_dedxHarmonic2[iGDau]);
-    t->Branch(Form("trk_gdau%d_dEdx_dedxPixelHarmonic2", iGDau), &trk_gdau_dEdx_dedxPixelHarmonic2[iGDau]);
-    t->Branch(Form("trk_gdau%d_nChi2", iGDau), &trk_gdau_nChi2[iGDau]);
-    t->Branch(Form("trk_gdau%d_pTErr", iGDau), &trk_gdau_pTErr[iGDau]);
-    t->Branch(Form("trk_gdau%d_xyDCASignificance", iGDau), &trk_gdau_xyDCASignificance[iGDau]);
-    t->Branch(Form("trk_gdau%d_zDCASignificance", iGDau), &trk_gdau_zDCASignificance[iGDau]);
-  } // end granddaughter level
+      unsigned short gDauOffset = 0;
+      if (dauHasNGDau[iDau]) {
+        t->Branch(Form("cand_dau%d_vtxChi2", iDau), &cand_dau_vtxChi2[iDau]);
+        t->Branch(Form("cand_dau%d_vtxProb", iDau), &cand_dau_vtxProb[iDau]);
+        t->Branch(Form("cand_dau%d_angle2D", iDau), &cand_dau_angle2D[iDau]);
+        t->Branch(Form("cand_dau%d_angle3D", iDau), &cand_dau_angle3D[iDau]);
+        t->Branch(Form("cand_dau%d_dca", iDau), &cand_dau_dca[iDau]);
+        t->Branch(Form("cand_dau%d_decayLength2D", iDau), &cand_dau_decayLength2D[iDau]);
+        t->Branch(Form("cand_dau%d_decayLength3D", iDau), &cand_dau_decayLength3D[iDau]);
+        t->Branch(Form("cand_dau%d_decayLengthError2D", iDau), &cand_dau_decayLengthError2D[iDau]);
+        t->Branch(Form("cand_dau%d_decayLengthError3D", iDau), &cand_dau_decayLengthError3D[iDau]);
+        t->Branch(Form("cand_dau%d_pseudoDecayLengthError2D", iDau), &cand_dau_pseudoDecayLengthError2D[iDau]);
+        t->Branch(Form("cand_dau%d_pseudoDecayLengthError3D", iDau), &cand_dau_pseudoDecayLengthError3D[iDau]);
+        for (unsigned short iGDau=0; iGDau<dauHasNGDau[iDau]; ++iGDau) {
+          t->Branch(Form("cand_dau%d_massDau%d", iDau, iGDau), &cand_dau_massDau[iDau][iGDau]);
+          t->Branch(Form("cand_dau%d_pTDau%d", iDau, iGDau), &cand_dau_pTDau[iDau][iGDau]);
+          t->Branch(Form("cand_dau%d_etaDau%d", iDau, iGDau), &cand_dau_etaDau[iDau][iGDau]);
+          t->Branch(Form("cand_dau%d_phiDau%d", iDau, iGDau), &cand_dau_phiDau[iDau][iGDau]);
+        }
+      } else {
+        t->Branch(Form("trk_dau%d_isHP", iDau), &trk_dau_isHP[iDau]);
+        t->Branch(Form("trk_dau%d_nHit", iDau), &trk_dau_nHit[iDau]);
+        t->Branch(Form("trk_dau%d_dEdx_dedxHarmonic2", iDau), &trk_dau_dEdx_dedxHarmonic2[iDau]);
+        t->Branch(Form("trk_dau%d_dEdx_dedxPixelHarmonic2", iDau), &trk_dau_dEdx_dedxPixelHarmonic2[iDau]);
+        t->Branch(Form("trk_dau%d_nChi2", iDau), &trk_dau_nChi2[iDau]);
+        t->Branch(Form("trk_dau%d_pTErr", iDau), &trk_dau_pTErr[iDau]);
+        t->Branch(Form("trk_dau%d_xyDCASignificance", iDau), &trk_dau_xyDCASignificance[iDau]);
+        t->Branch(Form("trk_dau%d_zDCASignificance", iDau), &trk_dau_zDCASignificance[iDau]);
+      }
+      gDauOffset += dauHasNGDau[iDau];
+    } // end daughter level
+    // granddaughter level
+    for (unsigned short iGDau=0; iGDau<nGDau; ++iGDau) {
+      if (isMC) {
+        t->Branch(Form("cand_gdau%d_matchGEN", iGDau), &cand_gdau_matchGEN[iGDau]);
+        t->Branch(Form("cand_gdau%d_isSwap", iGDau), &cand_gdau_isSwap[iGDau]);
+      }
+
+      t->Branch(Form("cand_gdau%d_charge", iGDau), &cand_gdau_charge[iGDau]);
+      t->Branch(Form("cand_gdau%d_eta", iGDau), &cand_gdau_eta[iGDau]);
+      t->Branch(Form("cand_gdau%d_mass", iGDau), &cand_gdau_mass[iGDau]);
+      t->Branch(Form("cand_gdau%d_pT", iGDau), &cand_gdau_pT[iGDau]);
+      // t->Branch(Form("cand_gdau%d_p", iGDau), &cand_gdau_p[iGDau]);
+      t->Branch(Form("cand_gdau%d_phi", iGDau), &cand_gdau_phi[iGDau]);
+      // t->Branch(Form("cand_gdau%d_y", iGDau), &cand_gdau_y[iGDau]);
+
+      t->Branch(Form("trk_gdau%d_isHP", iGDau), &trk_gdau_isHP[iGDau]);
+      t->Branch(Form("trk_gdau%d_nHit", iGDau), &trk_gdau_nHit[iGDau]);
+      t->Branch(Form("trk_gdau%d_dEdx_dedxHarmonic2", iGDau), &trk_gdau_dEdx_dedxHarmonic2[iGDau]);
+      t->Branch(Form("trk_gdau%d_dEdx_dedxPixelHarmonic2", iGDau), &trk_gdau_dEdx_dedxPixelHarmonic2[iGDau]);
+      t->Branch(Form("trk_gdau%d_nChi2", iGDau), &trk_gdau_nChi2[iGDau]);
+      t->Branch(Form("trk_gdau%d_pTErr", iGDau), &trk_gdau_pTErr[iGDau]);
+      t->Branch(Form("trk_gdau%d_xyDCASignificance", iGDau), &trk_gdau_xyDCASignificance[iGDau]);
+      t->Branch(Form("trk_gdau%d_zDCASignificance", iGDau), &trk_gdau_zDCASignificance[iGDau]);
+    } // end granddaughter level
+  }
 }
 
 Int_t MyNTuple::fillNTuple()
