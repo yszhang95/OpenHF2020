@@ -70,9 +70,9 @@ struct MyNTuple
   //  UChar_t         nPV;
   //  UShort_t        BXNb;
   //  UShort_t        Ntrkoffline;
-  //  UInt_t          EventNb;
-  //  UInt_t          LSNb;
-  //  UInt_t          RunNb;
+  UInt_t          EventNb;
+  UInt_t          LSNb;
+  UInt_t          RunNb;
   //  Float_t         HFsumETMinus;
   //  Float_t         HFsumETPlus;
   //  Float_t         Npixel;

@@ -19,7 +19,7 @@ LIBS = $(shell root-config --libdir)
 INCS = $(shell root-config --incdir)
 
 
-default : bin bin/TMVACrossValidation bin/TMVAClassification bin/TMVAClassificationApp
+default : bin bin/TMVACrossValidation bin/TMVACrossValidationApp bin/TMVAClassification bin/TMVAClassificationApp
 
 bin/TMVA%: bin/TMVA%.o bin/functions.o
 	@echo -n "Linking $@ ... "

@@ -56,8 +56,9 @@ using std::cout;
 using std::endl;
 using std::istringstream;
 
-
-int TMVAClassificationApp(const map<string, vector<string>>& configs);
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+int TMVACrossValidationApp(const map<string, vector<string>>& configs);
+#endif
 
 int main( int argc, char** argv )
 {
@@ -77,12 +78,16 @@ int main( int argc, char** argv )
   if (pos!=string::npos) { (configs["outfileName"])[0].erase(pos, 4); }
   if (configs.at("outfileName").at(0).size()) { (configs["outfileName"])[0].insert(0, "_"); }
   //  (configs["outputDir"]).at(0) += "/";
-  int code = TMVAClassificationApp(configs);
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+  int code = TMVACrossValidationApp(configs);
+#else
+  int code = -1;
+#endif
   return code;
 }
 
-
-int TMVAClassificationApp(const map<string, vector<string>>& configs)
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+int TMVACrossValidationApp(const map<string, vector<string>>& configs)
 {
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
@@ -150,8 +155,14 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   }
   for (size_t ivar=0; ivar!=spectatorVars.size(); ivar++) {
     const auto& pars = spectatorVars.at(ivar);
-    reader->AddSpectator(pars.at("spectator_vars"), &helper.specs[ivar]);
+    // hard code, temporary use
+    if (pars.at("spectator_vars") != "eventID")
+      reader->AddSpectator(pars.at("spectator_vars"), &helper.specs[ivar]);
   }
+
+  // hard code here, temporary use
+  int eventID = 0;
+  reader->AddSpectator("eventID", &eventID);
 
   // ---- Book MVA methods
   //
@@ -165,7 +176,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
 #else
   dir = "weights";
 #endif
-   TString prefix = "TMVAClassification";
+   TString prefix = "TMVACrossValidation";
    // Book method(s)
   auto MethodCollection = setupMethodCollection();
   vector<TString> methodNames;
@@ -212,6 +223,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
 
   if(nentries < 0) nentries = p.GetEntries();
   // Event loop
+  Long64_t num = 0;
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
     p.GetEntry(ientry);
@@ -226,6 +238,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
     for (size_t ireco=0; ireco<recosize; ireco++) {
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle_id)) {
+        eventID = (num++) % 8192;
         ntp.retrieveTreeInfo(p, ireco);
         helper.GetValues(ntp, allTrainVars, allSpectatorVars);
         for (size_t i=0; i<methodNames.size(); i++) {
@@ -246,3 +259,4 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   delete reader;
   return 0;
 }
+#endif

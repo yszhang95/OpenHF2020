@@ -1,0 +1,31 @@
+<root>
+  <training_variables>
+    dedx := trk_dau1_dEdx_dedxHarmonic2 ? [0] ? trk_dau1_dEdx_dedxHarmonic2
+    cand_vtxChi2? [0]? cand_vtxChi2
+    cos(cand_angle3D)? cos([0])? cand_angle3D
+    cand_decayLength3D? [0]? cand_decayLength3D
+    cand_dlsig3D := cand_decayLength3D/cand_decayLengthError3D? [0]/[1]? cand_decayLength3D:cand_decayLengthError3D
+    cand_dau1_p := cand_pTDau1 * cosh(cand_etaDau1)? [0] * cosh([1])? cand_pTDau1:cand_etaDau1
+    cand_etaDau1 ? [0] ? cand_etaDau1
+    cand_dau0_p := cand_pTDau0 * cosh(cand_etaDau0)? [0] * cosh([1])? cand_pTDau0:cand_etaDau0
+    cand_etaDau0 ? [0] ? cand_etaDau0
+  </training_variables>
+  <spectator_variables>
+    cand_pT? [0] ? cand_pT
+  </spectator_variables>
+  <outfileName>
+    testcvApp
+  </outfileName>
+  <outputDir>
+    ./storage/
+  </outputDir>
+  <trainXML>
+    testcv.xml
+  </trainXML>
+  <treeInfo>
+    testcvApp.list ? lambdacAna  ? 4122 ? -1
+  </treeInfo>
+  <methods>
+    BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=3
+  </methods>
+</root>

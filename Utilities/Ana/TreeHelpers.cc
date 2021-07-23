@@ -402,6 +402,8 @@ float MyNTuple::value(const TString& s)
       if (s.Contains("pTErr")) return this->trk_dau_pTErr[index];
       if (s.Contains("xyDCASignificance")) return this->trk_dau_xyDCASignificance[index];
       if (s.Contains("zDCASignificance")) return this->trk_dau_zDCASignificance[index];
+      if (s.Contains("dedxHarmonic2")) return this->trk_dau_dEdx_dedxHarmonic2[index];
+      if (s.Contains("dedxPixelHarmonic2")) return this->trk_dau_dEdx_dedxPixelHarmonic2[index];
     }
   } else if (s.Contains("_gdau")) {
     const auto index = s.Contains("cand") ? TString(s[9]).Atoi() : TString(s[8]).Atoi();
@@ -413,6 +415,8 @@ float MyNTuple::value(const TString& s)
     if (s.Contains("pTErr")) return this->trk_gdau_pTErr[index];
     if (s.Contains("xyDCASignificance")) return this->trk_gdau_xyDCASignificance[index];
     if (s.Contains("zDCASignificance")) return this->trk_gdau_zDCASignificance[index];
+    if (s.Contains("dedxHarmonic2")) return this->trk_gdau_dEdx_dedxHarmonic2[index];
+    if (s.Contains("dedxPixelHarmonic2")) return this->trk_gdau_dEdx_dedxPixelHarmonic2[index];
   } else if (s.Contains("Dau")) {
     auto index = TString(s[s.Length()-1]).Atoi();
     if (s.Contains("etaDau")) return this->cand_etaDau[index];

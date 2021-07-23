@@ -13,13 +13,13 @@
     testApp
   </outfileName>
   <outputDir>
-    ./
+    ./storage/
   </outputDir>
   <trainXML>
     test.xml
   </trainXML>
   <treeInfo>
-    testApp.list ? lambdacAna_mc  ? 4122 ? 10
+    testApp.list ? lambdacAna_mc  ? 4122 ? -1
   </treeInfo>
   <methods>
 #    Cuts? CutsGA? H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95 
