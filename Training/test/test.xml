@@ -1,4 +1,7 @@
 <root>
+  <factory_config>
+    !V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification
+  </factory_config>
   <dataloader_config>
     nTest_Signal=500:nTest_Background=500:SplitMode=Random:NormMode=EqualNumEvents:!V
   </dataloader_config>

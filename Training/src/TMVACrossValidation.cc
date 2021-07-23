@@ -1,5 +1,5 @@
 // Original code can be found on 
-// https://github.com/root-project/root/blob/v6-06-00-patches/tutorials/tmva/TMVAClassification.C
+// https://github.com/root-project/root/blob/master/tutorials/tmva/TMVACrossValidation.C
 // Modified by Yousen Zhang, Rice University, US
 // Data: 2020 August 27
 //
@@ -14,12 +14,14 @@
 
 #include "Riostream.h"
 
-#include "TMVA/Factory.h"
+
 #include "TMVA/Tools.h"
 #include "TMVA/Config.h"
+#include "TMVA/Factory.h"
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
 #include "TMVA/DataLoader.h"
+#include "TMVA/CrossValidation.h"
 #endif
 
 #include "functions.h"
@@ -32,14 +34,16 @@ using std::cout;
 using std::endl;
 using std::istringstream;
 
-int TMVAClassification(const map<string, vector<string>>& configs);
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+int TMVACrossValidation(const map<string, vector<string>>& configs);
+#endif
 
 int main( int argc, char** argv )
 {
   // Select methods (don't look at this code - not of interest)
-  TString methodList; 
+  TString methodList;
   if( argc<2 || argc>3 ) {
-    std::cout << "Usage: TMVAClassification configName [ DEBUG ]" << std::endl;
+    std::cout << "Usage: TMVACrossValidation configName [ DEBUG ]" << std::endl;
     return -1;
   }
 
@@ -51,10 +55,16 @@ int main( int argc, char** argv )
   if (pos!=string::npos) { (configs["outfileName"])[0].erase(pos, 4); }
   if (configs.at("outfileName").at(0).size()) { (configs["outfileName"])[0].insert(0, "_"); }
 
-  return TMVAClassification(configs);
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+  return TMVACrossValidation(configs);
+#else
+  cerr << "ROOT VERSION is too low. Please upgrade to root-6.12 or above" << endl;
+  return -1;
+#endif
 }
 
-int TMVAClassification(const map<string, vector<string>>& configs)
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
+int TMVACrossValidation(const map<string, vector<string>>& configs)
 {
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
@@ -77,23 +87,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
 
-  // Create the factory object. Later you can choose the methods
-  // whose performance you'd like to investigate. The factory is
-  // the only TMVA object you have to interact with
-  //
-  // The first argument is the base of the name of all the
-  // weightfiles in the directory weight/
-  //
-  // The second argument is the output file for the training results
-  // All TMVA output can be suppressed by removing the "!" (not) in
-  // front of the "Silent" argument in the option string
-  TMVA::Factory *factory = new TMVA::Factory( "TMVAClassification", outputFile, configs.at("factory_config").at(0));
-
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
   TMVA::DataLoader *dataloader = new TMVA::DataLoader("dataset");
-#else
-  auto dataloader = factory;
-#endif
 
   // If you wish to modify default settings
   // (please check "src/Config.h" to see all available global options)
@@ -105,9 +99,15 @@ int TMVAClassification(const map<string, vector<string>>& configs)
     (TMVA::gConfig().GetIONames()).fWeightFileDir = "weights" + temp; //TString(temp.erase(0, 1).c_str());
   }
 
-  // Define the input variables that shall be used for the MVA training
-  // note that you may also use variable expressions, such as: "3*var1/var2*abs(var3)"
-  // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
+
+  // NOTE: Currently TMVA treats all input variables, spectators etc as
+  //       floats. Thus, if the absolute value of the input is too large
+  //       there can be precision loss. This can especially be a problem for
+  //       cross validation with large event numbers.
+  //       A workaround is to define your splitting variable as:
+  //           `dataloader->AddSpectator("eventID := eventID % 4096", 'I');`
+  //       where 4096 should be a number much larger than the number of folds
+  //       you intend to run with.
 
   // varialbes without range specified
   for (const auto& var : configs.at("training_variables_worange")) {
@@ -128,10 +128,6 @@ int TMVAClassification(const map<string, vector<string>>& configs)
         pars.at("description"), pars.at("unit"), pars.at("type")[0],
         minValue, maxValue);
   }
-
-  // You can add so-called "Spectator variables", which are not used in the MVA training,
-  // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
-  // input variables, the response values of all trained MVAs, and the spectator variables
 
   // varialbes without range specified
   for (const auto& var : configs.at("spectator_variables_worange")) {
@@ -182,7 +178,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   dataloader->SetSignalWeightExpression("weight");
   dataloader->SetBackgroundWeightExpression("weight");
 
-  // --- end of tree registration 
+  // --- end of tree registration
 
   // Apply additional cuts on the signal and background samples (can be different)
   std::string common_cuts;
@@ -196,18 +192,43 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   if (DEBUG) { cout << "Cut name:" << mycuts.GetName() << ", cut title: " << mycuts.GetTitle(); }
   if (DEBUG) { cout << "Cut name:" << mycutb.GetName() << ", cut title: " << mycutb.GetTitle(); }
 
-  // Tell the factory how to use the training and testing events
-  //
-  // If no numbers of events are given, half of the events in the tree are used 
-  // for training, and the other half for testing:
-  //    factory->PrepareTrainingAndTestTree( mycut, "SplitMode=random:!V" );
-  // To also specify the number of testing events, use:
-  //    factory->PrepareTrainingAndTestTree( mycut,
-  //                                         "NSigTrain=3000:NBkgTrain=3000:NSigTest=3000:NBkgTest=3000:SplitMode=Random:!V" );
-  //  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
-  //  "nTest_Signal=1:nTest_Background=1:SplitMode=Random:NormMode=NumEvents:!V" );
+  // The CV mechanism of TMVA splits up the training set into several folds.
+  // The test set is currently left unused. The `nTest_ClassName=1` assigns
+  // one event to the the test set for each class and puts the rest in the
+  // training set. A value of 0 is a special value and would split the
+  // datasets 50 / 50.
   dataloader->PrepareTrainingAndTestTree( mycuts, mycutb, configs.at("dataloader_config").at(0));
 
+  // --------------------------------------------------------------------------
+
+  //
+  // This sets up a CrossValidation class (which wraps a TMVA::Factory
+  // internally) for 2-fold cross validation.
+  //
+  // The split type can be "Random", "RandomStratified" or "Deterministic".
+  // For the last option, check the comment below. Random splitting randomises
+  // the order of events and distributes events as evenly as possible.
+  // RandomStratified applies the same logic but distributes events within a
+  // class as evenly as possible over the folds.
+  //
+  //
+  // One can also use a custom splitting function for producing the folds.
+  // The example uses a dataset spectator `eventID`.
+  //
+  // The idea here is that eventID should be an event number that is integral,
+  // random and independent of the data, generated only once. This last
+  // property ensures that if a calibration is changed the same event will
+  // still be assigned the same fold.
+  //
+  // This can be used to use the cross validated classifiers in application,
+  // a technique that can simplify statistical analysis.
+  //
+  // If you want to run TMVACrossValidationApplication, make sure you have
+  // run this tutorial with Deterministic splitting type, i.e.
+  // with the option useRandomSPlitting = false
+  //
+
+  TMVA::CrossValidation cv{"TMVACrossValidation", dataloader, outputFile, configs.at("factory_config").at(0)};
 
   // ---- Book MVA methods
   //
@@ -220,26 +241,38 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   for (const auto& m : configs.at("methods")) {
     const auto method = getTrainPars(m, "methods");
     if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
-    factory->BookMethod(dataloader,
+    cv.BookMethod(
         MethodCollection.at(method.at("method").Data()),
         method.at("name"), method.at("config"));
-#else
-    factory->BookMethod(MethodCollection.at(method.at("method").Data()),
-        method.at("name"), method.at("config"));
-#endif
   }
 
-  // ---- Now you can tell the factory to train, test, and evaluate the MVAs
+  // --------------------------------------------------------------------------
 
-  // Train MVAs using the set of training events
-  factory->TrainAllMethods();
+  //
+  // Train, test and evaluate the booked methods.
+  // Evaluates the booked methods once for each fold and aggregates the result
+  // in the specified output file.
+  //
+  cv.Evaluate();
 
-  // ---- Evaluate all MVAs using the set of test events
-  factory->TestAllMethods();
+  // --------------------------------------------------------------------------
 
-  // ----- Evaluate and compare performance of all configured MVAs
-  factory->EvaluateAllMethods();
+  //
+  // Process some output programatically, printing the ROC score for each
+  // booked method.
+  //
+  size_t iMethod = 0;
+  for (auto && result : cv.GetResults()) {
+    std::cout << "Summary for method " << cv.GetMethods()[iMethod++].GetValue<TString>("MethodName")
+              << std::endl;
+    for (UInt_t iFold = 0; iFold<cv.GetNumFolds(); ++iFold) {
+      std::cout << "\tFold " << iFold << ": "
+                << "ROC int: " << result.GetROCValues()[iFold]
+                << ", "
+                << "BkgEff@SigEff=0.3: " << result.GetEff30Values()[iFold]
+                << std::endl;
+    }
+   }
 
   // --------------------------------------------------------------
 
@@ -247,12 +280,10 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   outputFile->Close();
 
   std::cout << "==> Wrote root file: " << outputFile->GetName() << std::endl;
-  std::cout << "==> TMVAClassification is done!" << std::endl;
+  std::cout << "==> TMVACrossValidation is done!" << std::endl;
 
-  delete factory;
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
   delete dataloader;
-#endif
 
   return 0;
 }
+#endif

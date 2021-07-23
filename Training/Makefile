@@ -6,7 +6,7 @@
 ######################################################################
 # Project: TMVA - Toolkit for Multivariate Data Analysis             #
 # Code   : Example usage for TMVA analyses                           #
-###################################################################### 
+######################################################################
 
 CXX=$(shell root-config --cxx)
 CCFLAGS = -O0
@@ -15,18 +15,13 @@ CCFLAGS += $(shell root-config --cflags)
 LDFLAGS=$(shell root-confi --libs)
 
 
-LIBS = $(shell root-config --libdir) 
-INCS = $(shell root-config --incdir)  
+LIBS = $(shell root-config --libdir)
+INCS = $(shell root-config --incdir)
 
 
-default : bin bin/TMVAClassification bin/TMVAClassificationApp
+default : bin bin/TMVACrossValidation bin/TMVAClassification bin/TMVAClassificationApp
 
-bin/TMVAClassificationApp: bin/TMVAClassificationApp.o bin/functions.o
-	@echo -n "Linking $@ ... "
-	$(CXX) $(CCFLAGS) $^ $(shell root-config --libs) -L$(OPENHF2020TOP)/Utilities/lib \
-		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
-
-bin/TMVAClassification: bin/TMVAClassification.o bin/functions.o
+bin/TMVA%: bin/TMVA%.o bin/functions.o
 	@echo -n "Linking $@ ... "
 	$(CXX) $(CCFLAGS) $^ $(shell root-config --libs) -L$(OPENHF2020TOP)/Utilities/lib \
 		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
@@ -38,7 +33,7 @@ bin/%.o: src/%.cc
 
 bin:
 	@echo "Creating directory bin"
-	@mkdir bin 
+	@mkdir bin
 	@echo "Done"
 	@echo
 
