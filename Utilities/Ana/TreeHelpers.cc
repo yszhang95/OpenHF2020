@@ -135,17 +135,19 @@ void MyNTuple::initNTuple()
     t->Branch("cand_isSwap", &cand_isSwap);
   }
 
-  t->Branch("cand_vtxChi2", &cand_vtxChi2);
-  t->Branch("cand_vtxProb", &cand_vtxProb);
-  t->Branch("cand_angle2D", &cand_angle2D);
-  t->Branch("cand_angle3D", &cand_angle3D);
-  t->Branch("cand_dca", &cand_dca);
-  t->Branch("cand_decayLength2D", &cand_decayLength2D);
-  t->Branch("cand_decayLength3D", &cand_decayLength3D);
-  t->Branch("cand_decayLengthError2D", &cand_decayLengthError2D);
-  t->Branch("cand_decayLengthError3D", &cand_decayLengthError3D);
-  t->Branch("cand_pseudoDecayLengthError2D", &cand_pseudoDecayLengthError2D);
-  t->Branch("cand_pseudoDecayLengthError3D", &cand_pseudoDecayLengthError3D);
+  if (!dropDau) {
+    t->Branch("cand_vtxChi2", &cand_vtxChi2);
+    t->Branch("cand_vtxProb", &cand_vtxProb);
+    t->Branch("cand_angle2D", &cand_angle2D);
+    t->Branch("cand_angle3D", &cand_angle3D);
+    t->Branch("cand_dca", &cand_dca);
+    t->Branch("cand_decayLength2D", &cand_decayLength2D);
+    t->Branch("cand_decayLength3D", &cand_decayLength3D);
+    t->Branch("cand_decayLengthError2D", &cand_decayLengthError2D);
+    t->Branch("cand_decayLengthError3D", &cand_decayLengthError3D);
+    t->Branch("cand_pseudoDecayLengthError2D", &cand_pseudoDecayLengthError2D);
+    t->Branch("cand_pseudoDecayLengthError3D", &cand_pseudoDecayLengthError3D);
+  }
 
   if (!dropDau) {
     for (unsigned short iDau=0; iDau<nDau; ++iDau) {

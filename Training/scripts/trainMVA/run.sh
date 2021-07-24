@@ -23,6 +23,9 @@ echo "Current directory is ${PWD}"
 
 LD_LIBRARY_PATH=${OPENHF2020TOP}/Utilities/lib:${LD_LIBRARY_PATH} ./OpenHF2020/Training/bin/TMVACrossValidation $2
 
+echo
+ls -lst
+
 FileName=$(basename -s .xml $2)
 FileName="TMVA_${FileName}.root"
 Folds=$(ls *_fold*.root)
