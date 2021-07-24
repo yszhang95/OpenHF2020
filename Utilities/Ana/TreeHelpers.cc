@@ -147,7 +147,7 @@ void MyNTuple::initNTuple()
   t->Branch("cand_pseudoDecayLengthError2D", &cand_pseudoDecayLengthError2D);
   t->Branch("cand_pseudoDecayLengthError3D", &cand_pseudoDecayLengthError3D);
 
-  if (dropDau) {
+  if (!dropDau) {
     for (unsigned short iDau=0; iDau<nDau; ++iDau) {
       t->Branch(Form("cand_etaDau%d", iDau), &cand_etaDau[iDau]);
       t->Branch(Form("cand_massDau%d", iDau), &cand_massDau[iDau]);
