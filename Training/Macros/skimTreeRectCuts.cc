@@ -115,8 +115,8 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
         PtEtaPhiM_t p4_proton = getRecoDauP4(ireco, 1, p);
         if (p4_Ks.Pt() < 1.3) continue;
         if (p4_proton.Pt() < 0.4) continue;
-        if (abs(p4_Ks.Eta()) < 1.4) continue;
-        if (abs(p4_proton.Eta()) < 1.1) continue;
+        if (abs(p4_Ks.Eta()) > 1.4) continue;
+        if (abs(p4_proton.Eta()) > 1.1) continue;
 
         // retrieve other information
         //ntp.hltRecordLumi = p.hltRecordLumi().at(0); // 0 means high multiplicity 185
