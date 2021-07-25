@@ -17,7 +17,7 @@
     testcvApp
   </outfileName>
   <outputDir>
-    ./storage/
+    .//
   </outputDir>
   <trainXML>
     testcv.xml
