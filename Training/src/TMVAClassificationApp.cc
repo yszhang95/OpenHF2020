@@ -17,6 +17,7 @@
 
 #include "TChain.h"
 #include "TFile.h"
+#include "TH3D.h"
 #include "TTree.h"
 #include "TString.h"
 #include "TObjString.h"
@@ -55,6 +56,8 @@ using std::getline;
 using std::cout;
 using std::endl;
 using std::istringstream;
+
+using std::unique_ptr;
 
 
 int TMVAClassificationApp(const map<string, vector<string>>& configs);
@@ -203,6 +206,11 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
+  vector<unique_ptr<TH3D>> hMassPtMVA(methodNames.size());
+  for (size_t i=0; i<methodNames.size(); i++) {
+    auto& ptr = hMassPtMVA[i];
+    ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s", methodNames_copy[i].Data()), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 100, -1., 1.);
+  }
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   unsigned short dauNGDau[] = {2, 0};
@@ -231,9 +239,12 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
+          if (std::abs(ntp.cand_y) < 1.) {
+            hMassPtMVA[i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+          }
         }
         ntp.setMVAValues(mvaValues);
-        ntp.fillNTuple();
+        //ntp.fillNTuple();
       }
     }
   }
