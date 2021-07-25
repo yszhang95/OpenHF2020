@@ -192,7 +192,8 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   }
   if(common_cuts.size()>4) common_cuts.erase(common_cuts.size()-4, 4);
   TCut mycuts = TCut(common_cuts.c_str());
-  TCut mycutb( (common_cuts + "&& abs(cand_mass-2.29)>0.15 && abs(cand_mass-2.29)<0.20").c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
+  //TCut mycutb( (common_cuts + "&& abs(cand_mass-2.29)>0.15 && abs(cand_mass-2.29)<0.20").c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
+  TCut mycutb( (common_cuts).c_str() ); // for example: TCut mycutb = "abs(var1)<0.5";
   if (DEBUG) { cout << "Cut name:" << mycuts.GetName() << ", cut title: " << mycuts.GetTitle(); }
   if (DEBUG) { cout << "Cut name:" << mycutb.GetName() << ", cut title: " << mycutb.GetTitle(); }
 

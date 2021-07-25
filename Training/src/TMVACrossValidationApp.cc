@@ -17,6 +17,7 @@
 
 #include "TChain.h"
 #include "TFile.h"
+#include "TH3D.h"
 #include "TTree.h"
 #include "TString.h"
 #include "TObjString.h"
@@ -109,6 +110,9 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   TFile outputFile( outfileName, "RECREATE" );
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
+
+  // save output histogram
+  TH3D hMassPtY("hMassPtY", ";Mass;Pt;y", 120, 2.15, 2.45, 50, 0, 10, 20, -2, 2);
 
   // Create the reader object.
   TMVA::Reader *reader = new TMVA::Reader( "!Color:!Silent" );
@@ -247,7 +251,8 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
           mvaValues[i] = reader->EvaluateMVA(methodName);
         }
         ntp.setMVAValues(mvaValues);
-        ntp.fillNTuple();
+        //ntp.fillNTuple();
+        hMassPtY.Fill(ntp.cand_mass, ntp.cand_pT, ntp.cand_y);
       }
     }
   }
