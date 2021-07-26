@@ -107,7 +107,7 @@ void MyNTuple::initMVABranches(const vector<TString>& methods)
 {
   cand_nMVA = methods.size();
   for(size_t i=0; i<cand_nMVA; i++) {
-    t->Branch(Form("%s_%d", methods.at(i).Data(), i), &cand_MVA[i]);
+    t->Branch(Form("%s", methods.at(i).Data()), &cand_MVA[i]);
   }
 }
 
