@@ -262,7 +262,7 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
         helper.GetValues(ntp, allTrainVars, allSpectatorVars, allCommonCuts);
         bool passCuts = true;
         for (size_t icut=0; icut<helper.nCuts; ++icut) {
-          passCuts = passCuts && helper.cuts[icut];
+          passCuts = passCuts && static_cast<int>(std::round(helper.cuts[icut]));
           if (!passCuts) break;
         }
         if (!passCuts) continue;
