@@ -56,6 +56,7 @@ using std::getline;
 using std::cout;
 using std::endl;
 using std::istringstream;
+using std::unique_ptr;
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
 int TMVACrossValidationApp(const map<string, vector<string>>& configs);
@@ -90,6 +91,14 @@ int main( int argc, char** argv )
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
 int TMVACrossValidationApp(const map<string, vector<string>>& configs)
 {
+  vector<TString> options = splitTString( configs.at("options").at(0), ":" );
+  cout << "Options are:" << endl;
+  for (const auto& e: options) {
+    cout << "\t" << e << endl;
+  }
+  const bool saveTree = std::find(options.begin(), options.end(), "saveTree") != options.end();
+  const bool saveDau = std::find(options.begin(), options.end(), "saveDau") != options.end();
+  const bool selectMVA = std::find(options.begin(), options.end(), "selectMVA") != options.end();
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -111,8 +120,6 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
 
-  // save output histogram
-  TH3D hMassPtY("hMassPtY", ";Mass;Pt;y", 120, 2.15, 2.45, 50, 0, 10, 20, -2, 2);
 
   // Create the reader object.
   TMVA::Reader *reader = new TMVA::Reader( "!Color:!Silent" );
@@ -150,7 +157,6 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
     allSpectatorVars.push_back(v);
     spectatorVars.push_back(pars);
   }
-
 
   vector<vector<TString>> allCommonCuts;
   vector<map<string, TString>> commonCuts;
@@ -199,11 +205,12 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   auto MethodCollection = setupMethodCollection();
   vector<TString> methodNames;
   vector<TString> methodNames_copy;
-  for (const auto& m : configs.at("methods")) {
+  for (size_t im=0; im<configs.at("methods").size(); ++im) {
+    const auto& m = configs.at("methods").at(im);
     const auto method = getAppPars(m, "methods");
     if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     TString methodName = method.at("name");
-    TString postfix = configs.at("trainXML").at(0);
+    TString postfix = configs.at("trainXML").at(im);
     auto pos = postfix.Index(".xml");
     postfix.Remove(pos, 4);
     TString weightfile = dir + "_" + postfix + "/" + prefix + TString("_") + methodName + TString(".weights.xml");
@@ -214,6 +221,17 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   }
 
   // Read data
+  // Prepare output histogram
+  vector<unique_ptr<TH3D>> hMassPtMVA[2];
+  for (size_t iy=0; iy<2; ++iy) {
+    auto& vec = hMassPtMVA[iy];
+    vec.resize(methodNames_copy.size());
+    for (size_t i=0; i<methodNames.size(); i++) {
+      auto& ptr = vec[i];
+      ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s_y%d", methodNames_copy[i].Data(), iy), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 100, -1., 1.);
+    }
+  }
+
   // Prepare input tree (this must be replaced by your data source)
 
   const auto treeInfo = getAppPars((configs.at("treeInfo"))[0], "treeInfo");
@@ -228,13 +246,13 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   TFileCollection tf("tf", "", inputFileList.Data());
   TChain t(treeDir+"/ParticleTree");
   t.AddFileInfoList(tf.GetList());
-  ParticleTreeData p(&t); // temporary use
+  ParticleTree p(&t); // temporary use
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
-  ntp.dropDau = true; // hard code, temporary use
+  ntp.dropDau = !saveDau;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);
@@ -266,18 +284,29 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
           if (!passCuts) break;
         }
         if (!passCuts) continue;
+        bool passMVA = false;
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
+          passMVA = passMVA || mvaValues[i] > std::stod(configs.at("mvaCutMin").at(i));
+          if (abs(ntp.cand_y)<1.) {
+            hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+          } else if (abs(ntp.cand_y)<2.) {
+            hMassPtMVA[1][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+          }
         }
         ntp.setMVAValues(mvaValues);
-        //ntp.fillNTuple();
-        hMassPtY.Fill(ntp.cand_mass, ntp.cand_pT, ntp.cand_y);
+        if (selectMVA &&  !passMVA) continue;
+        if (saveTree) ntp.fillNTuple();
       }
     }
   }
   // Save the output
-  outputFile.Write();
+  // outputFile.Write();
+  if (saveTree) ntp.t->Write();
+  for (const auto& vec : hMassPtMVA) {
+    for (const auto& h : vec) h->Write();
+  }
 
   std::cout << "==> Wrote root file: " << outputFile.GetName() << std::endl;
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;

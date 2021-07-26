@@ -13,6 +13,9 @@
   <spectator_variables>
     cand_pT? [0] ? cand_pT
   </spectator_variables>
+  <common_cuts>
+#
+  </common_cuts>
   <outfileName>
     testcvApp
   </outfileName>
@@ -28,4 +31,10 @@
   <methods>
     BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=3
   </methods>
+  <options>
+    saveTree:!saveDau:selectMVA
+  </options>
+  <mvaCutMin>
+    0.5
+  </mvaCutMin>
 </root>
