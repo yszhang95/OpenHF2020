@@ -75,15 +75,21 @@ struct MVAHelper
 {
   const static size_t NMAX = 100;
   size_t NVAR;
+  size_t nVars;
+  size_t nSpecs;
+  size_t nCuts;
   std::array<TF1*, NMAX> fvar;
   std::array<TF1*, NMAX> fspec;
+  std::array<TF1*, NMAX> fcuts;
   std::array<float, NMAX> vars;
   std::array<float, NMAX> specs;
+  std::array<float, NMAX> cuts;
   explicit MVAHelper(std::vector<std::map<std::string, TString>>,
+                     std::vector<std::map<std::string, TString>>,
                      std::vector<std::map<std::string, TString>>);
   MVAHelper(const MVAHelper&) = delete;
   ~MVAHelper();
-  void GetValues( MyNTuple&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&);
+  void GetValues( MyNTuple&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&);
 };
 
 std::vector<TString> splitTString(const TString& in, const char* delimiter);

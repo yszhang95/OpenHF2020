@@ -371,6 +371,7 @@ float MyNTuple::value(const TString& s)
   if (s == "cand_eta") return this->cand_eta;
   if (s == "cand_mass") return this->cand_mass;
   if (s == "cand_pT") return this->cand_pT;
+  if (s == "cand_y") return this->cand_y;
   if (s == "cand_phi") return this->cand_phi;
   if (s == "cand_pseudoDecayLengthError2D") return this->cand_pseudoDecayLengthError2D;
   if (s == "cand_pseudoDecayLengthError3D") return this->cand_pseudoDecayLengthError3D;
@@ -390,10 +391,10 @@ float MyNTuple::value(const TString& s)
       if (s.Contains("angle2D")) return this->cand_dau_angle2D[index];
       if (s.Contains("angle3D")) return this->cand_dau_angle3D[index];
       if (s.Contains("dca")) return this->cand_dau_dca[index];
-      if (s.Contains("dcayLength2D")) return this->cand_dau_decayLength2D[index];
-      if (s.Contains("dcayLength3D")) return this->cand_dau_decayLength3D[index];
-      if (s.Contains("dcayLengthError2D")) return this->cand_dau_decayLengthError2D[index];
-      if (s.Contains("dcayLengthError3D")) return this->cand_dau_decayLengthError3D[index];
+      if (s.Contains("decayLength2D")) return this->cand_dau_decayLength2D[index];
+      if (s.Contains("decayLength3D")) return this->cand_dau_decayLength3D[index];
+      if (s.Contains("decayLengthError2D")) return this->cand_dau_decayLengthError2D[index];
+      if (s.Contains("decayLengthError3D")) return this->cand_dau_decayLengthError3D[index];
       if (s.Contains("eta")) return this->cand_dau_eta[index];
       if (s.Contains("mass")) return this->cand_dau_mass[index];
       if (s.Contains("pT")) return this->cand_dau_pT[index];

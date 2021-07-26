@@ -202,6 +202,15 @@ map<string, TString> getAppPars(const TString& in, const std::string& type)
     output["eqn_vars"] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
 
   }
+  if (type == "common_cuts") {
+    TPRegexp r("(.*)\\?(.*)\\?(.*)");
+    TObjArray* subStrL = r.MatchS(in);
+    output["fullStr"] = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
+    output["common_cuts"] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
+    output["eqn"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
+    output["eqn_vars"] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
+
+  }
   for (auto& e : output) { e.second = e.second.Strip(TString::kBoth); }
   if (DEBUG) {for (const auto& e: output) { cout << e.second << endl; }}
   if (DEBUG) { cout << "End getPars\n" << endl; }
@@ -210,13 +219,22 @@ map<string, TString> getAppPars(const TString& in, const std::string& type)
 }
 
 MVAHelper::MVAHelper(const vector<map<string, TString>> trainingVars,
-                     const vector<map<string, TString>> spectatorVars)
+                     const vector<map<string, TString>> spectatorVars,
+                     const vector<map<string, TString>> cutVars)
 {
   fvar.fill(nullptr);
   fspec.fill(nullptr);
+  fcuts.fill(nullptr);
   vars.fill(0);
   specs.fill(0);
+  cuts.fill(0);
+  nVars = trainingVars.size();
+  nSpecs = spectatorVars.size();
+  nCuts = cutVars.size();
+
   NVAR = std::max(trainingVars.size(), spectatorVars.size());
+  NVAR = std::max(NVAR, cuts.size());
+
   if (NVAR > NMAX) cerr << "# of variables is larger than the maximum # allowed." << endl;
   for (size_t i=0; i<trainingVars.size(); i++) {
     fvar[i] = new TF1(Form("fvar%zu", i), trainingVars.at(i).at("eqn").Data());
@@ -224,17 +242,22 @@ MVAHelper::MVAHelper(const vector<map<string, TString>> trainingVars,
   for (size_t i=0; i<spectatorVars.size(); i++) {
     fspec[i] = new TF1(Form("fspec%zu", i), spectatorVars.at(i).at("eqn").Data());
   }
+  for (size_t i=0; i<cutVars.size(); i++) {
+    fcuts[i] = new TF1(Form("fcuts%zu", i), cutVars.at(i).at("eqn").Data());
+  }
 }
 MVAHelper::~MVAHelper()
 {
   std::cout << "Delete MVAHelper" << std::endl;
   for (auto& f : fvar) delete f;
   for (auto& f : fspec) delete f;
+  for (auto& f : fcuts) delete f;
 }
 
 void MVAHelper::GetValues(MyNTuple& t,
                           const vector<vector<TString>>& trainingVars,
-                          const vector<vector<TString>>& spectatorVars)
+                          const vector<vector<TString>>& spectatorVars,
+                          const vector<vector<TString>>& cutVars)
 {
   for (size_t i=0; i<trainingVars.size(); i++) {
     if (trainingVars[i].size() != fvar[i]->GetNpar()) {
@@ -255,6 +278,14 @@ void MVAHelper::GetValues(MyNTuple& t,
       fspec[i]->SetParameter(j, t.value(spectatorVars.at(i).at(j)));
     }
     specs[i] = fspec[i]->Eval(0);
+  }
+  for (size_t i=0; i<cutVars.size(); i++) {
+    if (cutVars[i].size() != fcuts[i]->GetNpar())
+      cerr << "[ERROR] cut variable size is different from parameter set size" << endl;
+    for (size_t j=0; j<fcuts[i]->GetNpar(); j++) {
+      fcuts[i]->SetParameter(j, t.value(cutVars.at(i).at(j)));
+    }
+    cuts[i] = fcuts[i]->Eval(0);
   }
 }
 

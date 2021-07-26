@@ -145,8 +145,21 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
     spectatorVars.push_back(pars);
   }
 
+  vector<vector<TString>> allCommonCuts;
+  vector<map<string, TString>> commonCuts;
+  for (size_t ivar=0; ivar!=configs.at("common_cuts").size(); ivar++) {
+    const auto & var = configs.at("common_cuts").at(ivar);
+    const auto pars = getAppPars(var, "common_cuts");
+    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+    auto v = splitTString(pars.at("eqn_vars"), ":");
 
-  MVAHelper helper(trainingVars, spectatorVars);
+    allCommonCuts.push_back(v);
+    commonCuts.push_back(pars);
+  }
+
+
+  MVAHelper helper(trainingVars, spectatorVars, commonCuts);
+
   for (size_t ivar=0; ivar!=trainingVars.size(); ivar++) {
     const auto& pars = trainingVars.at(ivar);
     reader->AddVariable(pars.at("training_vars"), &helper.vars[ivar]);
@@ -235,7 +248,13 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle_id)) {
         ntp.retrieveTreeInfo(p, ireco);
-        helper.GetValues(ntp, allTrainVars, allSpectatorVars);
+        helper.GetValues(ntp, allTrainVars, allSpectatorVars, allCommonCuts);
+        bool passCuts = true;
+        for (size_t icut=0; icut<helper.nCuts; ++icut) {
+          passCuts = passCuts && helper.cuts[icut];
+          if (!passCuts) break;
+        }
+        if (!passCuts) continue;
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
