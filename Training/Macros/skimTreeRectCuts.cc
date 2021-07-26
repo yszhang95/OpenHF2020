@@ -110,17 +110,30 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
         gDau1P4.SetM(0.000511);
         PtEtaPhiM_t ee = gDau0P4 + gDau1P4;
         if ( ee.M() <0.2 ) { continue; }
-
-        PtEtaPhiM_t p4_Ks = getRecoDauP4(ireco, 0, p);
-        PtEtaPhiM_t p4_proton = getRecoDauP4(ireco, 1, p);
-        if (p4_Ks.Pt() < 1.3) continue;
-        if (p4_proton.Pt() < 0.4) continue;
-        if (abs(p4_Ks.Eta()) > 1.4) continue;
-        if (abs(p4_proton.Eta()) > 1.1) continue;
-
+        
         // retrieve other information
         //ntp.hltRecordLumi = p.hltRecordLumi().at(0); // 0 means high multiplicity 185
         ntp.retrieveTreeInfo(p, ireco);
+
+        PtEtaPhiM_t p4_Ks = getRecoDauP4(ireco, 0, p);
+        PtEtaPhiM_t p4_proton = getRecoDauP4(ireco, 1, p);
+
+        if (ntp.cand_pT<4) {
+          if (p4_Ks.Pt() < 1.3) continue;
+          if (p4_proton.Pt() < 0.4) continue;
+          if (abs(p4_Ks.Eta()) > 1.4) continue;
+          if (abs(p4_proton.Eta()) > 1.1) continue;
+        } else if (ntp.cand_pT<6) {
+          if (p4_Ks.Pt() < 0.5) continue;
+          if (p4_proton.Pt() < 0.5) continue;
+          if (abs(p4_Ks.Eta()) > 1.4) continue;
+          if (abs(p4_proton.Eta()) > 1.4) continue;
+        } else if (ntp.cand_pT<8) {
+          if (p4_Ks.Pt() < 0.5) continue;
+          if (p4_proton.Pt() < 1.5) continue;
+          if (abs(p4_Ks.Eta()) > 1.4) continue;
+          if (abs(p4_proton.Eta()) > 1.4) continue;
+        }
 
         if (p4_proton.P() < 2.2) {
           const bool passDeDx = ntp.trk_dau_dEdx_dedxHarmonic2[1] > (2.6 * std::pow(0.9382720813 / (p4_proton.P() + 0.1), 2) + 2.2);
