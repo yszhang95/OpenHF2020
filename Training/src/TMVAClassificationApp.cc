@@ -87,6 +87,15 @@ int main( int argc, char** argv )
 
 int TMVAClassificationApp(const map<string, vector<string>>& configs)
 {
+  vector<TString> options = splitTString( configs.at("options").at(0), ":" );
+  cout << "Options are:" << endl;
+  for (const auto& e: options) {
+    cout << "\t" << e << endl;
+  }
+  const bool saveTree = std::find(options.begin(), options.end(), "saveTree") != options.end();
+  const bool saveDau = std::find(options.begin(), options.end(), "saveDau") != options.end();
+  const bool selectMVA = std::find(options.begin(), options.end(), "selectMVA") != options.end();
+
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -201,6 +210,17 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   }
 
   // Read data
+  // Prepare output histogram
+  vector<unique_ptr<TH3D>> hMassPtMVA[2];
+  for (size_t iy=0; iy<2; ++iy) {
+    auto& vec = hMassPtMVA[iy];
+    vec.resize(methodNames_copy.size());
+    for (size_t i=0; i<methodNames.size(); i++) {
+      auto& ptr = vec[i];
+      ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s_y%d", methodNames_copy[i].Data(), iy), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 100, -1., 1.);
+    }
+  }
+
   // Prepare input tree (this must be replaced by your data source)
 
   const auto treeInfo = getAppPars((configs.at("treeInfo"))[0], "treeInfo");
@@ -215,17 +235,13 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   TFileCollection tf("tf", "", inputFileList.Data());
   TChain t(treeDir+"/ParticleTree");
   t.AddFileInfoList(tf.GetList());
-  ParticleTreeData p(&t); // temporary use
+  ParticleTree p(&t); // temporary use
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
-  vector<unique_ptr<TH3D>> hMassPtMVA(methodNames.size());
-  for (size_t i=0; i<methodNames.size(); i++) {
-    auto& ptr = hMassPtMVA[i];
-    ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s", methodNames_copy[i].Data()), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 100, -1., 1.);
-  }
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
+  ntp.dropDau = !saveDau;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);
@@ -255,20 +271,29 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
           if (!passCuts) break;
         }
         if (!passCuts) continue;
+        bool passMVA = false;
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
-          if (std::abs(ntp.cand_y) < 1.) {
-            hMassPtMVA[i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+          passMVA = passMVA || mvaValues[i] > std::stod(configs.at("mvaCutMin").at(i));
+          if (abs(ntp.cand_y)<1.) {
+            hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+          } else if (abs(ntp.cand_y)<2.) {
+            hMassPtMVA[1][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
           }
         }
         ntp.setMVAValues(mvaValues);
-        //ntp.fillNTuple();
+        if (selectMVA &&  !passMVA) continue;
+        if (saveTree) ntp.fillNTuple();
       }
     }
   }
   // Save the output
-  outputFile.Write();
+  // outputFile.Write();
+  if (saveTree) ntp.t->Write();
+  for (const auto& vec : hMassPtMVA) {
+    for (const auto& h : vec) h->Write();
+  }
 
   std::cout << "==> Wrote root file: " << outputFile.GetName() << std::endl;
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;
