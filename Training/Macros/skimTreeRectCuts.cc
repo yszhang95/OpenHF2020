@@ -143,6 +143,12 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
           const bool passDeDx = ntp.trk_dau_dEdx_dedxHarmonic2[1] > (3.5 * std::pow(0.9382720813 / (p4_proton.P() - 0.1), 2) + 4.2);
           if(!passDeDx) continue;
         }
+
+        // Ks cuts
+        if (ntp.cand_dau_decayLength3D[0]/ntp.cand_dau_decayLengthError3D[0] < 5.) continue;
+        if (std::cos(ntp.cand_dau_angle3D[0]) < 0.999) continue;
+        if (std::cos(ntp.cand_dau_dca[0]>0.5)) continue;
+
         hMassPtY.Fill(ntp.cand_mass, ntp.cand_pT, ntp.cand_y);
 
         // fill this entry
