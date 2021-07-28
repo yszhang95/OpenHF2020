@@ -147,7 +147,7 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
         // Ks cuts
         if (ntp.cand_dau_decayLength3D[0]/ntp.cand_dau_decayLengthError3D[0] < 5.) continue;
         if (std::cos(ntp.cand_dau_angle3D[0]) < 0.999) continue;
-        if (std::cos(ntp.cand_dau_dca[0]>0.5)) continue;
+        if (ntp.cand_dau_dca[0]>0.5) continue;
 
         hMassPtY.Fill(ntp.cand_mass, ntp.cand_pT, ntp.cand_y);
 
