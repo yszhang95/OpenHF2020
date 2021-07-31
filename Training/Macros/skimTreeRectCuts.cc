@@ -60,6 +60,7 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
   ofile.mkdir(treeDir);
   ofile.cd(treeDir);
   TH3D hMassPtY("hMassPtY", ";Mass;Pt;Y", 80, 2.2, 2.4, 50, 0, 10, 20, -2, 2);
+  TH3D hMassPtYNoCut("hMassPtYNoCut", ";Mass;Pt;Y", 80, 2.2, 2.4, 50, 0, 10, 20, -2, 2);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   ntp.isMC = false;
@@ -118,6 +119,13 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
         PtEtaPhiM_t p4_Ks = getRecoDauP4(ireco, 0, p);
         PtEtaPhiM_t p4_proton = getRecoDauP4(ireco, 1, p);
 
+        // Ks cuts
+        if (ntp.cand_dau_decayLength3D[0]/ntp.cand_dau_decayLengthError3D[0] < 5.) continue;
+        if (std::cos(ntp.cand_dau_angle3D[0]) < 0.999) continue;
+        if (ntp.cand_dau_dca[0]>0.5) continue;
+        hMassPtYNoCut.Fill(ntp.cand_mass, ntp.cand_pT, ntp.cand_y);
+
+        // Lambda C cuts
         if (ntp.cand_pT<4) {
           if (p4_Ks.Pt() < 1.3) continue;
           if (p4_proton.Pt() < 0.4) continue;
@@ -143,11 +151,6 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
           const bool passDeDx = ntp.trk_dau_dEdx_dedxHarmonic2[1] > (3.5 * std::pow(0.9382720813 / (p4_proton.P() - 0.1), 2) + 4.2);
           if(!passDeDx) continue;
         }
-
-        // Ks cuts
-        if (ntp.cand_dau_decayLength3D[0]/ntp.cand_dau_decayLengthError3D[0] < 5.) continue;
-        if (std::cos(ntp.cand_dau_angle3D[0]) < 0.999) continue;
-        if (ntp.cand_dau_dca[0]>0.5) continue;
 
         hMassPtY.Fill(ntp.cand_mass, ntp.cand_pT, ntp.cand_y);
 
