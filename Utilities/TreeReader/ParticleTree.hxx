@@ -82,48 +82,6 @@ public:
   std::vector<float>&   trk_zDCASignificance() const { return *_trk_zDCASignificance; }
   std::vector<std::vector<unsigned int>>& trk_candIdx() const { return *_trk_candIdx; }
 
-  virtual Float_t         pileup() const = 0;
-  virtual Float_t         rawInstLumi() const = 0;
-  virtual Float_t         recordLumi() const = 0;
-  virtual Float_t         totalLumi() const = 0;
-
-  virtual std::vector<bool>&    passHLT() const = 0;
-  virtual std::vector<bool>&    passHLTPrescaler() const = 0;
-  virtual std::vector<bool>&    passL1() const = 0;
-  virtual std::vector<bool>&    passL1Prescaler() const = 0;
-  virtual std::vector<unsigned char>& hltPDs() const = 0;
-  virtual std::vector<unsigned short>& hltPrescale() const = 0;
-  virtual std::vector<unsigned short>& l1Prescale() const = 0;
-  virtual std::vector<float>&   hltRecordLumi() const = 0;
-  virtual std::vector<float>&   hltTotalLumi() const = 0;
-
-  virtual Int_t           Ntrkgen() const = 0;
-  virtual Float_t         genWeight() const = 0;
-  virtual Float_t         pTHat() const = 0;
-  virtual std::vector<bool>&    cand_matchGEN() const = 0;
-  virtual std::vector<bool>&    cand_momMatchGEN() const = 0;
-  virtual std::vector<int>&     cand_genPdgId() const = 0;
-  virtual std::vector<int>&     cand_isSwap() const = 0;
-  virtual std::vector<unsigned short>& cand_genIdx() const = 0;
-  virtual std::vector<unsigned int>& cand_momMatchIdx() const = 0;
-  virtual std::vector<char>&    gen_charge() const = 0;
-  virtual std::vector<int>&     gen_pdgId() const = 0;
-  virtual std::vector<unsigned char>& gen_status() const = 0;
-  virtual std::vector<unsigned short>& gen_statusBit() const = 0;
-  virtual std::vector<float>&   gen_angle2D() const = 0;
-  virtual std::vector<float>&   gen_angle3D() const = 0;
-  virtual std::vector<float>&   gen_decayLength2D() const = 0;
-  virtual std::vector<float>&   gen_decayLength3D() const = 0;
-  virtual std::vector<float>&   gen_eta() const = 0;
-  virtual std::vector<float>&   gen_mass() const = 0;
-  virtual std::vector<float>&   gen_p() const = 0;
-  virtual std::vector<float>&   gen_pT() const = 0;
-  virtual std::vector<float>&   gen_phi() const = 0;
-  virtual std::vector<float>&   gen_y() const = 0;
-  virtual std::vector<std::vector<unsigned short>>& gen_dauIdx() const = 0;
-  virtual std::vector<std::vector<unsigned short>>& gen_momIdx() const = 0;
-  virtual std::vector<std::vector<unsigned int>>& gen_candIdx() const = 0;
-
 protected:
   virtual void     Init(TTree *tree);
 

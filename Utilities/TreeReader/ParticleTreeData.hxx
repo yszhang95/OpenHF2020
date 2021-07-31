@@ -22,22 +22,22 @@ public :
   ParticleTreeData(TTree *tree=0);
   virtual ~ParticleTreeData();
 
-  bool            isMC() const override { return false; }
+  bool            isMC() const { return false; }
 
-  Float_t         pileup() const override { return _pileup; }
-  Float_t         rawInstLumi() const override { return _rawInstLumi; }
-  Float_t         recordLumi() const override { return _recordLumi; }
-  Float_t         totalLumi() const override { return _totalLumi; }
+  Float_t         pileup() const { return _pileup; }
+  Float_t         rawInstLumi() const { return _rawInstLumi; }
+  Float_t         recordLumi() const { return _recordLumi; }
+  Float_t         totalLumi() const { return _totalLumi; }
 
-  std::vector<bool>&    passHLT() const override { return *_passHLT; }
-  std::vector<bool>&    passHLTPrescaler() const override { return *_passHLTPrescaler; }
-  std::vector<bool>&    passL1() const override { return *_passL1; }
-  std::vector<bool>&    passL1Prescaler() const override { return *_passL1Prescaler; }
-  std::vector<unsigned char>& hltPDs() const override { return *_hltPDs; }
-  std::vector<unsigned short>& hltPrescale() const override { return *_hltPrescale; }
-  std::vector<unsigned short>& l1Prescale() const override { return *_l1Prescale; }
-  std::vector<float>&   hltRecordLumi() const override { return *_hltRecordLumi; }
-  std::vector<float>&   hltTotalLumi() const override { return *_hltTotalLumi; }
+  std::vector<bool>&    passHLT() const { return *_passHLT; }
+  std::vector<bool>&    passHLTPrescaler() const { return *_passHLTPrescaler; }
+  std::vector<bool>&    passL1() const { return *_passL1; }
+  std::vector<bool>&    passL1Prescaler() const { return *_passL1Prescaler; }
+  std::vector<unsigned char>& hltPDs() const { return *_hltPDs; }
+  std::vector<unsigned short>& hltPrescale() const { return *_hltPrescale; }
+  std::vector<unsigned short>& l1Prescale() const { return *_l1Prescale; }
+  std::vector<float>&   hltRecordLumi() const { return *_hltRecordLumi; }
+  std::vector<float>&   hltTotalLumi() const { return *_hltTotalLumi; }
 
 
 protected:
