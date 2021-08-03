@@ -1,10 +1,10 @@
 <root>
   <factory_config>
-    !V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification:ModelPersistence:SplitExpr=int(fabs([eventID]))%int([NumFolds]):NumFolds=5:SplitType=Deterministic:FoldFileOutput=True
+    !V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification:ModelPersistence:SplitExpr=int(fabs([eventID]))%int([NumFolds]):NumFolds=2:SplitType=Deterministic:FoldFileOutput=True
     #!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification:ModelPersistence:SplitExpr=int(fabs([eventID]))%int([NumFolds]):NumFolds=5:SplitType=Deterministic
   </factory_config>
   <dataloader_config>
-    nTest_Signal=1:nTest_Background=1:SplitMode=Random:NormMode=EqualNumEvents:!V
+    nTest_Signal=1:nTest_Background=1:SplitMode=Block:NormMode=EqualNumEvents:!V
   </dataloader_config>
   <signalFileList>
     mccv.list
@@ -46,8 +46,10 @@
   </spectator_variables_wrange>
 
   <common_cuts>
-    cand_pT &gt; 2.
-    cand_pT &lt; 3.
+    #cand_pT &gt; 2.
+    cand_pT &gt; 4.
+    #cand_pT &lt; 3.
+    cand_pT &lt; 5.
     abs(cand_y) &lt; 1.
   </common_cuts>
 </root>

@@ -62,7 +62,62 @@ static inline std::string trim_copy(std::string s) {
     trim(s);
     return s;
 }
+class tmvaConfigs
+{
+public:
+  tmvaConfigs(std::string, bool debug=false);
+  tmvaConfigs(const tmvaConfigs&) = delete;
+  ~tmvaConfigs() {};
+  std::vector<std::map<std::string, TString>> getMethods() const;
+  std::vector<std::map<std::string, TString>> getTrainVarsWoRange() const;
+  std::vector<std::map<std::string, TString>> getSpecVarsWoRange() const;
+  std::vector<std::map<std::string, TString>> getTrainVarsWRange() const;
+  std::vector<std::map<std::string, TString>> getSpecVarsWRange() const;
+  std::vector<std::map<std::string, TString>> getTrainVarExps() const;
+  std::vector<std::map<std::string, TString>> getSpecVarExps() const;
+  std::vector<std::map<std::string, TString>> getCutsVarExps() const;
+  std::map<std::string, TString>              getTreeInfo() const;
+  std::vector<std::string>                    getCommonCuts() const;
+  std::vector<std::string>                    getMVACutMin() const;
+  //  std::map<std::string, std::vector<std::string>> getConfigs();
+  std::map<std::string, std::vector<std::string>> getConfigs() const;
+  std::string                                 getOutFileName() const;
+  void                                        setOutFileName(const std::string&);
+  std::string                                 getOutDirName() const;
+  void                                        setOutDirName(const std::string&);
+  std::string                                 getDataLoaderConfig() const;
+  std::string                                 getFactoryConfig() const;
+  std::string                                 signalFileList() const;
+  std::string                                 backgroundFileList() const;
+  double                                      signalWeight() const;
+  double                                      backgroundWeight() const;
+  bool                                        saveTree()  const;
+  bool                                        saveDau()   const;
+  bool                                        selectMVA() const;
+  bool                                        useEventWiseWeight() const;
 
+private:
+  std::map<std::string, TString>              getMethod(const std::string&) const;
+  std::vector<std::map<std::string, TString>> getVarsWoRange(const std::string&) const;
+  std::map<std::string, TString>              getVarWoRange(const std::string&) const;
+  std::vector<std::map<std::string, TString>> getVarsWRange(const std::string&) const;
+  std::map<std::string, TString>              getVarWRange(const std::string&) const;
+  std::vector<std::map<std::string, TString>> getVarExps(const std::string&) const;
+  std::map<std::string, TString>              getVarExp(const std::string&) const;
+  std::vector<TString>                        getOptions() const;
+  std::map<std::string, std::vector<std::string>> _configs;
+  std::string _outfileName;
+  std::string _outdirName;
+  std::string _signalFileList;
+  std::string _backgroundFileList;
+  double _signalWeight;
+  double _backgroundWeight;
+  bool _saveTree;
+  bool _saveDau;
+  bool _selectMVA;
+  bool _useEventWiseWeight;
+  bool _debug;
+};
 std::map<std::string, std::vector<std::string>> readConfigs(std::string);
 
 std::map<std::string, TMVA::Types::EMVA> setupMethodCollection();

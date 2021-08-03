@@ -246,7 +246,7 @@ int TMVACrossValidationApp(const map<string, vector<string>>& configs)
   TFileCollection tf("tf", "", inputFileList.Data());
   TChain t(treeDir+"/ParticleTree");
   t.AddFileInfoList(tf.GetList());
-  ParticleTree p(&t); // temporary use
+  ParticleTreeData p(&t); // temporary use
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
