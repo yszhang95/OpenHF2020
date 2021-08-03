@@ -465,6 +465,11 @@ map<string, TString> tmvaConfigs::getTreeInfo() const
   return output;
 }
 
+/**
+   Get the common cuts on signal and background trees.
+   Can also be used as precuts.
+ */
+
 vector<string> tmvaConfigs::getCommonCuts() const
 {
   vector<string> output;
@@ -478,13 +483,26 @@ vector<string> tmvaConfigs::getCommonCuts() const
    Get the minimum of MVA values. Each entry corresponds to one method in "methods" node.
    The candidated will be selected if it passes any one of the cut
  */
-vector<string> tmvaConfigs::getMVACutMin() const
+vector<string> tmvaConfigs::getMVACutMins() const
 {
   vector<string> output;
   if (!_configs.count("mvaCutMin")
       || !_configs.at("mvaCutMin").size())
     return output;
   return _configs.at("mvaCutMin");
+}
+
+/**
+   Get the trian XML "node".
+   Each entry in this node corresponds to one train processes.
+ */
+vector<string> tmvaConfigs::getTrainXMLs() const
+{
+  vector<string> output;
+  if (!_configs.count("trainXML")
+      || !_configs.at("trainXML").size())
+    return output;
+  return _configs.at("trainXML");
 }
 
 /**

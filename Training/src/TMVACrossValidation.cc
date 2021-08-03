@@ -50,7 +50,7 @@ int main( int argc, char** argv )
   if (argc==3 && string(argv[2]).size()) { DEBUG = 1; }
   else DEBUG = 0;
 
-  static tmvaConfigs configs(argv[1], DEBUG);
+  tmvaConfigs configs(argv[1], DEBUG);
   string tempOutFileName(gSystem->BaseName(argv[1]));
   {
     auto pos = tempOutFileName.find(".xml");

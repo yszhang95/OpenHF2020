@@ -78,7 +78,8 @@ public:
   std::vector<std::map<std::string, TString>> getCutsVarExps() const;
   std::map<std::string, TString>              getTreeInfo() const;
   std::vector<std::string>                    getCommonCuts() const;
-  std::vector<std::string>                    getMVACutMin() const;
+  std::vector<std::string>                    getMVACutMins() const;
+  std::vector<std::string>                    getTrainXMLs() const;
   //  std::map<std::string, std::vector<std::string>> getConfigs();
   std::map<std::string, std::vector<std::string>> getConfigs() const;
   std::string                                 getOutFileName() const;
