@@ -82,6 +82,21 @@ public:
   std::vector<float>&   trk_zDCASignificance() const { return *_trk_zDCASignificance; }
   std::vector<std::vector<unsigned int>>& trk_candIdx() const { return *_trk_candIdx; }
 
+  // Data specified
+  virtual  Float_t         pileup() const = 0;
+  virtual  Float_t         rawInstLumi() const = 0;
+  virtual  Float_t         recordLumi() const = 0;
+  virtual  Float_t         totalLumi() const = 0;
+  virtual  std::vector<bool>&    passHLT() const = 0;
+  virtual  std::vector<bool>&    passHLTPrescaler() const = 0;
+  virtual  std::vector<bool>&    passL1() const = 0;
+  virtual  std::vector<bool>&    passL1Prescaler() const = 0;
+  virtual  std::vector<unsigned char>& hltPDs() const = 0;
+  virtual  std::vector<unsigned short>& hltPrescale() const = 0;
+  virtual  std::vector<unsigned short>& l1Prescale() const = 0;
+  virtual  std::vector<float>&   hltRecordLumi() const = 0;
+  virtual  std::vector<float>&   hltTotalLumi() const = 0;
+
 protected:
   virtual void     Init(TTree *tree);
 
