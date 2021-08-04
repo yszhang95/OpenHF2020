@@ -82,6 +82,7 @@ public:
   std::vector<std::string>                    getTrainXMLs() const;
   //  std::map<std::string, std::vector<std::string>> getConfigs();
   std::map<std::string, std::vector<std::string>> getConfigs() const;
+  std::vector<TString>                        getOptions() const;
   std::string                                 getOutFileName() const;
   void                                        setOutFileName(const std::string&);
   std::string                                 getOutDirName() const;
@@ -105,7 +106,6 @@ private:
   std::map<std::string, TString>              getVarWRange(const std::string&) const;
   std::vector<std::map<std::string, TString>> getVarExps(const std::string&) const;
   std::map<std::string, TString>              getVarExp(const std::string&) const;
-  std::vector<TString>                        getOptions() const;
   std::map<std::string, std::vector<std::string>> _configs;
   std::string _outfileName;
   std::string _outdirName;
@@ -119,13 +119,8 @@ private:
   bool _useEventWiseWeight;
   bool _debug;
 };
-std::map<std::string, std::vector<std::string>> readConfigs(std::string);
 
 std::map<std::string, TMVA::Types::EMVA> setupMethodCollection();
-
-std::map<std::string, TString> getTrainPars(const TString&, const std::string&);
-
-std::map<std::string, TString> getAppPars(const TString&, const std::string&);
 
 struct MVAHelper
 {
