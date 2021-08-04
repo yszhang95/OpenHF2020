@@ -32,29 +32,34 @@ using std::cout;
 using std::endl;
 using std::istringstream;
 
-int TMVAClassification(const map<string, vector<string>>& configs);
+int TMVAClassification(const tmvaConfigs& configs);
 
 int main( int argc, char** argv )
 {
   // Select methods (don't look at this code - not of interest)
-  TString methodList; 
+  TString methodList;
   if( argc<2 || argc>3 ) {
     std::cout << "Usage: TMVAClassification configName [ DEBUG ]" << std::endl;
     return -1;
   }
 
   if (argc==3 && string(argv[2]).size()) { DEBUG = 1; }
+  else DEBUG = 0;
 
-  auto configs = readConfigs(argv[1]);
-  configs["outfileName"] = vector<string>(1, gSystem->BaseName(argv[1]));
-  auto pos = configs.at("outfileName").at(0).find(".xml");
-  if (pos!=string::npos) { (configs["outfileName"])[0].erase(pos, 4); }
-  if (configs.at("outfileName").at(0).size()) { (configs["outfileName"])[0].insert(0, "_"); }
+  tmvaConfigs configs(argv[1], DEBUG);
+  string tempOutFileName(gSystem->BaseName(argv[1]));
+  {
+    auto pos = tempOutFileName.find(".xml");
+    if (pos!=string::npos) { tempOutFileName.erase(pos, 4); }
+    if (tempOutFileName.size())
+      tempOutFileName.insert(0, "_");
+  }
+  configs.setOutFileName("TMVA" + tempOutFileName +".root");
 
   return TMVAClassification(configs);
 }
 
-int TMVAClassification(const map<string, vector<string>>& configs)
+int TMVAClassification(const tmvaConfigs& configs)
 {
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
@@ -72,7 +77,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // --- Here the preparation phase begins
 
   // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
-  TString outfileName = "TMVA" + configs.at("outfileName").at(0) + ".root";
+  TString outfileName = configs.getOutFileName();
   TFile* outputFile = TFile::Open( outfileName, "RECREATE" );
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
@@ -87,7 +92,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // The second argument is the output file for the training results
   // All TMVA output can be suppressed by removing the "!" (not) in
   // front of the "Silent" argument in the option string
-  TMVA::Factory *factory = new TMVA::Factory( "TMVAClassification", outputFile, configs.at("factory_config").at(0));
+  TMVA::Factory *factory = new TMVA::Factory( "TMVAClassification", outputFile, configs.getFactoryConfig());
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
   TMVA::DataLoader *dataloader = new TMVA::DataLoader("dataset");
@@ -100,9 +105,9 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   //    (TMVA::gConfig().GetVariablePlotting()).fTimesRMS = 8.0;
   //    (TMVA::gConfig().GetIONames()).fWeightFileDir = "myWeightDirectory";
 
-  if (configs.at("outfileName").at(0).size()) {
-    auto temp = configs.at("outfileName").at(0);
-    (TMVA::gConfig().GetIONames()).fWeightFileDir = "weights" + temp; //TString(temp.erase(0, 1).c_str());
+  if (outfileName.Length() > 9) {
+    auto temp = outfileName(4, outfileName.Length()-9);
+    (TMVA::gConfig().GetIONames()).fWeightFileDir = "weights" + temp;
   }
 
   // Define the input variables that shall be used for the MVA training
@@ -110,23 +115,22 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
 
   // varialbes without range specified
-  for (const auto& var : configs.at("training_variables_worange")) {
-    const auto pars = getTrainPars(var, "training_variables_worange");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    dataloader->AddVariable(pars.at("variable"),
-        pars.at("description"), pars.at("unit"), pars.at("type")[0]);
+  for (const auto& var : configs.getTrainVarsWoRange()) {
+    //    if (DEBUG) { for (const auto& p : var) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+    dataloader->AddVariable(var.at("variable"),
+        var.at("description"), var.at("unit"), var.at("type")[0]);
   }
   // varialbes with range specified
-  for (const auto& var : configs.at("training_variables_wrange")) {
-    const auto pars = getTrainPars(var, "training_variables_wrange");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    const double minValue = pars.at("min") == "" ?
-      std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
-    const double maxValue = pars.at("max") == "" ?
-      std::numeric_limits<double>::max() : std::stod(pars.at("max").Data());
-    dataloader->AddVariable(pars.at("variable"),
-        pars.at("description"), pars.at("unit"), pars.at("type")[0],
-        minValue, maxValue);
+  for (const auto& var : configs.getTrainVarsWRange()) {
+    //    if (DEBUG) { for (const auto& p : var) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+    const double minValue = var.at("min") == "" ?
+      std::numeric_limits<double>::min() : std::stod(var.at("min").Data());
+    const double maxValue = var.at("max") == "" ?
+      std::numeric_limits<double>::max() : std::stod(var.at("max").Data());
+
+    dataloader->AddVariable(var.at("variable"),
+                            var.at("description"), var.at("unit"), var.at("type")[0],
+                            minValue, maxValue);
   }
 
   // You can add so-called "Spectator variables", which are not used in the MVA training,
@@ -134,29 +138,28 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // input variables, the response values of all trained MVAs, and the spectator variables
 
   // varialbes without range specified
-  for (const auto& var : configs.at("spectator_variables_worange")) {
-    const auto pars = getTrainPars(var, "spectator_variables_worange");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    dataloader->AddSpectator(pars.at("variable"),
-        pars.at("description"), pars.at("unit"), pars.at("type")[0]);
+  for (const auto& var : configs.getSpecVarsWoRange()) {
+    //    if (DEBUG) { for (const auto& p : var) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+    dataloader->AddSpectator(var.at("variable"),
+        var.at("description"), var.at("unit"), var.at("type")[0]);
   }
   // varialbes with range specified
-  for (const auto& var : configs.at("spectator_variables_wrange")) {
-    const auto pars = getTrainPars(var, "spectator_variables_wrange");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    const double minValue = pars.at("min") == "" ?
-      std::numeric_limits<double>::min() : std::stod(pars.at("min").Data());
-    const double maxValue = pars.at("max") == "" ?
-      std::numeric_limits<double>::max() : std::stod(pars.at("max").Data());
-    dataloader->AddVariable(pars.at("variable"),
-        pars.at("description"), pars.at("unit"), pars.at("type")[0],
-        minValue, maxValue);
+  for (const auto& var : configs.getSpecVarsWRange()) {
+    //    if (DEBUG) { for (const auto& p : var) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+    const double minValue = var.at("min") == "" ?
+      std::numeric_limits<double>::min() : std::stod(var.at("min").Data());
+    const double maxValue = var.at("max") == "" ?
+      std::numeric_limits<double>::max() : std::stod(var.at("max").Data());
+
+    dataloader->AddSpectator(var.at("variable"),
+                            var.at("description"), var.at("unit"),
+                            minValue, maxValue);
   }
 
   // Read training and test data
   // (it is also possible to use ASCII format as input -> see TMVA Users Guide)
-  const auto signalFileList = configs.at("signalFileList").at(0);
-  const auto backgroundFileList = configs.at("backgroundFileList").at(0);
+  const auto signalFileList = configs.signalFileList();
+  const auto backgroundFileList = configs.backgroundFileList();
 
   cout << "--- TMVAClassification       : Using signal file list:     " << signalFileList     << endl;
   cout << "--- TMVAClassification       : Using background file list: " << backgroundFileList << endl;
@@ -172,21 +175,24 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   background->AddFileInfoList(fcBackground.GetList());
 
   // global event weights per tree (see below for setting event-wise weights)
-  Double_t signalWeight     = 1.0;
-  Double_t backgroundWeight = 1.0;
+  // Double_t signalWeight     = 1.0;
+  // Double_t backgroundWeight = 1.0;
+  Double_t signalWeight = configs.signalWeight();
+  Double_t backgroundWeight = configs.backgroundWeight();
 
   // You can add an arbitrary number of signal or background trees
   dataloader->AddSignalTree    ( signal.get(),     signalWeight     );
   dataloader->AddBackgroundTree( background.get(), backgroundWeight );
 
-  dataloader->SetSignalWeightExpression("weight");
-  dataloader->SetBackgroundWeightExpression("weight");
-
+  if (configs.useEventWiseWeight()) {
+    dataloader->SetSignalWeightExpression("weight");
+    dataloader->SetBackgroundWeightExpression("weight");
+  }
   // --- end of tree registration 
 
   // Apply additional cuts on the signal and background samples (can be different)
   std::string common_cuts;
-  for (const auto& cut : configs.at("common_cuts")) {
+  for (const auto& cut : configs.getCommonCuts()) {
     common_cuts += cut;
     common_cuts += " && ";
   }
@@ -207,7 +213,7 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   //                                         "NSigTrain=3000:NBkgTrain=3000:NSigTest=3000:NBkgTest=3000:SplitMode=Random:!V" );
   //  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
   //  "nTest_Signal=1:nTest_Background=1:SplitMode=Random:NormMode=NumEvents:!V" );
-  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb, configs.at("dataloader_config").at(0));
+  dataloader->PrepareTrainingAndTestTree( mycuts, mycutb, configs.getDataLoaderConfig());
 
 
   // ---- Book MVA methods
@@ -218,9 +224,9 @@ int TMVAClassification(const map<string, vector<string>>& configs)
   // "...:CutRangeMin[2]=-1:CutRangeMax[2]=1"...", where [2] is the third input variable
 
   auto MethodCollection = setupMethodCollection();
-  for (const auto& m : configs.at("methods")) {
-    const auto method = getTrainPars(m, "methods");
-    if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+
+  for (const auto& method : configs.getMethods()) {
+    // if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
     factory->BookMethod(dataloader,
         MethodCollection.at(method.at("method").Data()),
