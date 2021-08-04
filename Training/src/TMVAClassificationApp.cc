@@ -60,7 +60,7 @@ using std::istringstream;
 using std::unique_ptr;
 
 
-int TMVAClassificationApp(const map<string, vector<string>>& configs);
+int TMVAClassificationApp(const tmvaConfigs& configs);
 
 int main( int argc, char** argv )
 {
@@ -72,30 +72,28 @@ int main( int argc, char** argv )
   }
 
   if (argc==3 && string(argv[2]).size()) { DEBUG = 1; }
+  else DEBUG = 0;
 
-  auto configs = readConfigs(argv[1]);
+  tmvaConfigs configs(argv[1], DEBUG);
+  string tempOutFileName(gSystem->BaseName(argv[1]));
+  {
+    auto pos = tempOutFileName.find(".xml");
+    if (pos!=string::npos) { tempOutFileName.erase(pos, 4); }
+    if (tempOutFileName.size())
+      tempOutFileName.insert(0, "_");
+  }
+  configs.setOutFileName("TMVA" + tempOutFileName +".root");
 
-  configs["outfileName"] = vector<string>(1, gSystem->BaseName(argv[1]));
-  auto pos = configs.at("outfileName").at(0).find(".xml");
-  if (pos!=string::npos) { (configs["outfileName"])[0].erase(pos, 4); }
-  if (configs.at("outfileName").at(0).size()) { (configs["outfileName"])[0].insert(0, "_"); }
-  //  (configs["outputDir"]).at(0) += "/";
   int code = TMVAClassificationApp(configs);
   return code;
 }
 
 
-int TMVAClassificationApp(const map<string, vector<string>>& configs)
+int TMVAClassificationApp(const tmvaConfigs& configs)
 {
-  vector<TString> options = splitTString( configs.at("options").at(0), ":" );
-  cout << "Options are:" << endl;
-  for (const auto& e: options) {
-    cout << "\t" << e << endl;
-  }
-  const bool saveTree = std::find(options.begin(), options.end(), "saveTree") != options.end();
-  const bool saveDau = std::find(options.begin(), options.end(), "saveDau") != options.end();
-  const bool selectMVA = std::find(options.begin(), options.end(), "selectMVA") != options.end();
-
+  const bool saveTree = configs.saveTree();
+  const bool saveDau = configs.saveDau();
+  const bool selectMVA = configs.selectMVA();
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -112,7 +110,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   // --- Here the preparation phase begins
 
   // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
-  TString outfileName = configs.at("outputDir").at(0) + "TMVA" + configs.at("outfileName").at(0) + ".root";
+  TString outfileName = configs.getOutFileName();
   TFile outputFile( outfileName, "RECREATE" );
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
@@ -132,38 +130,24 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   // variables in training
 
   vector<vector<TString>> allTrainVars;
-  vector<map<string, TString>> trainingVars;
-  for (size_t ivar=0; ivar!=configs.at("training_variables").size(); ivar++) {
-    const auto & var = configs.at("training_variables").at(ivar);
-    const auto pars = getAppPars(var, "training_variables");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    auto v = splitTString(pars.at("eqn_vars"), ":");
+  vector<map<string, TString>> trainingVars = configs.getTrainVarExps();
+  for (const auto& var : trainingVars) {
+    auto v = splitTString(var.at("eqn_vars"), ":");
     allTrainVars.push_back(v);
-    trainingVars.push_back(pars);
   }
 
   vector<vector<TString>> allSpectatorVars;
-  vector<map<string, TString>> spectatorVars;
-  for (size_t ivar=0; ivar!=configs.at("spectator_variables").size(); ivar++) {
-    const auto & var = configs.at("spectator_variables").at(ivar);
-    const auto pars = getAppPars(var, "spectator_variables");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    auto v = splitTString(pars.at("eqn_vars"), ":");
-
+  vector<map<string, TString>> spectatorVars = configs.getSpecVarExps();
+  for (const auto& var : spectatorVars) {
+    auto v = splitTString(var.at("eqn_vars"), ":");
     allSpectatorVars.push_back(v);
-    spectatorVars.push_back(pars);
   }
 
   vector<vector<TString>> allCommonCuts;
-  vector<map<string, TString>> commonCuts;
-  for (size_t ivar=0; ivar!=configs.at("common_cuts").size(); ivar++) {
-    const auto & var = configs.at("common_cuts").at(ivar);
-    const auto pars = getAppPars(var, "common_cuts");
-    if (DEBUG) { for (const auto& p : pars) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
-    auto v = splitTString(pars.at("eqn_vars"), ":");
-
+  vector<map<string, TString>> commonCuts = configs.getCutsVarExps();
+  for (const auto& var : commonCuts) {
+    auto v = splitTString(var.at("eqn_vars"), ":");
     allCommonCuts.push_back(v);
-    commonCuts.push_back(pars);
   }
 
 
@@ -171,11 +155,11 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
 
   for (size_t ivar=0; ivar!=trainingVars.size(); ivar++) {
     const auto& pars = trainingVars.at(ivar);
-    reader->AddVariable(pars.at("training_vars"), &helper.vars[ivar]);
+    reader->AddVariable(pars.at("vars"), &helper.vars[ivar]);
   }
   for (size_t ivar=0; ivar!=spectatorVars.size(); ivar++) {
     const auto& pars = spectatorVars.at(ivar);
-    reader->AddSpectator(pars.at("spectator_vars"), &helper.specs[ivar]);
+    reader->AddSpectator(pars.at("vars"), &helper.specs[ivar]);
   }
 
   // ---- Book MVA methods
@@ -195,11 +179,11 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
   auto MethodCollection = setupMethodCollection();
   vector<TString> methodNames;
   vector<TString> methodNames_copy;
-  for (const auto& m : configs.at("methods")) {
-    const auto method = getAppPars(m, "methods");
-    if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
+  for (size_t im=0; im<configs.getMethods().size(); ++im) {
+    const auto& method = configs.getMethods().at(im);
+    // if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     TString methodName = method.at("name");
-    TString postfix = configs.at("trainXML").at(0);
+    TString postfix = configs.getTrainXMLs().at(im);
     auto pos = postfix.Index(".xml");
     postfix.Remove(pos, 4);
     TString weightfile = dir + "_" + postfix + "/" + prefix + TString("_") + methodName + TString(".weights.xml");
@@ -208,6 +192,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
     reader->BookMVA( methodName, weightfile );
     methodNames.push_back(methodName);
   }
+
 
   // Read data
   // Prepare output histogram
@@ -223,7 +208,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
 
   // Prepare input tree (this must be replaced by your data source)
 
-  const auto treeInfo = getAppPars((configs.at("treeInfo"))[0], "treeInfo");
+  const auto treeInfo = configs.getTreeInfo();
 
   const auto treeDir = treeInfo.at("treeDir");
   const auto inputFileList = treeInfo.at("treeList");
@@ -275,7 +260,7 @@ int TMVAClassificationApp(const map<string, vector<string>>& configs)
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
-          passMVA = passMVA || mvaValues[i] > std::stod(configs.at("mvaCutMin").at(i));
+          passMVA = passMVA || mvaValues[i] > std::stod(configs.getMVACutMins().at(i));
           if (abs(ntp.cand_y)<1.) {
             hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
           } else if (abs(ntp.cand_y)<2.) {
