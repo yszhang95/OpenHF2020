@@ -67,7 +67,7 @@ public :
   std::vector<float>&   hltTotalLumi() const override { throw std::runtime_error("This interface can only be used for data"); };
 
 protected:
-  virtual void     Init(TTree *tree);
+  void     Init(TTree *tree);
 
 private:
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain

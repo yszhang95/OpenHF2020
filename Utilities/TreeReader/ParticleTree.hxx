@@ -82,6 +82,34 @@ public:
   std::vector<float>&   trk_zDCASignificance() const { return *_trk_zDCASignificance; }
   std::vector<std::vector<unsigned int>>& trk_candIdx() const { return *_trk_candIdx; }
 
+  // MC specified
+  virtual Int_t           Ntrkgen() const = 0;
+  virtual Float_t         genWeight() const = 0;
+  virtual Float_t         pTHat() const = 0;
+  virtual std::vector<bool>&    cand_matchGEN() const = 0;
+  virtual std::vector<bool>&    cand_momMatchGEN() const = 0;
+  virtual std::vector<int>&     cand_genPdgId() const = 0;
+  virtual std::vector<int>&     cand_isSwap() const = 0;
+  virtual std::vector<unsigned short>& cand_genIdx() const = 0;
+  virtual std::vector<unsigned int>& cand_momMatchIdx() const = 0;
+  virtual std::vector<char>&    gen_charge() const  = 0;
+  virtual std::vector<int>&     gen_pdgId() const  = 0;
+  virtual std::vector<unsigned char>& gen_status() const  = 0;
+  virtual std::vector<unsigned short>& gen_statusBit() const  = 0;
+  virtual std::vector<float>&   gen_angle2D() const  = 0;
+  virtual std::vector<float>&   gen_angle3D() const  = 0;
+  virtual std::vector<float>&   gen_decayLength2D() const  = 0;
+  virtual std::vector<float>&   gen_decayLength3D() const  = 0;
+  virtual std::vector<float>&   gen_eta() const  = 0;
+  virtual std::vector<float>&   gen_mass() const  = 0;
+  virtual std::vector<float>&   gen_p() const  = 0;
+  virtual std::vector<float>&   gen_pT() const  = 0;
+  virtual std::vector<float>&   gen_phi() const  = 0;
+  virtual std::vector<float>&   gen_y() const  = 0;
+  virtual std::vector<std::vector<unsigned short>>& gen_dauIdx() const  = 0;
+  virtual std::vector<std::vector<unsigned short>>& gen_momIdx() const  = 0;
+  virtual std::vector<std::vector<unsigned int>>& gen_candIdx() const  = 0;
+
   // Data specified
   virtual  Float_t         pileup() const = 0;
   virtual  Float_t         rawInstLumi() const = 0;
@@ -98,7 +126,7 @@ public:
   virtual  std::vector<float>&   hltTotalLumi() const = 0;
 
 protected:
-  virtual void     Init(TTree *tree);
+  void     Init(TTree *tree);
 
 private:
 

@@ -22,12 +22,12 @@ public :
   ParticleTreeData(TTree *tree=0);
   virtual ~ParticleTreeData();
 
-  bool            isMC() const { return false; }
+  bool            isMC() const override { return false; }
 
-  Float_t         pileup() const { return _pileup; }
-  Float_t         rawInstLumi() const { return _rawInstLumi; }
-  Float_t         recordLumi() const { return _recordLumi; }
-  Float_t         totalLumi() const { return _totalLumi; }
+  Float_t         pileup() const override { return _pileup; }
+  Float_t         rawInstLumi() const override { return _rawInstLumi; }
+  Float_t         recordLumi() const override { return _recordLumi; }
+  Float_t         totalLumi() const override { return _totalLumi; }
 
   std::vector<bool>&    passHLT() const override{ return *_passHLT; }
   std::vector<bool>&    passHLTPrescaler() const override{ return *_passHLTPrescaler; }
@@ -68,7 +68,7 @@ public :
 
 
 protected:
-  virtual void     Init(TTree *tree);
+  void     Init (TTree *tree);
 
 private:
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
