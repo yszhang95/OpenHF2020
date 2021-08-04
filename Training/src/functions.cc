@@ -69,7 +69,8 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _outfileName(""), _outdirName(""),
   _signalFileList(""), _backgroundFileList(""),
   _signalWeight(1.), _backgroundWeight(1.),
-  _saveTree(0), _saveDau(0), _selectMVA(0), _useEventWiseWeight(0),
+  _saveTree(0), _saveDau(0), _selectMVA(0),
+  _useEventWiseWeight(0), _isMC(0), _saveMatchedOnly(1),
   _debug(debug)
 {
   if (_debug) { cout << "\nStart readConfigs" << endl; }
@@ -141,6 +142,9 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _selectMVA = std::find(options.begin(), options.end(), "selectMVA") != options.end();
   _useEventWiseWeight = std::find(options.begin(), options.end(), "useEventWiseWeight")
     != options.end();
+  _isMC      = std::find(options.begin(), options.end(), "isMC")      != options.end();
+  _saveMatchedOnly = std::find (options.begin(), options.end(), "!saveMatchedOnly")
+    == options.end();
 
   if (_configs.count("signalFileList")
       && _configs.at("signalFileList").size())
@@ -599,6 +603,22 @@ bool tmvaConfigs::selectMVA() const
 bool tmvaConfigs::useEventWiseWeight() const
 {
   return _useEventWiseWeight;
+}
+
+/**
+   Return if the input tree is from MC samples
+ */
+bool tmvaConfigs::isMC() const
+{
+  return _isMC;
+}
+
+/**
+   Return if only the matched candidates will be saved
+ */
+bool tmvaConfigs::saveMatchedOnly() const
+{
+  return _saveMatchedOnly;
 }
 
 /**

@@ -5,7 +5,9 @@
 #ifdef TreeHelpers_H
 using std::vector;
 
-bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTreeMC& p,
+// bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTreeMC& p,
+//                      const bool isFirstGen)
+bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTree& p,
                      const bool isFirstGen)
 {
   // check pdg Id
@@ -82,7 +84,8 @@ PtEtaPhiM_t getRecoDauP4(size_t idx, size_t idau, const ParticleTree& p)
             );
 }
 
-PtEtaPhiM_t getGenP4(size_t idx, const ParticleTreeMC& p)
+// PtEtaPhiM_t getGenP4(size_t idx, const ParticleTreeMC& p)
+PtEtaPhiM_t getGenP4(size_t idx, const ParticleTree& p)
 {
   return PtEtaPhiM_t (
             p.gen_pT()[idx],

@@ -32,7 +32,8 @@
     BDTGcv3.xml
   </trainXML>
   <treeInfo>
-    testcvApp.list ? lambdacAna  ? 4122 ? -1
+    #testcvApp.list ? lambdacAna  ? 4122 ? -1
+    MC_particletree.list ? lambdacAna_mc  ? 4122 ? -1
   </treeInfo>
   <methods>
     #BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=3
@@ -44,7 +45,8 @@
     BDT? BDTGcv3? !H:!V:NTrees=1000:MinNodeSize=4.0%:BoostType=Grad:Shrinkage=0.1:nCuts=30:MaxDepth=3:SeparationType=CrossEntropy:UseYesNoLeaf=False
   </methods>
   <options>
-    saveTree:!saveDau:selectMVA
+    #saveTree:!saveDau:selectMVA
+    saveTree:!saveDau:selectMVA:saveMatchedOnly:isMC
   </options>
   <mvaCutMin>
     #0.5

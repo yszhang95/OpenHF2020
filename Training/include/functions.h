@@ -97,6 +97,8 @@ public:
   bool                                        saveDau()   const;
   bool                                        selectMVA() const;
   bool                                        useEventWiseWeight() const;
+  bool                                        isMC() const;
+  bool                                        saveMatchedOnly() const;
 
 private:
   std::map<std::string, TString>              getMethod(const std::string&) const;
@@ -117,6 +119,8 @@ private:
   bool _saveDau;
   bool _selectMVA;
   bool _useEventWiseWeight;
+  bool _isMC;
+  bool _saveMatchedOnly;
   bool _debug;
 };
 

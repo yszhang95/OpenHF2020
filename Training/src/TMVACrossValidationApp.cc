@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <tuple>
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -48,7 +49,11 @@
 #include "TreeReader/ParticleTreeMC.hxx"
 #include "TreeReader/ParticleTreeData.hxx"
 
+#include "Ana/Common.h"
+#include "Ana/TreeHelpers.h"
+
 using std::map;
+using std::tuple;
 using std::string;
 using std::vector;
 using std::ifstream;
@@ -57,6 +62,10 @@ using std::cout;
 using std::endl;
 using std::istringstream;
 using std::unique_ptr;
+
+using PtEtaPhiM_t = ROOT::Math::PtEtaPhiMVector;
+
+using MatchPairInfo =  tuple<size_t, size_t, double, double>;
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
 int TMVACrossValidationApp(const tmvaConfigs&);
@@ -99,6 +108,8 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
   const bool saveTree = configs.saveTree();
   const bool saveDau = configs.saveDau();
   const bool selectMVA = configs.selectMVA();
+  const bool isMC = configs.isMC();
+  const bool saveMatchedOnly = configs.saveMatchedOnly();
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -232,26 +243,98 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
   TFileCollection tf("tf", "", inputFileList.Data());
   TChain t(treeDir+"/ParticleTree");
   t.AddFileInfoList(tf.GetList());
-  ParticleTreeData p(&t); // temporary use
+  ParticleTree* pp;
+  if (configs.isMC()) pp = new ParticleTreeMC(&t);
+  else pp = new ParticleTreeData(&t);
+  ParticleTree& p = *pp;
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   ntp.dropDau = !saveDau;
+  ntp.isMC = isMC;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
+
+  // hard code for LambdaC begin
+  MatchCriterion  matchCriterion(0.03, 0.1);
+  Particle particle(4122);
+  if (isMC) {
+    Particle Ks(310);
+    Ks.selfConj(true);
+    Ks.longLived(true);
+    particle.addDaughter(Ks);
+    Particle proton(2212);
+    particle.addDaughter(proton);
+  }
+  // hard code for LambdaC end
 
   if(nentries < 0) nentries = p.GetEntries();
   // Event loop
   Long64_t num = 0;
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
+
     p.GetEntry(ientry);
+
+    // check pileup filter
+    if (!p.evtSel().at(4)) continue;
+
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
+
+    // reco gen matching begin
+    map<size_t, size_t> matchPairs;
+    if (isMC) {
+      const auto gensize = p.gen_mass().size();
+      const auto& gen_pdgId = p.gen_pdgId();
+
+      map<size_t, PtEtaPhiM_t> p4GenFS;
+      for (size_t igen=0; igen<gensize; igen++) {
+        if (abs(gen_pdgId[igen]) != std::abs(particle.id())) continue;
+        const auto gen_dauIdx = p.gen_dauIdx().at(igen);
+        Particle particle_copy(particle);
+        bool sameChain = checkDecayChain(particle_copy, igen, p);
+        if (!sameChain) continue;
+        p4GenFS[particle_copy.daughter(0)->treeIdx()] = getGenP4(particle_copy.daughter(0)->treeIdx(), p); // Ks from LambdaC
+        p4GenFS[particle_copy.daughter(1)->treeIdx()] = getGenP4(particle_copy.daughter(1)->treeIdx(), p); // proton from LambdaC
+      }
+      map<size_t, PtEtaPhiM_t> p4RecoFS;
+      for (size_t ireco=0; ireco<recosize; ireco++) {
+        if (p.cand_pdgId().at(ireco) == PdgId::Ks ||
+            p.cand_pdgId().at(ireco) == PdgId::Proton)
+          p4RecoFS[ireco] = getRecoP4(ireco, p); // Ks or proton
+      }
+      vector<bool> recoLock(recosize, 0);
+      vector<bool> genLock (gensize,  0);
+      vector<MatchPairInfo> matchGenInfo;
+      for (const auto& gen : p4GenFS) {
+        for (const auto& reco : p4RecoFS) {
+          if (matchCriterion.match(reco.second, gen.second)) {
+            const auto dR = ROOT::Math::VectorUtil::DeltaR(reco.second, gen.second);
+            const auto dRelPt = TMath::Abs(gen.second.Pt() - reco.second.Pt())/gen.second.Pt();
+            matchGenInfo.push_back( std::make_tuple(reco.first, gen.first, dR, dRelPt) );
+          }
+        }
+      }
+      // sort by pT
+      std::sort(matchGenInfo.begin(), matchGenInfo.end(), [](MatchPairInfo i, MatchPairInfo j) { return std::get<3>(i) < std::get<3>(j); } );
+
+      for (auto e : matchGenInfo) {
+        const auto ireco = std::get<0>(e);
+        const auto igen  = std::get<1>(e);
+        if (!recoLock.at(ireco) && !genLock.at(igen)) {
+          recoLock.at(ireco) = 1;
+          genLock.at(igen)   = 1;
+          matchPairs.insert(map<size_t, size_t>::value_type(ireco, igen));
+        }
+      }
+    }
+    // reco gen matching end
+
   // Prepare the event tree
   // - Here the variable names have to corresponds to your tree
   // - You can use the same variables as above which is slightly faster,
@@ -262,6 +345,54 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle_id)) {
         eventID = (num++) % 8192;
+
+        // hard code begin
+        const auto dauIdx = p.cand_dauIdx().at(ireco);
+        // 0 for Ks, 1 for proton
+        const auto gDauIdx = p.cand_dauIdx().at(dauIdx.at(0));
+        if (isMC) {
+          // check reco-gen match
+          bool matchGEN = true;
+          bool isSwap = false;
+
+          ntp.cand_dau_matchGEN[0] = matchPairs.find( dauIdx.at(0) ) != matchPairs.end();
+          ntp.cand_dau_matchGEN[1] = matchPairs.find( dauIdx.at(1) ) != matchPairs.end();
+          matchGEN = matchGEN && ( matchPairs.find( dauIdx.at(0) ) != matchPairs.end() );
+          matchGEN = matchGEN && ( matchPairs.find( dauIdx.at(1) ) != matchPairs.end() );
+
+          if (ntp.cand_dau_matchGEN[0]) {
+            ntp.cand_dau_isSwap[0] = std::abs(0.497611 - p.gen_mass().at(matchPairs.at(dauIdx.at(0)))) > 0.01;
+            isSwap = isSwap || ntp.cand_dau_isSwap[0];
+          }
+          if (ntp.cand_dau_matchGEN[1]) {
+            ntp.cand_dau_isSwap[1] = std::abs(0.938272081 - p.gen_mass().at((matchPairs.at(dauIdx.at(1))))) > 0.01;
+            isSwap = isSwap || ntp.cand_dau_isSwap[1];
+          }
+
+          ntp.cand_matchGEN = matchGEN;
+          ntp.cand_isSwap = isSwap;
+          if (saveMatchedOnly && !matchGEN) continue;
+        }
+        // hard code end
+
+        // special for Ks begin
+        // check it is not a Lambda/Anti-Lambda
+        PtEtaPhiM_t gDau0P4 = getRecoDauP4(dauIdx.at(0), 0, p); // pi- from Ks
+        PtEtaPhiM_t gDau1P4 = getRecoDauP4(dauIdx.at(0), 1, p); // pi+ from Ks
+        if (gDau0P4.P() > gDau1P4.P()) {
+          gDau0P4.SetM(0.938272081);
+        } else {
+          gDau1P4.SetM(0.938272081);
+        }
+        PtEtaPhiM_t total = gDau0P4 + gDau1P4;
+        if ( std::abs(total.M() - 1.11568) < 0.02) { continue; }
+        // dielectron cross check
+        gDau0P4.SetM(0.000511);
+        gDau1P4.SetM(0.000511);
+        PtEtaPhiM_t ee = gDau0P4 + gDau1P4;
+        if ( ee.M() <0.2 ) { continue; }
+        // special for Ks end
+
         ntp.retrieveTreeInfo(p, ireco);
         helper.GetValues(ntp, allTrainVars, allSpectatorVars, allCommonCuts);
         bool passCuts = true;
@@ -298,6 +429,7 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;
 
   delete reader;
+  delete pp;
   return 0;
 }
 #endif
