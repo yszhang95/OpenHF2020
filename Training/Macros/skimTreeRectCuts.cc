@@ -111,7 +111,7 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
         gDau1P4.SetM(0.000511);
         PtEtaPhiM_t ee = gDau0P4 + gDau1P4;
         if ( ee.M() <0.2 ) { continue; }
-        
+
         // retrieve other information
         //ntp.hltRecordLumi = p.hltRecordLumi().at(0); // 0 means high multiplicity 185
         ntp.retrieveTreeInfo(p, ireco);
