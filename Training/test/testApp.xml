@@ -1,10 +1,14 @@
 <root>
   <training_variables>
+    dedx := trk_dau1_dEdx_dedxHarmonic2 ? [0] ? trk_dau1_dEdx_dedxHarmonic2
     cand_vtxChi2? [0]? cand_vtxChi2
-    cand_vtxProb? [0]? cand_vtxProb
-    cand_angle3D? [0]? cand_angle3D
+    cos(cand_angle3D)? cos([0])? cand_angle3D
     cand_decayLength3D? [0]? cand_decayLength3D
     cand_dlsig3D := cand_decayLength3D/cand_decayLengthError3D? [0]/[1]? cand_decayLength3D:cand_decayLengthError3D
+    cand_dau1_p := cand_pTDau1 * cosh(cand_etaDau1)? [0] * cosh([1])? cand_pTDau1:cand_etaDau1
+    cand_etaDau1 ? [0] ? cand_etaDau1
+    cand_dau0_p := cand_pTDau0 * cosh(cand_etaDau0)? [0] * cosh([1])? cand_pTDau0:cand_etaDau0
+    cand_etaDau0 ? [0] ? cand_etaDau0
   </training_variables>
   <spectator_variables>
     cand_pT? [0] ? cand_pT
@@ -19,13 +23,16 @@
     test.xml
   </trainXML>
   <treeInfo>
-    testApp.list ? lambdacAna_mc  ? 4122 ? -1
+    MC_particletree.list ? lambdacAna_mc  ? 4122 ? -1
   </treeInfo>
   <methods>
-#    Cuts? CutsGA? H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95 
-    BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=2
+    BDT? BDTG? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=3
   </methods>
   <options>
-    selectMVA:saveTree:saveDau
+    #saveTree:!saveDau:selectMVA
+    saveTree:!saveDau:selectMVA:saveMatchedOnly:isMC
   </options>
+  <mvaCutMin>
+    0.5
+  </mvaCutMin>
 </root>
