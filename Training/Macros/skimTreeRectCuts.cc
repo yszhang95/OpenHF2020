@@ -41,9 +41,10 @@ using PtEtaPhiM_t = ROOT::Math::PtEtaPhiMVector;
 using MatchPairInfo =  tuple<size_t, size_t, double, double>;
 
 int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
-               const TString& postfix, const TString& outDir,
-               Particle particle, KineCut kins,
-               Long64_t nentries=-1)
+                     const TString& postfix, const TString& outDir,
+                     Particle particle, KineCut kins,
+                     Long64_t nentries=-1, const bool isMC=false,
+                     const bool saveMatchedOnly=true)
 {
   TString basename(gSystem->BaseName(inputList));
   const auto firstPos = basename.Index(".list");
@@ -63,7 +64,7 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
   TH3D hMassPtYNoCut("hMassPtYNoCut", ";Mass;Pt;Y", 80, 2.2, 2.4, 50, 0, 10, 20, -2, 2);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
-  ntp.isMC = false;
+  ntp.isMC = isMC;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();
@@ -71,7 +72,12 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
   TFileCollection tf("tf", "", inputList);
   TChain t(treeDir+"/ParticleTree");
   t.AddFileInfoList(tf.GetList());
-  ParticleTreeData p(&t);
+  ParticleTree* pp;
+  if (isMC) pp = new ParticleTreeMC(&t);
+  else pp = new ParticleTreeData(&t);
+  ParticleTree& p = *pp;
+
+  MatchCriterion  matchCriterion(0.03, 0.1);
 
   if(nentries < 0) nentries = p.GetEntries();
   cout << "Tree " << treeDir << "/ParticleTree in " << inputList
@@ -85,8 +91,56 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
     if (!p.evtSel().at(4)) continue;
 
     const auto recosize = p.cand_mass().size();
-
     const auto& pdgId = p.cand_pdgId();
+
+    // reco gen matching begin
+    map<size_t, size_t> matchPairs;
+    if (isMC) {
+      const auto gensize = p.gen_mass().size();
+      const auto& gen_pdgId = p.gen_pdgId();
+
+      map<size_t, PtEtaPhiM_t> p4GenFS;
+      for (size_t igen=0; igen<gensize; igen++) {
+        if (abs(gen_pdgId[igen]) != std::abs(particle.id())) continue;
+        const auto gen_dauIdx = p.gen_dauIdx().at(igen);
+        Particle particle_copy(particle);
+        bool sameChain = checkDecayChain(particle_copy, igen, p);
+        if (!sameChain) continue;
+        p4GenFS[particle_copy.daughter(0)->treeIdx()] = getGenP4(particle_copy.daughter(0)->treeIdx(), p); // Ks from LambdaC
+        p4GenFS[particle_copy.daughter(1)->treeIdx()] = getGenP4(particle_copy.daughter(1)->treeIdx(), p); // proton from LambdaC
+      }
+      map<size_t, PtEtaPhiM_t> p4RecoFS;
+      for (size_t ireco=0; ireco<recosize; ireco++) {
+        if (p.cand_pdgId().at(ireco) == PdgId::Ks ||
+            p.cand_pdgId().at(ireco) == PdgId::Proton)
+          p4RecoFS[ireco] = getRecoP4(ireco, p); // Ks or proton
+      }
+      vector<bool> recoLock(recosize, 0);
+      vector<bool> genLock (gensize,  0);
+      vector<MatchPairInfo> matchGenInfo;
+      for (const auto& gen : p4GenFS) {
+        for (const auto& reco : p4RecoFS) {
+          if (matchCriterion.match(reco.second, gen.second)) {
+            const auto dR = ROOT::Math::VectorUtil::DeltaR(reco.second, gen.second);
+            const auto dRelPt = TMath::Abs(gen.second.Pt() - reco.second.Pt())/gen.second.Pt();
+            matchGenInfo.push_back( std::make_tuple(reco.first, gen.first, dR, dRelPt) );
+          }
+        }
+      }
+      // sort by pT
+      std::sort(matchGenInfo.begin(), matchGenInfo.end(), [](MatchPairInfo i, MatchPairInfo j) { return std::get<3>(i) < std::get<3>(j); } );
+
+      for (auto e : matchGenInfo) {
+        const auto ireco = std::get<0>(e);
+        const auto igen  = std::get<1>(e);
+        if (!recoLock.at(ireco) && !genLock.at(igen)) {
+          recoLock.at(ireco) = 1;
+          genLock.at(igen)   = 1;
+          matchPairs.insert(map<size_t, size_t>::value_type(ireco, igen));
+        }
+      }
+    }
+    // reco gen matching end
 
     // loop over particles
     for (size_t ireco=0; ireco<recosize; ireco++) {
@@ -95,6 +149,30 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
         const auto dauIdx = p.cand_dauIdx().at(ireco);
         // 0 for Ks, 1 for proton
         const auto gDauIdx = p.cand_dauIdx().at(dauIdx.at(0));
+        if (isMC) {
+          // check reco-gen match
+          bool matchGEN = true;
+          bool isSwap = false;
+
+          ntp.cand_dau_matchGEN[0] = matchPairs.find( dauIdx.at(0) ) != matchPairs.end();
+          ntp.cand_dau_matchGEN[1] = matchPairs.find( dauIdx.at(1) ) != matchPairs.end();
+          matchGEN = matchGEN && ( matchPairs.find( dauIdx.at(0) ) != matchPairs.end() );
+          matchGEN = matchGEN && ( matchPairs.find( dauIdx.at(1) ) != matchPairs.end() );
+
+          if (ntp.cand_dau_matchGEN[0]) {
+            ntp.cand_dau_isSwap[0] = std::abs(0.497611 - p.gen_mass().at(matchPairs.at(dauIdx.at(0)))) > 0.01;
+            isSwap = isSwap || ntp.cand_dau_isSwap[0];
+          }
+          if (ntp.cand_dau_matchGEN[1]) {
+            ntp.cand_dau_isSwap[1] = std::abs(0.938272081 - p.gen_mass().at((matchPairs.at(dauIdx.at(1))))) > 0.01;
+            isSwap = isSwap || ntp.cand_dau_isSwap[1];
+          }
+
+          ntp.cand_matchGEN = matchGEN;
+          ntp.cand_isSwap = isSwap;
+          if (saveMatchedOnly && !matchGEN) continue;
+        }
+        // hard code end
 
         // check it is not a Lambda/Anti-Lambda
         PtEtaPhiM_t gDau0P4 = getRecoDauP4(dauIdx.at(0), 0, p); // pi- from Ks
@@ -160,5 +238,6 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
     } // end looping over particles
   } // end loop
   ofile.Write();
+  delete pp;
   return 0;
 }

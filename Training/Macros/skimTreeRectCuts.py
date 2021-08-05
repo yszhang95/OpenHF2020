@@ -6,8 +6,11 @@ parser.add_argument('--maxEvents', dest='maxEvents', help='number of events', ty
 parser.add_argument('--treeDir', dest='treeDir', help='TDirectory for ParticleTree', type=str, default='lambdacAna')
 parser.add_argument('--outdir', dest='outdir', help='output directory', type=str, default='.')
 parser.add_argument('--suffix', dest='suffix', help='suffix', type=str, default='LamCKsP')
+parser.add_argument('--mc', dest='isMC', help='intput is MC (default: input is data)', action='store_const', const=True, default=False)
+parser.add_argument('--saveAll', dest='saveAll', help='Save all candidates when intput is MC (default: not)', action='store_const', const=True, default=False)
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
+saveMatchedOnly = not args.saveAll
 
 import ROOT as r
 r.gROOT.LoadMacro('${OPENHF2020TOP}/Training/Macros/skimTreeRectCuts.cc+')
@@ -24,6 +27,6 @@ kinsCut = r.KineCut(0., 1000., 0., 1000)
 
 ts = r.TStopwatch()
 ts.Start()
-r.skimTreeRectCuts(args.inputList, args.treeDir, args.suffix, args.outdir, LambdaC, kinsCut, args.maxEvents)
+r.skimTreeRectCuts(args.inputList, args.treeDir, args.suffix, args.outdir, LambdaC, kinsCut, args.maxEvents, args.isMC, saveMatchedOnly)
 ts.Stop()
 ts.Print()
