@@ -21,15 +21,30 @@ ACLiC.BuildDir:        .compiles
 ACLiC.IncludePaths:     -I${OPENHF2020TOP}/Utilities
 _EOF_
 
+TreeDir=""
+if [[ $2 == *"data"* ]]; then
+  TreeDir="lambdacAna"
+fi
+if [[ $2 == *"MC"* ]]; then
+  TreeDir="lambdacAna_mc"
+fi
+
+Options=""
+if [[ $2 == *"data"* ]]; then
+  Options="--treeDir $TreeDir"
+fi
+if [[ $2 == *"MC"* ]]; then
+  Options="--treeDir $TreeDir --mc"
+fi
+
 Exe=skimTreeRectCuts.py
-echo "./OpenHF2020/Training/Macros/${Exe} -i $2"
-./OpenHF2020/Training/Macros/${Exe} -i $2
+echo "./OpenHF2020/Training/Macros/${Exe} -i $2 $Options"
+./OpenHF2020/Training/Macros/${Exe} -i $2 $Options
 
 ls
 FileName=$(basename -- "$2")
 FileNameHead="${FileName%.list.*}"
 FileNameTail="${FileName#*.list}"
-TreeDir="lambdacAna"
 OutFile="${FileNameHead}_${FileNameTail}${TreeDir}_AllEntries_LamCKsP.root"
 
 xrdcp -f ${OutFile} ${3}/${OutFile}
