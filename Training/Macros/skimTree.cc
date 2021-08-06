@@ -59,6 +59,7 @@ int skimTree(const TString& inputList, const TString& treeDir,
   // new TTree
   ofile.mkdir(treeDir);
   ofile.cd(treeDir);
+  TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0, 300);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   ntp.isMC = false;
@@ -81,6 +82,7 @@ int skimTree(const TString& inputList, const TString& treeDir,
 
     // check pileup filter
     if (!p.evtSel().at(4)) continue;
+    hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();
 

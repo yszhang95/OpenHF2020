@@ -60,6 +60,7 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
   // new TTree
   ofile.mkdir(treeDir);
   ofile.cd(treeDir);
+  TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0, 300);
   TH3D hMassPtY("hMassPtY", ";Mass;Pt;Y", 80, 2.2, 2.4, 50, 0, 10, 20, -2, 2);
   TH3D hMassPtYNoCut("hMassPtYNoCut", ";Mass;Pt;Y", 80, 2.2, 2.4, 50, 0, 10, 20, -2, 2);
   TTree tt("ParticleNTuple", "ParticleNTuple");
@@ -89,6 +90,7 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
 
     // check pileup filter
     if (!p.evtSel().at(4)) continue;
+    if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();

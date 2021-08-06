@@ -67,9 +67,11 @@ int genMatchFS(const TString& inputList, const TString& treeDir,
   // new TTree
   ofile.mkdir(treeDir);
   ofile.cd(treeDir);
+  TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0, 300);
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   unsigned short dauNGDau[] = {2, 0};
+  ntp.isMC = true;
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();
 
@@ -89,6 +91,7 @@ int genMatchFS(const TString& inputList, const TString& treeDir,
     p.GetEntry(ientry);
     // check pileup filter
     if (!p.evtSel().at(4)) continue;
+    // hNtrkoffline.Fill(p.Ntrkoffline());
 
     // reco-gen matching
     const auto gensize = p.gen_mass().size();
