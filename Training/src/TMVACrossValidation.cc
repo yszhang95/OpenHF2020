@@ -40,6 +40,7 @@ int TMVACrossValidation(const tmvaConfigs&);
 
 int main( int argc, char** argv )
 {
+  gROOT->SetBatch(true);
   // Select methods (don't look at this code - not of interest)
   TString methodList;
   if( argc<2 || argc>3 ) {
@@ -77,6 +78,7 @@ int TMVACrossValidation(const tmvaConfigs& configs)
 
   //---------------------------------------------------------------
   // This loads the library
+  gROOT->SetBatch(true);
   TMVA::Tools::Instance();
 
   std::cout << std::endl;

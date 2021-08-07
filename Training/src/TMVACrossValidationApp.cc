@@ -74,6 +74,7 @@ int TMVACrossValidationApp(const tmvaConfigs&);
 int main( int argc, char** argv )
 {
   // Select methods (don't look at this code - not of interest)
+  gROOT->SetBatch(true);
 
   if( argc<2 || argc>3 ) {
     std::cout << "Usage: TMVAClassificationApp configName [ DEBUG ]" << std::endl;
@@ -105,6 +106,7 @@ int main( int argc, char** argv )
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
 int TMVACrossValidationApp(const tmvaConfigs& configs)
 {
+  gROOT->SetBatch(true);
   const bool saveTree = configs.saveTree();
   const bool saveDau = configs.saveDau();
   const bool selectMVA = configs.selectMVA();
