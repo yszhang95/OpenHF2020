@@ -66,6 +66,8 @@ int skimTree(const TString& inputList, const TString& treeDir,
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();
+  Int_t ievent=0;
+  ntp.t->Branch("eventID", &ievent);
 
   TFileCollection tf("tf", "", inputList);
   TChain t(treeDir+"/ParticleTree");
@@ -117,6 +119,7 @@ int skimTree(const TString& inputList, const TString& treeDir,
         ntp.retrieveTreeInfo(p, ireco);
         // fill this entry
         ntp.fillNTuple();
+        ievent = (++ievent) % 8096;
       } // end LambdaC
     } // end looping over particles
   } // end loop
