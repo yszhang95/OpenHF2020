@@ -18,6 +18,7 @@
 
 #include "TChain.h"
 #include "TFile.h"
+#include "TH1I.h"
 #include "TH3D.h"
 #include "TTree.h"
 #include "TString.h"
@@ -247,6 +248,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
 
+  TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
+
   // hard code for LambdaC begin
   MatchCriterion  matchCriterion(0.03, 0.1);
   Particle particle(4122);
@@ -269,7 +272,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
     // check pileup filter
     if (!p.evtSel().at(4)) continue;
-
+    if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
@@ -395,7 +398,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
-          passMVA = passMVA || mvaValues[i] > std::stod(configs.getMVACutMins().at(i));
+          passMVA = passMVA || (selectMVA && mvaValues[i] > std::stod(configs.getMVACutMins().at(i)));
           if (abs(ntp.cand_y)<1.) {
             hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
           } else if (abs(ntp.cand_y)<2.) {

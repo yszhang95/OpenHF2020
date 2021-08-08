@@ -9,7 +9,7 @@
 ######################################################################
 
 CXX=$(shell root-config --cxx)
-CCFLAGS = -O3
+CCFLAGS = -O2
 CCFLAGS += $(shell root-config --cflags)
 
 LDFLAGS=$(shell root-confi --libs)
