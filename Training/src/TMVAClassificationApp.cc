@@ -413,6 +413,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   }
   // Save the output
   // outputFile.Write();
+  hNtrkoffline.Write();
   if (saveTree) ntp.t->Write();
   for (const auto& vec : hMassPtMVA) {
     for (const auto& h : vec) h->Write();
