@@ -371,10 +371,20 @@ float MyNTuple::value(const TString& s)
   if (s == "cand_decayLength3D") return this->cand_decayLength3D;
   if (s == "cand_decayLengthError2D") return this->cand_decayLengthError2D;
   if (s == "cand_decayLengthError3D") return this->cand_decayLengthError3D;
-  if (s == "cand_eta") return this->cand_eta;
+  if (s == "cand_eta") {
+    if (flipEta) 
+      return -1*this->cand_eta;
+    else
+      return this->cand_eta;
+  }
   if (s == "cand_mass") return this->cand_mass;
   if (s == "cand_pT") return this->cand_pT;
-  if (s == "cand_y") return this->cand_y;
+  if (s == "cand_y") {
+    if (flipEta)
+      return -1*this->cand_y;
+    else
+      return this->cand_y;
+  }
   if (s == "cand_phi") return this->cand_phi;
   if (s == "cand_pseudoDecayLengthError2D") return this->cand_pseudoDecayLengthError2D;
   if (s == "cand_pseudoDecayLengthError3D") return this->cand_pseudoDecayLengthError3D;
@@ -386,7 +396,12 @@ float MyNTuple::value(const TString& s)
 
     if (s.Contains("Dau")) {
       auto gDauIndex = TString(s[s.Length()-1]).Atoi();
-      if (s.Contains("etaDau")) return this->cand_dau_etaDau[index][gDauIndex];
+      if (s.Contains("etaDau")) {
+        if (flipEta)
+          return -1*this->cand_dau_etaDau[index][gDauIndex];
+        else
+          return this->cand_dau_etaDau[index][gDauIndex];
+      }
       if (s.Contains("massDau")) return this->cand_dau_massDau[index][gDauIndex];
       if (s.Contains("pTDau")) return this->cand_dau_pTDau[index][gDauIndex];
       if (s.Contains("phiDau")) return this->cand_dau_phiDau[index][gDauIndex];
@@ -398,7 +413,12 @@ float MyNTuple::value(const TString& s)
       if (s.Contains("decayLength3D")) return this->cand_dau_decayLength3D[index];
       if (s.Contains("decayLengthError2D")) return this->cand_dau_decayLengthError2D[index];
       if (s.Contains("decayLengthError3D")) return this->cand_dau_decayLengthError3D[index];
-      if (s.Contains("eta")) return this->cand_dau_eta[index];
+      if (s.Contains("eta")) {
+        if (flipEta)
+          return -1*this->cand_dau_eta[index];
+        else
+          return this->cand_dau_eta[index];
+      }
       if (s.Contains("mass")) return this->cand_dau_mass[index];
       if (s.Contains("pT")) return this->cand_dau_pT[index];
       if (s.Contains("phi")) return this->cand_dau_phi[index];
@@ -415,7 +435,12 @@ float MyNTuple::value(const TString& s)
     }
   } else if (s.Contains("_gdau")) {
     const auto index = s.Contains("cand") ? TString(s[9]).Atoi() : TString(s[8]).Atoi();
-    if (s.Contains("eta")) return this->cand_gdau_eta[index];
+    if (s.Contains("eta")) {
+      if (flipEta) 
+        return -1*this->cand_gdau_eta[index];
+      else
+        return this->cand_gdau_eta[index];
+    }
     if (s.Contains("mass")) return this->cand_gdau_mass[index];
     if (s.Contains("pT")) return this->cand_gdau_pT[index];
     if (s.Contains("phi")) return this->cand_gdau_phi[index];
@@ -427,7 +452,12 @@ float MyNTuple::value(const TString& s)
     if (s.Contains("dedxPixelHarmonic2")) return this->trk_gdau_dEdx_dedxPixelHarmonic2[index];
   } else if (s.Contains("Dau")) {
     auto index = TString(s[s.Length()-1]).Atoi();
-    if (s.Contains("etaDau")) return this->cand_etaDau[index];
+    if (s.Contains("etaDau")) {
+      if (flipEta)
+        return -1*this->cand_etaDau[index];
+      else
+        return this->cand_etaDau[index];
+    }
     if (s.Contains("massDau")) return this->cand_massDau[index];
     if (s.Contains("pTDau")) return this->cand_pTDau[index];
     if (s.Contains("phiDau")) return this->cand_phiDau[index];

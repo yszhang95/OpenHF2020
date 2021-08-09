@@ -69,6 +69,7 @@ struct MyNTuple
   TTree* t;
 
   bool   isMC;
+  bool   flipEta;
 
   bool   dropDau;
 

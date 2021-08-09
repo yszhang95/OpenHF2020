@@ -106,6 +106,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool selectMVA = configs.selectMVA();
   const bool isMC = configs.isMC();
   const bool saveMatchedOnly = configs.saveMatchedOnly();
+  const bool flipEta = configs.flipEta();
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -123,6 +124,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
   // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
   TString outfileName = configs.getOutFileName();
+  if (flipEta) {
+    auto index = outfileName.Index(".root");
+    if (index >0) {
+      outfileName.Replace(index, 5, "_etaFlipped.root");
+    }
+  }
   TFile outputFile( outfileName, "RECREATE" );
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
@@ -243,6 +250,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   MyNTuple ntp(&tt);
   ntp.dropDau = !saveDau;
   ntp.isMC = isMC;
+  ntp.flipEta = flipEta;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);

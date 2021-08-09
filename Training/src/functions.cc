@@ -71,7 +71,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _signalWeight(1.), _backgroundWeight(1.),
   _saveTree(0), _saveDau(0), _selectMVA(0),
   _useEventWiseWeight(0), _isMC(0), _saveMatchedOnly(1),
-  _debug(debug)
+  _flipEta(0), _debug(debug)
 {
   if (_debug) { cout << "\nStart readConfigs" << endl; }
 
@@ -145,6 +145,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _isMC      = std::find(options.begin(), options.end(), "isMC")      != options.end();
   _saveMatchedOnly = std::find (options.begin(), options.end(), "!saveMatchedOnly")
     == options.end();
+  _flipEta   = std::find(options.begin(), options.end(), "flipEta") != options.end();
 
   if (_configs.count("signalFileList")
       && _configs.at("signalFileList").size())
@@ -619,6 +620,14 @@ bool tmvaConfigs::isMC() const
 bool tmvaConfigs::saveMatchedOnly() const
 {
   return _saveMatchedOnly;
+}
+
+/**
+   Return if flipping eta of candidate
+ */
+bool tmvaConfigs::flipEta() const
+{
+  return _flipEta;
 }
 
 /**

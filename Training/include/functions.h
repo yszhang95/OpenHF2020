@@ -99,6 +99,7 @@ public:
   bool                                        useEventWiseWeight() const;
   bool                                        isMC() const;
   bool                                        saveMatchedOnly() const;
+  bool                                        flipEta() const;
 
 private:
   std::map<std::string, TString>              getMethod(const std::string&) const;
@@ -121,6 +122,7 @@ private:
   bool _useEventWiseWeight;
   bool _isMC;
   bool _saveMatchedOnly;
+  bool _flipEta;
   bool _debug;
 };
 
