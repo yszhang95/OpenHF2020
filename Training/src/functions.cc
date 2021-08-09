@@ -362,7 +362,7 @@ vector<map<string, TString>> tmvaConfigs::getSpecVarExps() const
  */
 vector<map<string, TString>> tmvaConfigs::getCutsVarExps() const
 {
-  return getVarExps("commont_cuts");
+  return getVarExps("common_cuts");
 }
 
 /**
