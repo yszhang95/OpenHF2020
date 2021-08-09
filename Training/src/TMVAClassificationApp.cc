@@ -214,7 +214,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     vec.resize(methodNames_copy.size());
     for (size_t i=0; i<methodNames.size(); i++) {
       auto& ptr = vec[i];
-      ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s_y%d", methodNames_copy[i].Data(), iy), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 100, -1., 1.);
+      ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s_y%d", methodNames_copy[i].Data(), iy), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 1000, 0., 1.);
     }
   }
 
