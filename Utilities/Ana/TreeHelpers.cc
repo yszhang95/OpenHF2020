@@ -65,6 +65,15 @@ bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTree& p
   return sameChain;
 }
 
+bool passEvent(const ParticleTree& p, const int pu, const int hlt)
+{
+  const bool passVtx = std::abs(p.bestvtxZ())<15.; // < 15cm
+  const bool passPU = pu > 0 ? p.evtSel().at(pu) : true; // olv_dz_1 by default
+  const bool passHLT = hlt > 0 ? p.passHLT().at(hlt) : true; // Multiplicity185_part* by default
+  return passVtx && passPU && passHLT;
+}
+
+
 PtEtaPhiM_t getRecoP4(size_t idx, const ParticleTree& p)
 {
   return PtEtaPhiM_t (
@@ -197,6 +206,8 @@ void MyNTuple::initNTuple()
       } else {
         t->Branch(Form("trk_dau%d_isHP", iDau), &trk_dau_isHP[iDau]);
         t->Branch(Form("trk_dau%d_nHit", iDau), &trk_dau_nHit[iDau]);
+        t->Branch(Form("trk_dau%d_nPixelHit", iDau), &trk_dau_nPixelHit[iDau]);
+        t->Branch(Form("trk_dau%d_nStripHit", iDau), &trk_dau_nStripHit[iDau]);
         t->Branch(Form("trk_dau%d_dEdx_dedxHarmonic2", iDau), &trk_dau_dEdx_dedxHarmonic2[iDau]);
         t->Branch(Form("trk_dau%d_dEdx_dedxPixelHarmonic2", iDau), &trk_dau_dEdx_dedxPixelHarmonic2[iDau]);
         t->Branch(Form("trk_dau%d_nChi2", iDau), &trk_dau_nChi2[iDau]);
@@ -223,6 +234,8 @@ void MyNTuple::initNTuple()
 
       t->Branch(Form("trk_gdau%d_isHP", iGDau), &trk_gdau_isHP[iGDau]);
       t->Branch(Form("trk_gdau%d_nHit", iGDau), &trk_gdau_nHit[iGDau]);
+      t->Branch(Form("trk_gdau%d_nPixelHit", iGDau), &trk_gdau_nPixelHit[iGDau]);
+      t->Branch(Form("trk_gdau%d_nStripHit", iGDau), &trk_gdau_nStripHit[iGDau]);
       t->Branch(Form("trk_gdau%d_dEdx_dedxHarmonic2", iGDau), &trk_gdau_dEdx_dedxHarmonic2[iGDau]);
       t->Branch(Form("trk_gdau%d_dEdx_dedxPixelHarmonic2", iGDau), &trk_gdau_dEdx_dedxPixelHarmonic2[iGDau]);
       t->Branch(Form("trk_gdau%d_nChi2", iGDau), &trk_gdau_nChi2[iGDau]);
@@ -330,6 +343,8 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
       const auto& trkIdx = p.cand_trkIdx().at(gDIdx);
       this->trk_gdau_isHP[gDauOffset] = p.trk_isHP().at(trkIdx);
       this->trk_gdau_nHit[gDauOffset] = p.trk_nHit().at(trkIdx);
+      this->trk_gdau_nPixelHit[gDauOffset] = p.trk_nPixelHit().at(trkIdx);
+      this->trk_gdau_nStripHit[gDauOffset] = p.trk_nStripHit().at(trkIdx);
       this->trk_gdau_nChi2[gDauOffset] = p.trk_nChi2().at(trkIdx);
       this->trk_gdau_pTErr[gDauOffset] = p.trk_pTErr().at(trkIdx);
       this->trk_gdau_xyDCASignificance[gDauOffset] = p.trk_xyDCASignificance().at(trkIdx);
@@ -350,6 +365,8 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
       const auto& trkIdx = p.cand_trkIdx().at(dIdx);
       this->trk_dau_isHP[iDau] = p.trk_isHP().at(trkIdx);
       this->trk_dau_nHit[iDau] = p.trk_nHit().at(trkIdx);
+      this->trk_dau_nPixelHit[iDau] = p.trk_nPixelHit().at(trkIdx);
+      this->trk_dau_nStripHit[iDau] = p.trk_nStripHit().at(trkIdx);
       this->trk_dau_nChi2[iDau] = p.trk_nChi2().at(trkIdx);
       this->trk_dau_pTErr[iDau] = p.trk_pTErr().at(trkIdx);
       this->trk_dau_xyDCASignificance[iDau] = p.trk_xyDCASignificance().at(trkIdx);

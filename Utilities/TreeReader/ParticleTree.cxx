@@ -98,6 +98,8 @@ void ParticleTree::Init(TTree *tree)
   _cand_phiDau = 0;
   _trk_isHP = 0;
   _trk_nHit = 0;
+  _trk_nPixelHit = 0;
+  _trk_nStripHit = 0;
   _trk_dEdx_dedxHarmonic2 = 0;
   _trk_dEdx_dedxPixelHarmonic2 = 0;
   _trk_nChi2 = 0;
@@ -156,6 +158,8 @@ void ParticleTree::Init(TTree *tree)
   fChain->SetBranchAddress("cand_phiDau", &_cand_phiDau, &b_cand_phiDau);
   fChain->SetBranchAddress("trk_isHP", &_trk_isHP, &b_trk_isHP);
   fChain->SetBranchAddress("trk_nHit", &_trk_nHit, &b_trk_nHit);
+  fChain->SetBranchAddress("trk_nPixelHit", &_trk_nPixelHit, &b_trk_nPixelHit);
+  fChain->SetBranchAddress("trk_nStripHit", &_trk_nStripHit, &b_trk_nStripHit);
   fChain->SetBranchAddress("trk_dEdx_dedxHarmonic2", &_trk_dEdx_dedxHarmonic2, &b_trk_dEdx_dedxHarmonic2);
   fChain->SetBranchAddress("trk_dEdx_dedxPixelHarmonic2", &_trk_dEdx_dedxPixelHarmonic2, &b_trk_dEdx_dedxPixelHarmonic2);
   fChain->SetBranchAddress("trk_nChi2", &_trk_nChi2, &b_trk_nChi2);

@@ -41,6 +41,8 @@ PtEtaPhiM_t getRecoDauP4(size_t, size_t, const ParticleTree&);
 // PtEtaPhiM_t getGenP4(size_t, const ParticleTreeMC&);
 PtEtaPhiM_t getGenP4(size_t, const ParticleTree&);
 
+bool passEvent(const ParticleTree&, const int pu=4, const int hlt=2);
+
 // classes and structs
 
 class MatchCriterion {
@@ -160,6 +162,8 @@ struct MyNTuple
   // track info
   Bool_t          trk_dau_isHP[100];
   UShort_t        trk_dau_nHit[100];
+  UShort_t        trk_dau_nPixelHit[100];
+  UShort_t        trk_dau_nStripHit[100];
   Float_t         trk_dau_dEdx_dedxHarmonic2[100];
   Float_t         trk_dau_dEdx_dedxPixelHarmonic2[100];
   Float_t         trk_dau_nChi2[100];
@@ -182,6 +186,8 @@ struct MyNTuple
   // track info
   Bool_t          trk_gdau_isHP[100];
   UShort_t        trk_gdau_nHit[100];
+  UShort_t        trk_gdau_nPixelHit[100];
+  UShort_t        trk_gdau_nStripHit[100];
   Float_t         trk_gdau_dEdx_dedxHarmonic2[100];
   Float_t         trk_gdau_dEdx_dedxPixelHarmonic2[100];
   Float_t         trk_gdau_nChi2[100];
