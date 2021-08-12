@@ -119,13 +119,17 @@ int skimTree(const Config& conf,
   Int_t ievent=0;
   ntp.t->Branch("eventID", &ievent);
 
-  if(nentries < 0) nentries = p.GetEntries();
-  cout << "Tree " << treeDir << "/ParticleTree in " << inputList
-    << " has " << nentries << " entries." << endl;
+  // if(nentries < 0) nentries = p.GetEntries();
+  if(nentries < 0) nentries = p.GetEntriesFast();
+  // cout << "Tree " << treeDir << "/ParticleTree in " << inputList
+  //   << " has " << nentries << " entries." << endl;
 
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
+    auto jentry =  p.LoadTree(ientry);
+    if (jentry < 0) break;
     p.GetEntry(ientry);
+
 
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;

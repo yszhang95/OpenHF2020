@@ -53,6 +53,7 @@ Long64_t ParticleTree::LoadTree(Long64_t entry)
   if (fChain->GetTreeNumber() != fCurrent) {
     fCurrent = fChain->GetTreeNumber();
     Notify();
+    std::clog << "Successfully loaded tree " << fCurrent << std::endl;
   }
   return centry;
 }
@@ -168,6 +169,7 @@ void ParticleTree::Init(TTree *tree)
   fChain->SetBranchAddress("trk_zDCASignificance", &_trk_zDCASignificance, &b_trk_zDCASignificance);
   fChain->SetBranchAddress("trk_candIdx", &_trk_candIdx, &b_trk_candIdx);
   Notify();
+  std::clog << "Initialized current tree " << fCurrent << std::endl;
 }
 
 Bool_t ParticleTree::Notify()

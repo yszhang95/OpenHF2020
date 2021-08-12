@@ -80,12 +80,15 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
 
   MatchCriterion  matchCriterion(0.03, 0.1);
 
-  if(nentries < 0) nentries = p.GetEntries();
-  cout << "Tree " << treeDir << "/ParticleTree in " << inputList
-    << " has " << nentries << " entries." << endl;
+  // if(nentries < 0) nentries = p.GetEntries();
+  // cout << "Tree " << treeDir << "/ParticleTree in " << inputList
+  //   << " has " << nentries << " entries." << endl;
+  if (nentries < 0) nentries = p.GetEntriesFast();
 
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
+    auto jentry = p.LoadTree(ientry);
+    if (jentry < 0) break;
     p.GetEntry(ientry);
 
     // check pileup filter
