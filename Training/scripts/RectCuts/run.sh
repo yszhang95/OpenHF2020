@@ -45,7 +45,9 @@ ls
 FileName=$(basename -- "$2")
 FileNameHead="${FileName%.list.*}"
 FileNameTail="${FileName#*.list}"
+NewFileNameTail="${FileName#*.list.}"
 OutFile="${FileNameHead}_${FileNameTail}${TreeDir}_AllEntries_LamCKsP.root"
+NewOutFile="${FileNameHead}_${NewFileNameTail}${TreeDir}_AllEntries_LamCKsP.root"
 
-xrdcp -f ${OutFile} ${3}/${OutFile}
+xrdcp -f ${OutFile} ${3}/${NewOutFile}
 echo "Finished"

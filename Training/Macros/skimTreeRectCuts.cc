@@ -89,7 +89,8 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
     p.GetEntry(ientry);
 
     // check pileup filter
-    if (!p.evtSel().at(4)) continue;
+    // if (!p.evtSel().at(4)) continue;
+    if (!isMC && !passEvent(p))  continue; // temporary
     if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();
