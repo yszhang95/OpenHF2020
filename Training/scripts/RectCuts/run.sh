@@ -5,16 +5,20 @@ export X509_USER_PROXY=$1
 voms-proxy-info -all
 voms-proxy-info -all -file $1
 
-
 TopDir=${PWD}
+mkdir Test
+WorkDir=${TopDir}/Test
+cd ${WorkDir}
+xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileLists/${2} ${WorkDir}/$2
+
 git clone https://github.com/yszhang95/OpenHF2020.git
-cd OpenHF2020
+cd ${WorkDir}/OpenHF2020
 source setup.sh
 echo ${OPENHF2020TOP}
-cd Utilities
+cd ${OPENHF2020TOP}/Utilities
 make -f Makefile
 
-cd $TopDir
+cd $WorkDir
 cat > .rootrc <<- _EOF_
 Unix.*.Root.MacroPath:    .:${OPENHF2020TOP}/Training/Macros/
 ACLiC.BuildDir:        .compiles
@@ -47,7 +51,7 @@ FileNameHead="${FileName%.list.*}"
 FileNameTail="${FileName#*.list}"
 NewFileNameTail="${FileName#*.list.}"
 OutFile="${FileNameHead}_${FileNameTail}${TreeDir}_AllEntries_LamCKsP.root"
-NewOutFile="${FileNameHead}_${NewFileNameTail}${TreeDir}_AllEntries_LamCKsP.root"
+NewOutFile="${FileNameHead}_${NewFileNameTail}_${TreeDir}_AllEntries_LamCKsP.root"
 
 xrdcp -f ${OutFile} ${3}/${NewOutFile}
 echo "Finished"
