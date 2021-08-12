@@ -85,14 +85,6 @@ int skimTree(const Config& conf,
   const auto saveMatchedOnly = conf.SaveMatchedOnly();
   MatchCriterion  matchCriterion = conf.GetMatchCriterion();
 
-  TFileCollection tf("tf", "", inputList);
-  TChain t(treeDir+"/ParticleTree");
-  t.AddFileInfoList(tf.GetList());
-  ParticleTree* pp;
-  if (isMC) pp = new ParticleTreeMC(&t);
-  else pp = new ParticleTreeData(&t);
-  ParticleTree& p = *pp;
-
   TString basename(gSystem->BaseName(inputList));
   const auto firstPos = basename.Index(".list");
   basename.Replace(firstPos, 5, "_");
@@ -110,6 +102,14 @@ int skimTree(const Config& conf,
 
   TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0, 300);
 
+  TFileCollection tf("tf", "", inputList);
+  TChain t(treeDir+"/ParticleTree");
+  t.AddFileInfoList(tf.GetList());
+  ParticleTree* pp;
+  if (isMC) pp = new ParticleTreeMC(&t);
+  else pp = new ParticleTreeData(&t);
+  ParticleTree& p = *pp;
+
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   ntp.isMC = isMC;
@@ -118,8 +118,6 @@ int skimTree(const Config& conf,
   ntp.initNTuple();
   Int_t ievent=0;
   ntp.t->Branch("eventID", &ievent);
-
-
 
   if(nentries < 0) nentries = p.GetEntries();
   cout << "Tree " << treeDir << "/ParticleTree in " << inputList
@@ -243,8 +241,8 @@ int skimTree(const Config& conf,
       } // end LambdaC
     } // end looping over particles
   } // end loop
-  ofile.Write();
   delete pp;
+  ofile.Write();
 
   return 0;
 }
