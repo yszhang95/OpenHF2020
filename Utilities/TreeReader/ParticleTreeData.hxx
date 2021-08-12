@@ -39,32 +39,32 @@ public :
   std::vector<float>&   hltRecordLumi() const override{ return *_hltRecordLumi; }
   std::vector<float>&   hltTotalLumi() const override{ return *_hltTotalLumi; }
 
-  Int_t           Ntrkgen() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  Float_t         genWeight() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  Float_t         pTHat() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<bool>&    cand_matchGEN() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<bool>&    cand_momMatchGEN() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<int>&     cand_genPdgId() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<int>&     cand_isSwap() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<unsigned short>& cand_genIdx() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<unsigned int>& cand_momMatchIdx() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<char>&    gen_charge() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<int>&     gen_pdgId() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<unsigned char>& gen_status() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<unsigned short>& gen_statusBit() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_angle2D() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_angle3D() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_decayLength2D() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_decayLength3D() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_eta() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_mass() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_p() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_pT() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_phi() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<float>&   gen_y() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<std::vector<unsigned short>>& gen_dauIdx() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<std::vector<unsigned short>>& gen_momIdx() const override { throw std::runtime_error("This interface can only be used for MC"); };
-  std::vector<std::vector<unsigned int>>& gen_candIdx() const override { throw std::runtime_error("This interface can only be used for MC"); };
+  Int_t           Ntrkgen() const override { throw std::runtime_error("Ntrkgen() can only be used for MC"); };
+  Float_t         genWeight() const override { throw std::runtime_error("genWeight() can only be used for MC"); };
+  Float_t         pTHat() const override { throw std::runtime_error("pTHat() can only be used for MC"); };
+  std::vector<bool>&    cand_matchGEN() const override { throw std::runtime_error("cand_matchGEN() can only be used for MC"); };
+  std::vector<bool>&    cand_momMatchGEN() const override { throw std::runtime_error("cand_momMatchGEN() can only be used for MC"); };
+  std::vector<int>&     cand_genPdgId() const override { throw std::runtime_error("cand_genPdgId() can only be used for MC"); };
+  std::vector<int>&     cand_isSwap() const override { throw std::runtime_error("cand_isSwap() can only be used for MC"); };
+  std::vector<unsigned short>& cand_genIdx() const override { throw std::runtime_error("cand_genIdx() can only be used for MC"); };
+  std::vector<unsigned int>& cand_momMatchIdx() const override { throw std::runtime_error("cand_momMatchIdx() can only be used for MC"); };
+  std::vector<char>&    gen_charge() const override { throw std::runtime_error("gen_charge()can only be used for MC"); };
+  std::vector<int>&     gen_pdgId() const override { throw std::runtime_error("gen_pdgId() can only be used for MC"); };
+  std::vector<unsigned char>& gen_status() const override { throw std::runtime_error("gen_status() can only be used for MC"); };
+  std::vector<unsigned short>& gen_statusBit() const override { throw std::runtime_error("gen_statusBit() can only be used for MC"); };
+  std::vector<float>&   gen_angle2D() const override { throw std::runtime_error("gen_angle2D()can only be used for MC"); };
+  std::vector<float>&   gen_angle3D() const override { throw std::runtime_error("gen_angle3D() can only be used for MC"); };
+  std::vector<float>&   gen_decayLength2D() const override { throw std::runtime_error("gen_decayLength2() can only be used for MC"); };
+  std::vector<float>&   gen_decayLength3D() const override { throw std::runtime_error("gen_decayLength3D() can only be used for MC"); };
+  std::vector<float>&   gen_eta() const override { throw std::runtime_error("gen_eta() can only be used for MC"); };
+  std::vector<float>&   gen_mass() const override { throw std::runtime_error("gen_mass() can only be used for MC"); };
+  std::vector<float>&   gen_p() const override { throw std::runtime_error("gen_p() can only be used for MC"); };
+  std::vector<float>&   gen_pT() const override { throw std::runtime_error("gen_pT() can only be used for MC"); };
+  std::vector<float>&   gen_phi() const override { throw std::runtime_error("gen_phi() can only be used for MC"); };
+  std::vector<float>&   gen_y() const override { throw std::runtime_error("gen_y() can only be used for MC"); };
+  std::vector<std::vector<unsigned short>>& gen_dauIdx() const override { throw std::runtime_error("gen_dauIdx() can only be used for MC"); };
+  std::vector<std::vector<unsigned short>>& gen_momIdx() const override { throw std::runtime_error("gen_momIdx() can only be used for MC"); };
+  std::vector<std::vector<unsigned int>>& gen_candIdx() const override { throw std::runtime_error("gen_candIdx() can only be used for MC"); };
 
 
 protected:

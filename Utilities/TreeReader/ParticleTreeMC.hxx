@@ -51,20 +51,20 @@ public :
   std::vector<std::vector<unsigned short>>& gen_momIdx() const override{ return *_gen_momIdx; }
   std::vector<std::vector<unsigned int>>& gen_candIdx() const override{ return *_gen_candIdx; }
 
-  Float_t         pileup() const override { throw std::runtime_error("This interface can only be used for data"); };
-  Float_t         rawInstLumi() const override { throw std::runtime_error("This interface can only be used for data"); };
-  Float_t         recordLumi() const override { throw std::runtime_error("This interface can only be used for data"); };
-  Float_t         totalLumi() const override { throw std::runtime_error("This interface can only be used for data"); };
+  Float_t         pileup() const override { throw std::runtime_error("pileup() can only be used for data"); };
+  Float_t         rawInstLumi() const override { throw std::runtime_error("rawInstLumi() can only be used for data"); };
+  Float_t         recordLumi() const override { throw std::runtime_error("recordLumi() can only be used for data"); };
+  Float_t         totalLumi() const override { throw std::runtime_error("totalLumi() can only be used for data"); };
 
-  std::vector<bool>&    passHLT() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<bool>&    passHLTPrescaler() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<bool>&    passL1() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<bool>&    passL1Prescaler() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<unsigned char>& hltPDs() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<unsigned short>& hltPrescale() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<unsigned short>& l1Prescale() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<float>&   hltRecordLumi() const override { throw std::runtime_error("This interface can only be used for data"); };
-  std::vector<float>&   hltTotalLumi() const override { throw std::runtime_error("This interface can only be used for data"); };
+  std::vector<bool>&    passHLT() const override { throw std::runtime_error("passHLT() can only be used for data"); };
+  std::vector<bool>&    passHLTPrescaler() const override { throw std::runtime_error("passHLTPrescaler() can only be used for data"); };
+  std::vector<bool>&    passL1() const override { throw std::runtime_error("passL1() can only be used for data"); };
+  std::vector<bool>&    passL1Prescaler() const override { throw std::runtime_error("passL1Prescaler() can only be used for data"); };
+  std::vector<unsigned char>& hltPDs() const override { throw std::runtime_error("hltPDs() can only be used for data"); };
+  std::vector<unsigned short>& hltPrescale() const override { throw std::runtime_error("hltPrescale() can only be used for data"); };
+  std::vector<unsigned short>& l1Prescale() const override { throw std::runtime_error("l1Prescale() can only be used for data"); };
+  std::vector<float>&   hltRecordLumi() const override { throw std::runtime_error("hltRecordLumi() can only be used for data"); };
+  std::vector<float>&   hltTotalLumi() const override { throw std::runtime_error("hltTotalLumi() can only be used for data"); };
 
 protected:
   void     Init(TTree *tree);

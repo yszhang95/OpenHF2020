@@ -195,18 +195,17 @@ struct MyNTuple
   Float_t         trk_gdau_xyDCASignificance[100];
   Float_t         trk_gdau_zDCASignificance[100];
 
-  MyNTuple(TTree* t) : t(t)
+  MyNTuple(TTree* t) : t(t),
+                       nDau(0), nGDau(0),
+                       cand_nMVA(0), dropDau(0),
+                       flipEta(0)
   {
     if (!t) {
       std::cerr << "[ERROR] Nullptr of TTree is given to NTuple!" << std::endl;
     }
-    nDau = 0;
-    nGDau = 0;
     for (auto& ngdau : dauHasNGDau) {
       ngdau = 0;
     }
-    cand_nMVA = 0;
-    dropDau = false;
   }
   ~MyNTuple()
   {
