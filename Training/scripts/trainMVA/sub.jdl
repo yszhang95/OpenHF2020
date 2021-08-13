@@ -1,0 +1,22 @@
+# this is config for submitting condor jobs
+# replace CERTIFICATE with your certificate
+Proxy_filename = CERTIFICATE
+Proxy_path = /afs/cern.ch/user/y/yousen/private/$(Proxy_filename)
+
+Universe   = vanilla
+Executable = run.sh
+Log        = log/$(Cluster)_$(Process).log
+Output     = log/$(Cluster)_$(Process).out
+Error      = log/$(Cluster)_$(Process).err
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_output_files = ""
+#requirements = (OpSysAndVer =?= "CntOS7")
+#+JobFlavour = "workday"
++JobFlavour = "tomorrow"
+#+JobFlavour = "microcentury"
+max_transfer_output_mb = 5000
+#0
+Arguments = $(Proxy_filename) testcv.xml root://eoscms.cern.ch//store/group/phys_heavyions/yousen/OpenHF2020Storage/Training
+transfer_input_files = $(Proxy_path),../../test/mccv.list,../../test/datacv.list,../../test/testcv.xml
+queue
