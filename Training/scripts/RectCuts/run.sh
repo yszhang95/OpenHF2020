@@ -9,11 +9,16 @@ TopDir=${PWD}
 mkdir Test
 WorkDir=${TopDir}/Test
 cd ${WorkDir}
+
+cp ${TopDir}/$1 .
+
 xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileLists/${2} ${WorkDir}/$2
 
-git clone https://github.com/yszhang95/OpenHF2020.git
+xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/Package/OpenHF2020.tar.gz .
+tar zxf OpenHF2020.tar.gz
+rm OpenHF2020.tar.gz
 cd ${WorkDir}/OpenHF2020
-source setup.sh
+source setup.sh --enable-lib
 echo ${OPENHF2020TOP}
 cd ${OPENHF2020TOP}/Utilities
 make -f Makefile
