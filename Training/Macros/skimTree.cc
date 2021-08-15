@@ -208,6 +208,7 @@ int skimTree(const Config& conf,
         if(!passKinematic(p.cand_pT().at(ireco),
                           p.cand_eta().at(ireco),
                           p.cand_y().at(ireco),
+                          p.cand_mass().at(ireco),
                           kins)) continue;
         const auto dauIdx = p.cand_dauIdx().at(ireco);
         // 0 for Ks, 1 for proton

@@ -42,7 +42,7 @@ using MatchPairInfo =  tuple<size_t, size_t, double, double>;
 
 int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
                      const TString& postfix, const TString& outDir,
-                     Particle particle, KineCut kins,
+                     Particle particle,
                      Long64_t nentries=-1, const bool isMC=false,
                      const bool saveMatchedOnly=true)
 {

@@ -4,6 +4,8 @@ parser = argparse.ArgumentParser(description='Convert ParticleTree to simplified
 parser.add_argument('-i', dest='inputList', help='input file list', type=str)
 parser.add_argument('--pTMin', dest='pTMin', help='minimum pT', type=float, default=0.9)
 parser.add_argument('--pTMax', dest='pTMax', help='maximum pT', type=float, default=20)
+parser.add_argument('--absMassLw', dest='absMassLw', help='minimum distance to PDG mass', type=float, default=-1.)
+parser.add_argument('--absMassUp', dest='absMassUp', help='maximum distance to PDG mass', type=float, default=20)
 parser.add_argument('--absYMin', dest='absYMin', help='minimum abs(y)', type=float, default=-1.)
 parser.add_argument('--absYMax', dest='absYMax', help='maximum abs(y)', type=float, default=1.)
 parser.add_argument('--maxEvents', dest='maxEvents', help='number of events', type=int, default=-1)
@@ -35,7 +37,8 @@ LambdaC = r.Particle(4122)
 LambdaC.addDaughter(Ks)
 LambdaC.addDaughter(r.Particle(+2212))
 
-kinsCut = r.KineCut(args.pTMin, args.pTMax, 0., 1000, args.absYMin, args.absYMax)
+MassPDG = 2.2865 # GeV
+kinsCut = r.KineCut(args.pTMin, args.pTMax, 0., 1000, args.absYMin, args.absYMax, MassPDG, args.absMassLw, args.absMassUp)
 
 ts = r.TStopwatch()
 ts.Start()

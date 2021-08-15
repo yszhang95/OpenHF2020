@@ -23,10 +23,10 @@ LambdaC = r.Particle(4122)
 LambdaC.addDaughter(Ks)
 LambdaC.addDaughter(r.Particle(+2212))
 
-kinsCut = r.KineCut(0., 1000., 0., 1000)
+#kinsCut = r.KineCut(0., 1000., 0., 1000)
 
 ts = r.TStopwatch()
 ts.Start()
-r.skimTreeRectCuts(args.inputList, args.treeDir, args.suffix, args.outdir, LambdaC, kinsCut, args.maxEvents, args.isMC, saveMatchedOnly)
+r.skimTreeRectCuts(args.inputList, args.treeDir, args.suffix, args.outdir, LambdaC, args.maxEvents, args.isMC, saveMatchedOnly)
 ts.Stop()
 ts.Print()

@@ -44,13 +44,17 @@ void Particle::flipFlavor()
   _flip++;
 }
 
-bool passKinematic (const float pT, const float eta, const float y, const KineCut& cut)
+bool passKinematic (const float pT, const float eta, const float y,
+                    const float mass, const KineCut& cut)
 {
   if (pT < cut.pTMin || pT > cut.pTMax
       || std::abs(eta) < cut.absEtaMin
       || std::abs(eta) > cut.absEtaMax
       || std::abs(y) < cut.absYMin
-      || std::abs(y) > cut.absYMax) return false;
+      || std::abs(y) > cut.absYMax
+      || std::abs(mass-cut.massPDG) < cut.absMassLw
+      || std::abs(mass-cut.massPDG) > cut.absMassUp
+      ) return false;
   return true;
 }
 

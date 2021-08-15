@@ -51,16 +51,23 @@ struct KineCut {
   float absEtaMax;
   float absYMin;
   float absYMax;
+  float massPDG;
+  float absMassLw;
+  float absMassUp;
   KineCut(float pTMin_, float pTMax_,
           float absEtaMin_, float absEtaMax_,
-          float absYMin_, float absYMax_) :
+          float absYMin_, float absYMax_,
+          float massPDG_, float absMassLw_, float absMassUp_) :
     pTMin(pTMin_), pTMax(pTMax_),
     absEtaMin(absEtaMin_), absEtaMax(absEtaMax_),
-    absYMin(absYMin_), absYMax(absYMax_) {}
+    absYMin(absYMin_), absYMax(absYMax_),
+    massPDG(massPDG_), absMassLw(absMassLw_), absMassUp(absMassUp_)
+  {}
 };
 
 bool passKinematic (const float, const float,
-                    const float, const KineCut&);
+                    const float, const float mass,
+                    const KineCut&);
 
 /**
    A struct for selecting protons using dE/dx.  The profile of dE/dx
