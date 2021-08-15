@@ -22,10 +22,12 @@
 #include "Math/GenVector/LorentzVectorfwd.h"
 #include "Math/GenVector/PtEtaPhiM4D.h"
 #include "Math/GenVector/VectorUtil.h"
+#include "Math/Vector3D.h"
 
 // typedefs
 //using PtEtaPhiM_t = ROOT::Math::PtEtaPhiMVector;
 typedef ROOT::Math::PtEtaPhiMVector PtEtaPhiM_t;
+typedef ROOT::Math::RhoEtaPhiVector PtEtaPhi_t;
 
 // functions
 // bool checkDecayChain(Particle&, unsigned short,
@@ -37,6 +39,8 @@ bool checkDecayChain(Particle&, unsigned short,
 PtEtaPhiM_t getRecoP4(size_t, const ParticleTree&);
 
 PtEtaPhiM_t getRecoDauP4(size_t, size_t, const ParticleTree&);
+
+PtEtaPhi_t getRecoDauP3(size_t, size_t, const ParticleTree&);
 
 // PtEtaPhiM_t getGenP4(size_t, const ParticleTreeMC&);
 PtEtaPhiM_t getGenP4(size_t, const ParticleTree&);
@@ -118,6 +122,8 @@ struct MyNTuple
   Float_t         cand_pseudoDecayLengthError3D;
   Float_t         cand_vtxChi2;
   Float_t         cand_vtxProb;
+
+  Float_t         cand_dauCosOpenAngle3D;
 
   unsigned short  nDau;
   Float_t         cand_etaDau[100];

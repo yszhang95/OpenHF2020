@@ -11,8 +11,21 @@ args = parser.parse_args()
 print ('The input file list is', args.inputFile)
 
 import ROOT
+# one method
+ROOT.gSystem.Load('${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so')
+ROOT.gInterpreter.AddIncludePath("%s/Utilities/Ana/" % ROOT.gSystem.Getenv("OPENHF2020TOP"))
+ROOT.gInterpreter.ProcessLine('#include "Common.h"')
+ROOT.gInterpreter.Declare("DeDxSelection selectDeDx;")
+# alternative way
+#ROOT.gInterpreter.AddIncludePath("%s/Training/Macros/" % ROOT.gSystem.Getenv("OPENHF2020TOP"))
+#ROOT.gInterpreter.ProcessLine('#include "SelectDeDx.cc"')
+
 df = ROOT.RDataFrame(args.treeDir+"/ParticleNTuple", args.inputFile)
-df_skim = df.Filter(args.cuts)
+if args.cuts == "":
+  args.cuts = "true"
+df_preskim = df.Filter(args.cuts)
+#df_skim = df_preskim.Define("cand_dau1_p", "cosh(cand_etaDau1) * cand_pTDau1").Filter("passDeDx(cand_dau1_p, trk_dau1_dEdx_dedxHarmonic2)")
+df_skim = df_preskim.Define("cand_dau1_p", "cosh(cand_etaDau1) * cand_pTDau1").Filter("selectDeDx(cand_dau1_p, trk_dau1_dEdx_dedxHarmonic2)")
 df_skim.Snapshot(args.treeDir+"/ParticleNTuple", args.inputFile.replace(".root", "_slimmed.root"))
 
 # you could also do with TTree::CopyTree(args.cuts)

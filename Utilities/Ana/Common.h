@@ -1,6 +1,8 @@
 #include <array>
+#include <initializer_list>
 #include <vector>
 #include <memory>
+
 #include <climits>
 
 #include "Math/GenVector/VectorUtil.h"
@@ -45,11 +47,45 @@ protected:
 struct KineCut {
   float pTMin;
   float pTMax;
-  float etaMin;
-  float etaMax;
-  KineCut(float pTMin, float pTMax, float etaMin, float etaMax) :
-    pTMin(pTMin), pTMax(pTMax), etaMin(etaMin), etaMax(etaMax) {}
+  float absEtaMin;
+  float absEtaMax;
+  float absYMin;
+  float absYMax;
+  KineCut(float pTMin_, float pTMax_,
+          float absEtaMin_, float absEtaMax_,
+          float absYMin_, float absYMax_) :
+    pTMin(pTMin_), pTMax(pTMax_),
+    absEtaMin(absEtaMin_), absEtaMax(absEtaMax_),
+    absYMin(absYMin_), absYMax(absYMax_) {}
 };
 
-bool passKinematic (const float, const float, const KineCut&);
+bool passKinematic (const float, const float,
+                    const float, const KineCut&);
+
+/**
+   A struct for selecting protons using dE/dx.  The profile of dE/dx
+   is represented via a function inside operator(). It is a function
+   with two pieces. The end point of the first piece is turn1, and the
+   end of the second piece is turn2. The candidates pass the selection
+   if the dE/dx is within [lower, upper] * profile (or the
+   mean). Details could be checked inside override operator().
+ */
+struct DeDxSelection
+{
+public:
+  DeDxSelection(const float turn1, const float turn2,
+             const float lower, const float upper,
+             std::initializer_list<float> in);
+  DeDxSelection(const float turn1, const float turn2,
+             const float lower, const float upper);
+  DeDxSelection(const float turn1, const float turn2);
+  DeDxSelection();
+  bool operator() (const float p, const float dedx);
+private:
+  float _turn1;
+  float _turn2;
+  float _upper;
+  float _lower;
+  std::vector<float> _pars;
+};
 #endif

@@ -3,6 +3,7 @@
 #endif
 
 #ifdef TreeHelpers_H
+// #include "ROOT/RVec.hxx"
 using std::vector;
 
 // bool checkDecayChain(Particle& par, unsigned short genIdx, const ParticleTreeMC& p,
@@ -92,6 +93,15 @@ PtEtaPhiM_t getRecoDauP4(size_t idx, size_t idau, const ParticleTree& p)
             p.cand_massDau()[idx].at(idau)
             );
 }
+PtEtaPhi_t getRecoDauP3(size_t idx, size_t idau, const ParticleTree& p)
+{
+  return PtEtaPhi_t (
+            p.cand_pTDau()[idx].at(idau),
+            p.cand_etaDau()[idx].at(idau),
+            p.cand_phiDau()[idx].at(idau)
+            );
+}
+
 
 // PtEtaPhiM_t getGenP4(size_t idx, const ParticleTreeMC& p)
 PtEtaPhiM_t getGenP4(size_t idx, const ParticleTree& p)
@@ -159,6 +169,10 @@ void MyNTuple::initNTuple()
     t->Branch("cand_decayLengthError3D", &cand_decayLengthError3D);
     t->Branch("cand_pseudoDecayLengthError2D", &cand_pseudoDecayLengthError2D);
     t->Branch("cand_pseudoDecayLengthError3D", &cand_pseudoDecayLengthError3D);
+
+    if (nDau == 2) {
+      t->Branch("cand_dauCosOpenAngle3D", &cand_dauCosOpenAngle3D);
+    }
   }
 
   if (!dropDau) {
@@ -285,6 +299,26 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
     this->cand_etaDau[iDau] = p.cand_etaDau().at(it).at(iDau);
     this->cand_phiDau[iDau] = p.cand_phiDau().at(it).at(iDau);
     this->cand_massDau[iDau] = p.cand_massDau().at(it).at(iDau);
+  }
+
+  // temporary for nDau == 2
+  if (nDau==2) {
+    PtEtaPhi_t dauP0 = getRecoDauP3(it, 0, p);
+    PtEtaPhi_t dauP1 = getRecoDauP3(it, 1, p);
+    const auto dauCosAngle = dauP0.Dot(dauP1)/dauP0.R()/dauP1.R();
+    cand_dauCosOpenAngle3D = dauCosAngle;
+
+    // const auto p0 = this->cand_pTDau[0] * std::cosh(this->cand_etaDau[0]);
+    // const auto p1 = this->cand_pTDau[1] * std::cosh(this->cand_etaDau[1]);
+    // const auto pz0 = this->cand_pTDau[0] * std::sinh(this->cand_etaDau[0]);
+    // const auto pz1 = this->cand_pTDau[1] * std::sinh(this->cand_etaDau[1]);
+    // const auto deltaPhi = ROOT::VecOps::DeltaPhi(this->cand_phiDau[0],
+    //                                              this->cand_phiDau[1]);
+    // const auto dot = this->cand_pTDau[0] * this->cand_pTDau[1] *
+    //   std::cos( deltaPhi ) + pz0 * pz1;
+    // const auto cosAngle = dot/(p0*p1);
+    // cand_dauCosOpenAngle3D = cosAngle;
+
   }
 
   int stableIt = 0; // stable particle
@@ -453,7 +487,7 @@ float MyNTuple::value(const TString& s)
   } else if (s.Contains("_gdau")) {
     const auto index = s.Contains("cand") ? TString(s[9]).Atoi() : TString(s[8]).Atoi();
     if (s.Contains("eta")) {
-      if (flipEta) 
+      if (flipEta)
         return -1*this->cand_gdau_eta[index];
       else
         return this->cand_gdau_eta[index];

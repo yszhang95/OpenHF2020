@@ -8,7 +8,7 @@ TargetDir=""
 if [[ -z ${2} ]]; then
   TargetDir="root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/Package"
 else
-  TargetDir=${1}
+  TargetDir=${2}
 fi
 TopDir=${PWD}
 git clone https://github.com/yszhang95/OpenHF2020.git

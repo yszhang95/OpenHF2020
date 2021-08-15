@@ -46,7 +46,8 @@ public:
   Config(const bool isMC): Config(-1, isMC) {}
   Config(const Long64_t n, const bool isMC): Config(n, isMC, 0.03, 0.1) {}
   Config(const Long64_t n, const bool isMC, const float dR, const float dPt):
-    _matchCriterion(dR, dPt),_nentries(n), _isMC(isMC), _saveMatchedOnly(1) {}
+    _matchCriterion(dR, dPt),_nentries(n), _isMC(isMC),
+    _saveMatchedOnly(1), _selectDeDx(0) {}
   TString GetInputList() const { return _inputList; }
   void SetInputList(const TString s) { _inputList = s; }
   TString GetTreeDir() const { return _treeDir; }
@@ -60,10 +61,15 @@ public:
   bool isMC() const { return _isMC; }
   bool SaveMatchedOnly() const { return _saveMatchedOnly; }
   void SetSaveMatchedOnly(const bool save) { _saveMatchedOnly = save; }
-  MatchCriterion GetMatchCriterion() const { return _matchCriterion; }
+  const MatchCriterion& GetMatchCriterion() const { return _matchCriterion; }
+  const DeDxSelection&  GetDeDxSelection() const { return _dEdxSelection; }
+  void SetDeDxSelection(const DeDxSelection& sel){ _dEdxSelection = sel; }
+  bool SelectDeDx() const { return _selectDeDx; }
+  void SetSelectDeDx (const bool sel) { _selectDeDx = sel; }
 
 private:
   MatchCriterion _matchCriterion;
+  DeDxSelection  _dEdxSelection;
   TString _inputList;
   TString _treeDir;
   TString _postfix;
@@ -71,6 +77,7 @@ private:
   Long64_t _nentries;
   bool     _isMC;
   bool     _saveMatchedOnly;
+  bool     _selectDeDx;
 };
 
 int skimTree(const Config& conf,
@@ -83,6 +90,8 @@ int skimTree(const Config& conf,
   auto nentries = conf.GetNEntries();
   const auto isMC = conf.isMC();
   const auto saveMatchedOnly = conf.SaveMatchedOnly();
+  const auto selectDeDx = conf.SelectDeDx();
+  DeDxSelection   dEdxSelection  = conf.GetDeDxSelection();
   MatchCriterion  matchCriterion = conf.GetMatchCriterion();
 
   TString basename(gSystem->BaseName(inputList));
@@ -195,6 +204,11 @@ int skimTree(const Config& conf,
     for (size_t ireco=0; ireco<recosize; ireco++) {
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle.id())) {
+        // pass kinematic cuts
+        if(!passKinematic(p.cand_pT().at(ireco),
+                          p.cand_eta().at(ireco),
+                          p.cand_y().at(ireco),
+                          kins)) continue;
         const auto dauIdx = p.cand_dauIdx().at(ireco);
         // 0 for Ks, 1 for proton
         const auto gDauIdx = p.cand_dauIdx().at(dauIdx.at(0));
@@ -219,6 +233,13 @@ int skimTree(const Config& conf,
           ntp.cand_isSwap = isSwap;
           if (saveMatchedOnly && !matchGEN) continue;
         }
+
+        // check dE/dx
+        const auto trkIdxProton = p.cand_trkIdx().at(dauIdx.at(1));  // 1 for proton
+        const auto dEdx = p.trk_dEdx_dedxHarmonic2().at(trkIdxProton);
+        PtEtaPhi_t dau1P = getRecoDauP3(ireco, 1, p);
+        const auto pProton = dau1P.R();
+        if (selectDeDx && !dEdxSelection(pProton, dEdx)) { continue; }
 
         // check it is not a Lambda/Anti-Lambda
         PtEtaPhiM_t gDau0P4 = getRecoDauP4(dauIdx.at(0), 0, p); // pi- from Ks
