@@ -2,12 +2,13 @@
 import argparse
 parser = argparse.ArgumentParser(description='generate condor configuration.')
 parser.add_argument('-i', dest='inputCert', help='input certificate', type=str)
+parser.add_argument('--exe', dest='userexe', help='executable', type=str)
 args = parser.parse_args()
 
 import os
 import subprocess
 
-mylists = os.listdir('lists')
+mylists = os.listdir('/eos/cms/store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileListsV2/')
 
 cmd='''
 # this is config for submitting condor jobs
@@ -15,7 +16,7 @@ Proxy_filename = %s
 Proxy_path = /afs/cern.ch/user/y/yousen/private/$(Proxy_filename)
 
 Universe   = vanilla
-Executable = run.sh
+Executable = %s
 Log        = log/$(Cluster)_$(Process).log
 Output     = log/$(Cluster)_$(Process).out
 Error      = log/$(Cluster)_$(Process).err
@@ -26,17 +27,19 @@ transfer_output_files = ""
 +JobFlavour = "espresso"
 #+MaxRunTime = 360
 #max_transfer_output_mb = 2000
-''' % args.inputCert
+''' % (args.inputCert, args.userexe)
 
 num = 0
 for l in mylists:
+    if "dataHM1" in l:
+        continue
     cmd += "#%d" % num
     cmd += '''
 Arguments = $(Proxy_filename) %s root://eoscms.cern.ch//store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep
 ''' % (l)
-    cmd +='''transfer_input_files = $(Proxy_path),lists/%s
+    cmd +='''transfer_input_files = $(Proxy_path)
 queue
-''' % (l)
+'''
     num = num+1
 
 #print (cmd)
