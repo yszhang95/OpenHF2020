@@ -31,8 +31,8 @@ transfer_output_files = ""
 
 num = 0
 for l in mylists:
-    if "dataHM1" in l:
-        continue
+    #if "dataHM1" in l:
+    #    continue
     cmd += "#%d" % num
     cmd += '''
 Arguments = $(Proxy_filename) %s root://eoscms.cern.ch//store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep

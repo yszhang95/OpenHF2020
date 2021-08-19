@@ -18,6 +18,9 @@ parser.add_argument('--selectDeDx', dest='selectDeDx', help='Select candidates u
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
+if args.isMC and args.treeDir == "lambdacAna":
+    args.treeDir = "lambdacAna_mc"
+
 import ROOT as r
 r.gROOT.LoadMacro('skimTree.cc+')
 r.gSystem.Load('${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so')
@@ -29,6 +32,7 @@ conf.SetOutDir(args.outdir)
 conf.SetPostfix(args.suffix)
 conf.SetSaveMatchedOnly(not args.saveAll)
 conf.SetSelectDeDx(args.selectDeDx)
+conf.SetDeDxSelection((0.7, 1.5, 0.75, 1.25))
 
 Ks = r.Particle(310)
 Ks.selfConj(True);
