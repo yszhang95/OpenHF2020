@@ -82,6 +82,8 @@ public:
   std::vector<std::string>                    getTrainXMLs() const;
   //  std::map<std::string, std::vector<std::string>> getConfigs();
   std::map<std::string, std::vector<std::string>> getConfigs() const;
+  std::vector<std::string>                    getSignalFileNames() const;
+  std::vector<std::string>                    getBackgroundFileNames() const;
   std::vector<TString>                        getOptions() const;
   std::string                                 getOutFileName() const;
   void                                        setOutFileName(const std::string&);
@@ -148,6 +150,8 @@ struct MVAHelper
   ~MVAHelper();
   void GetValues( MyNTuple&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&, const std::vector<std::vector<TString>>&);
 };
+
+void addFilesToChain(TChain* t, const std::vector<std::string>& fs);
 
 std::vector<TString> splitTString(const TString& in, const char* delimiter);
 #endif

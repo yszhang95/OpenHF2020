@@ -8,6 +8,8 @@
 #include "TObjString.h"
 #include "TPRegexp.h"
 #include "TObjString.h"
+#include "TFileCollection.h"
+#include "THashList.h"
 
 #include "TXMLEngine.h"
 
@@ -483,6 +485,22 @@ map<string, vector<string>> tmvaConfigs::getConfigs() const
 }
 
 /**
+   Get the name collection of signal files
+ */
+vector<string> tmvaConfigs::getSignalFileNames() const
+{
+  return _configs.at("signalFileList");
+}
+
+/**
+   Get the name collection of background files
+ */
+vector<string> tmvaConfigs::getBackgroundFileNames() const
+{
+  return _configs.at("backgroundFileList");
+}
+
+/**
    Get the output file name
  */
 string tmvaConfigs::getOutFileName() const
@@ -721,6 +739,31 @@ void MVAHelper::GetValues(MyNTuple& t,
     }
     cuts[i] = fcuts[i]->Eval(0);
   }
+}
+
+/**
+   Add files to the TChain.
+   File list need to be ended with ".list"
+
+ */
+
+void addFilesToChain(TChain* t, const vector<string>& fs)
+{
+  for (const auto& f : fs) {
+    if (f.size() <=5 ) {
+      cerr << "[EROOR] Cannot find correct file extension."
+           << " Please checke the file name!" << endl;
+    }
+    const auto extPos = f.size() - 5;
+    if ( f.find(".list", extPos) != std::string::npos ) {
+      TFileCollection tf("tf", "", f.c_str());
+      t->AddFileInfoList(tf.GetList());
+    }
+    else if ( f.find(".list", extPos) != std::string::npos ) {
+      t->Add(f.c_str());
+    }
+  }
+  return;
 }
 
 vector<TString> splitTString(const TString& in, const char* delimiter)

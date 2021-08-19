@@ -29,6 +29,7 @@ using std::string;
 using std::vector;
 using std::ifstream;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::istringstream;
 
@@ -167,30 +168,63 @@ int TMVAClassification(const tmvaConfigs& configs)
   cout << "--- TMVAClassification       : Using background file list: " << backgroundFileList << endl;
 
   // --- Register the training and test trees
-  TFileCollection fcSignal("signalFileCollection", "", signalFileList.c_str());
-  TFileCollection fcBackground("backgroundFileCollection", "", backgroundFileList.c_str());
-
-  auto signal = std::make_shared<TChain>("lambdacAna_mc/ParticleNTuple");
-  auto background = std::make_shared<TChain>("lambdacAna/ParticleNTuple");
-
-  signal->AddFileInfoList(fcSignal.GetList());
-  background->AddFileInfoList(fcBackground.GetList());
-
+  auto sTrain = std::make_shared<TChain>("lambdacAna_mc/ParticleNTuple");
+  auto bTrain = std::make_shared<TChain>("lambdacAna/ParticleNTuple");
+  auto sTest = std::make_shared<TChain>("lambdacAna_mc/ParticleNTuple");
+  auto bTest = std::make_shared<TChain>("lambdacAna/ParticleNTuple");
   // global event weights per tree (see below for setting event-wise weights)
   // Double_t signalWeight     = 1.0;
   // Double_t backgroundWeight = 1.0;
   Double_t signalWeight = configs.signalWeight();
   Double_t backgroundWeight = configs.backgroundWeight();
 
+  // prepare trees to read
   // You can add an arbitrary number of signal or background trees
-  dataloader->AddSignalTree    ( signal.get(),     signalWeight     );
-  dataloader->AddBackgroundTree( background.get(), backgroundWeight );
+  // But I only prepared one tree and add once
+  const auto sNames = configs.getSignalFileNames();
+  const auto bNames = configs.getBackgroundFileNames();
+  // for signal
+  if (sNames.size() == 2) {
+    // train
+    vector<string> fTrain(1, sNames.at(0));
+    addFilesToChain(sTrain.get(), fTrain);
+    dataloader->AddSignalTree(sTrain.get(), signalWeight, "Training");
+    cout << "    Added the signal training tree from " << sNames.at(0) << endl;
+    // test
+    vector<string> fTest(1, sNames.at(1));
+    addFilesToChain(sTest.get(), fTest);
+    dataloader->AddSignalTree(sTest.get(), signalWeight, "Test");
+    cout << "    Added the signal test tree from " << sNames.at(1) << endl;
+  } else if (sNames.size() == 1) {
+    addFilesToChain(sTrain.get(), sNames);
+    dataloader->AddSignalTree(sTrain.get(), signalWeight);
+  } else {
+    cerr << "[ERROR] cannot find the file for the signal tree" << endl;
+  }
+  // for background
+  if (bNames.size() == 2) {
+    // train
+    vector<string> fTrain(1, bNames.at(0));
+    addFilesToChain(bTrain.get(), fTrain);
+    dataloader->AddBackgroundTree(bTrain.get(), backgroundWeight, "Training");
+    cout << "    Added the background training tree from " << bNames.at(0) << endl;
+    // test
+    vector<string> fTest(1, bNames.at(1));
+    addFilesToChain(bTest.get(), fTest);
+    dataloader->AddBackgroundTree(bTest.get(), backgroundWeight, "Test");
+    cout << "    Added the background test tree from " << bNames.at(1) << endl;
+  } else if (bNames.size() == 1) {
+    addFilesToChain(bTrain.get(), bNames);
+    dataloader->AddBackgroundTree(bTrain.get(), backgroundWeight);
+  } else {
+    cerr << "[ERROR] cannot find the file for the background tree" << endl;
+  }
 
   if (configs.useEventWiseWeight()) {
     dataloader->SetSignalWeightExpression("weight");
     dataloader->SetBackgroundWeightExpression("weight");
   }
-  // --- end of tree registration 
+  // --- end of tree registration
 
   // Apply additional cuts on the signal and background samples (can be different)
   std::string common_cuts;
