@@ -759,7 +759,7 @@ void addFilesToChain(TChain* t, const vector<string>& fs)
       TFileCollection tf("tf", "", f.c_str());
       t->AddFileInfoList(tf.GetList());
     }
-    else if ( f.find(".list", extPos) != std::string::npos ) {
+    else if ( f.find(".root", extPos) != std::string::npos ) {
       t->Add(f.c_str());
     }
   }
