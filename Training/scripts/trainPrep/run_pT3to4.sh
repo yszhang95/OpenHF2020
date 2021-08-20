@@ -53,7 +53,7 @@ fi
 echo "./OpenHF2020/Training/Macros/${Exe} -i $2 ${Options}"
 ./OpenHF2020/Training/Macros/${Exe} -i $2 ${Options}
 
-ls
+ls -lsth
 FileName=$(basename -- "$2")
 FileNameHead="${FileName%.list.*}"
 FileNameTail="${FileName#*.list}"
