@@ -59,6 +59,8 @@ public:
   Long64_t GetNEntries() const { return _nentries; }
   void SetNEntries(Long64_t n) { _nentries = n; }
   bool isMC() const { return _isMC; }
+  bool flipEta() const { return _flipEta; }
+  void SetFlipEta(const bool flip) { _flipEta = flip; }
   bool SaveMatchedOnly() const { return _saveMatchedOnly; }
   void SetSaveMatchedOnly(const bool save) { _saveMatchedOnly = save; }
   const MatchCriterion& GetMatchCriterion() const { return _matchCriterion; }
@@ -76,6 +78,7 @@ private:
   TString _outDir;
   Long64_t _nentries;
   bool     _isMC;
+  bool     _flipEta;
   bool     _saveMatchedOnly;
   bool     _selectDeDx;
 };
@@ -89,6 +92,7 @@ int skimTree(const Config& conf,
   const auto outDir = conf.GetOutDir();
   auto nentries = conf.GetNEntries();
   const auto isMC = conf.isMC();
+  const auto flipEta = conf.flipEta();
   const auto saveMatchedOnly = conf.SaveMatchedOnly();
   const auto selectDeDx = conf.SelectDeDx();
   DeDxSelection   dEdxSelection  = conf.GetDeDxSelection();
@@ -102,6 +106,12 @@ int skimTree(const Config& conf,
   TString outName;
   if (outDir == "") outName = basename;
   else outName = outDir + "/" + basename;
+  if (flipEta) {
+    auto index = outName.Index(".root");
+    if (index >0) {
+      outName.Replace(index, 5, "_etaFlipped.root");
+    }
+  }
   TFile ofile(outName, "recreate");
   cout << "Created " << ofile.GetName() << endl;
 
@@ -122,6 +132,7 @@ int skimTree(const Config& conf,
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   ntp.isMC = isMC;
+  ntp.flipEta = flipEta;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();
