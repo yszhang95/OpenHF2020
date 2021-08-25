@@ -82,6 +82,7 @@ public:
   std::vector<std::string>                    getTrainXMLs() const;
   //  std::map<std::string, std::vector<std::string>> getConfigs();
   std::map<std::string, std::vector<std::string>> getConfigs() const;
+  std::vector<std::string>                    getInputFileNames() const;
   std::vector<std::string>                    getSignalFileNames() const;
   std::vector<std::string>                    getBackgroundFileNames() const;
   std::vector<TString>                        getOptions() const;

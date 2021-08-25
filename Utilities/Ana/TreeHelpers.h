@@ -82,7 +82,8 @@ struct MyNTuple
   //  Event info
   //  UChar_t         nPV;
   //  UShort_t        BXNb;
-  //  UShort_t        Ntrkoffline;
+  UShort_t        Ntrkoffline;
+  UShort_t        cand_Ntrkoffline;
   UInt_t          EventNb;
   UInt_t          LSNb;
   UInt_t          RunNb;

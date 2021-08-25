@@ -198,8 +198,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   auto MethodCollection = setupMethodCollection();
   vector<TString> methodNames;
   vector<TString> methodNames_copy;
-  for (size_t im=0; im<configs.getMethods().size(); ++im) {
-    const auto& method = configs.getMethods().at(im);
+  const auto methods = configs.getMethods();
+  for (size_t im=0; im<methods.size(); ++im) {
+    const auto& method = methods.at(im);
     // if (DEBUG) { for (const auto& p : method) { cout << "key: " << p.first << ", value: " << p.second << endl; } }
     TString methodName = method.at("name");
     TString postfix = configs.getTrainXMLs().at(im);
@@ -226,19 +227,24 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   }
 
   // Prepare input tree (this must be replaced by your data source)
-
+  const auto inputFileNames = configs.getInputFileNames();
   const auto treeInfo = configs.getTreeInfo();
 
   const auto treeDir = treeInfo.at("treeDir");
-  const auto inputFileList = treeInfo.at("treeList");
   const auto particle_id = treeInfo.at("pdgId").Atoi();
   Long64_t nentries = treeInfo.at("nentries").Atoll();
 
-  cout << "--- TMVAClassificationApp    : Using input file: " << inputFileList << endl;
+  cout << "--- TMVAClassificationApp    : Using inputs:" <<  endl;
 
-  TFileCollection tf("tf", "", inputFileList.Data());
   TChain t(treeDir+"/ParticleTree");
-  t.AddFileInfoList(tf.GetList());
+  addFilesToChain(&t, inputFileNames);
+  const auto files = t.GetListOfFiles();
+  for (int i=0; i<files->GetEntries(); ++i) {
+    cout << "---\t\tInput file " << i << " "
+         << files->At(i)->GetTitle() << ":"
+         << files->At(i)->GetName() << endl;
+  }
+
   ParticleTree* pp;
   if (configs.isMC()) pp = new ParticleTreeMC(&t);
   else pp = new ParticleTreeData(&t);
@@ -271,11 +277,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   }
   // hard code for LambdaC end
 
-  if(nentries < 0) nentries = p.GetEntries();
+  if(nentries < 0) nentries = p.GetEntriesFast();
   // Event loop
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
-
+    auto jentry =  p.LoadTree(ientry);
+    if (jentry < 0) break;
     p.GetEntry(ientry);
 
     // check pileup filter
@@ -284,7 +291,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
-
 
     // reco gen matching begin
     map<size_t, size_t> matchPairs;

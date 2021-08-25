@@ -49,6 +49,7 @@ public:
   std::vector<int>&     cand_pdgId() const { return *_cand_pdgId; }
   std::vector<unsigned char>& cand_status() const { return *_cand_status; }
   std::vector<unsigned short>& cand_trkIdx() const { return *_cand_trkIdx; }
+  std::vector<unsigned short>& cand_Ntrkoffline() const { return *_cand_Ntrkoffline; }
   std::vector<float>&   cand_angle2D() const { return *_cand_angle2D; }
   std::vector<float>&   cand_angle3D() const { return *_cand_angle3D; }
   std::vector<float>&   cand_dca() const { return *_cand_dca; }
@@ -158,6 +159,7 @@ private:
   std::vector<int>     *_cand_pdgId;
   std::vector<unsigned char> *_cand_status;
   std::vector<unsigned short> *_cand_trkIdx;
+  std::vector<unsigned short> *_cand_Ntrkoffline;
   std::vector<float>   *_cand_angle2D;
   std::vector<float>   *_cand_angle3D;
   std::vector<float>   *_cand_dca;
@@ -214,6 +216,7 @@ private:
   TBranch        *b_cand_pdgId;   //!
   TBranch        *b_cand_status;   //!
   TBranch        *b_cand_trkIdx;   //!
+  TBranch        *b_cand_Ntrkoffline;   //!
   TBranch        *b_cand_angle2D;   //!
   TBranch        *b_cand_angle3D;   //!
   TBranch        *b_cand_dca;   //!

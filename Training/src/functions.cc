@@ -417,13 +417,12 @@ map<string, TString> tmvaConfigs::getTreeInfo() const
   if (!_configs.count("treeInfo")
       || !_configs.at("treeInfo").size()) return output;
   const TString& in = _configs.at("treeInfo").front();
-  TPRegexp r("(.*)\\?(.*)\\?(.*)\\?(.*)");
+  TPRegexp r("(.*)\\?(.*)\\?(.*)");
   TObjArray* subStrL = r.MatchS(in);
   output["fullStr"] = dynamic_cast<TObjString*>(subStrL->At(0))->GetString();
-  output["treeList"] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
-  output["treeDir"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
-  output["pdgId"] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
-  output["nentries"] = dynamic_cast<TObjString*>(subStrL->At(4))->GetString();
+  output["treeDir"] = dynamic_cast<TObjString*>(subStrL->At(1))->GetString();
+  output["pdgId"] = dynamic_cast<TObjString*>(subStrL->At(2))->GetString();
+  output["nentries"] = dynamic_cast<TObjString*>(subStrL->At(3))->GetString();
   for (auto& e : output) { e.second = e.second.Strip(TString::kBoth); }
   return output;
 }
@@ -482,6 +481,14 @@ vector<string> tmvaConfigs::getTrainXMLs() const
 map<string, vector<string>> tmvaConfigs::getConfigs() const
 {
   return _configs;
+}
+
+/**
+   Get the name collection of input files
+ */
+vector<string> tmvaConfigs::getInputFileNames() const
+{
+  return _configs.at("inputFiles");
 }
 
 /**

@@ -144,6 +144,8 @@ void MyNTuple::initNTuple()
   // mva
   // lumi
   if (!isMC) t->Branch("hltRecordLumi", &hltRecordLumi);
+  if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
+  if (!isMC) t->Branch("cand_Ntrkoffline", &cand_Ntrkoffline);
   // particle level
   t->Branch("cand_charge", &cand_charge);
   t->Branch("cand_eta", &cand_eta);
@@ -275,6 +277,8 @@ bool MyNTuple::setMVAValues(const std::vector<float>& vals)
 
 bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 {
+  this->Ntrkoffline = isMC ? 0 : p.Ntrkoffline();
+  this->cand_Ntrkoffline = p.cand_Ntrkoffline().at(it);
   this->cand_pT     = p.cand_pT().at(it);
   this->cand_eta    = p.cand_eta().at(it);
   this->cand_phi    = p.cand_phi().at(it);
