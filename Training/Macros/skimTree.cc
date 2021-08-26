@@ -83,6 +83,24 @@ private:
   bool     _selectDeDx;
 };
 
+TString getPhaseSpaceString(const KineCut& kins)
+{
+  auto phase = TString::Format("pT%.1fto%.1f_", kins.pTMin, kins.pTMax);
+  phase += kins.absYMin>0 ?
+    TString::Format("yAbs%.1fto%.1f", kins.absYMin, kins.absYMax) :
+    TString::Format("yAbs%.1f", kins.absYMax) ;
+  phase += "_";
+  phase += kins.absMassLw>0 ?
+    TString::Format("absMassDiff%.3fto%.3f", kins.absMassLw, kins.absMassUp) :
+    TString::Format("absMassDiff%.3f", kins.absMassUp) ;
+  int point = phase.Index(".");
+  while(point > 0) {
+    phase.Replace(point, 1, "p");
+    point = phase.Index(".");
+  }
+  return phase;
+}
+
 int skimTree(const Config& conf,
              Particle particle, KineCut kins)
 {
@@ -99,9 +117,26 @@ int skimTree(const Config& conf,
   MatchCriterion  matchCriterion = conf.GetMatchCriterion();
 
   TString basename(gSystem->BaseName(inputList));
-  const auto firstPos = basename.Index(".list");
-  basename.Replace(firstPos, 5, "_");
+  auto firstPos = basename.Index(".list");
+  if (firstPos>0) {
+    basename.Replace(firstPos, 5, "_");
+  }
+  if (basename[basename.Length()-1] != '_')
+    basename.Append('_');
+  firstPos = basename.Index(".");
+  while (firstPos>0) {
+    basename.Replace(firstPos, 1, "_");
+    firstPos = basename.Index("__");
+    while (firstPos>0) {
+      basename.Replace(firstPos, 2, "_");
+      firstPos = basename.Index("__");
+    }
+    firstPos = basename.Index(".");
+  }
+  
   basename += nentries > 0 ? Form("%s%lld_", treeDir.Data(), nentries) : (treeDir + "_AllEntries_");
+  basename += getPhaseSpaceString(kins);
+  if (postfix.Length()) basename += "_";
   basename += postfix + ".root";
   TString outName;
   if (outDir == "") outName = basename;
