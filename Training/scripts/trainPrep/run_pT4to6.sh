@@ -6,7 +6,6 @@ voms-proxy-info -all
 voms-proxy-info -all -file $1
 
 TopDir=${PWD}
-TopDir=${PWD}
 mkdir Test
 WorkDir=${TopDir}/Test
 cd ${WorkDir}
@@ -25,6 +24,8 @@ RunDir=${WorkDir}/OpenHF2020
 cd ${RunDir}
 source setup.sh
 echo OPENHF2020TOP ${OPENHF2020TOP}
+#export ROOT_INCLUDE_PATH=${ROOT_INCLUDE_PATH}:${OPENHF2020TOP}/Utilities
+#export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${OPENHF2020TOP}/Training/Macros:${OPENHF2020TOP}/Utilities/lib
 
 cd ${RunDir}
 cp ${TopDir}/$1 .
@@ -39,7 +40,7 @@ if [[ $2 == *"MC"* ]]; then
   TreeDir="lambdacAna_mc"
 fi
 
-Options=" --selectDeDx --pTMin=3. --pTMax=4. --absMassLw=0.06 --absMassUp=0.11"
+Options=" --selectDeDx --pTMin=4. --pTMax=6. --absMassLw=0.06 --absMassUp=0.11"
 if [[ $2 == *"data"* ]]; then
   Options="${Options}"
 fi
@@ -49,8 +50,9 @@ fi
 
 echo "${OPENHF2020TOP}/Training/Macros/${Exe} -i $2 ${Options}"
 ${OPENHF2020TOP}/Training/Macros/${Exe} -i $2 ${Options}
+#./${Exe} -i $2 ${Options}
 
 ls -lsth
-OutFile=$(ls *AllEntries_pT3p0to4p0_yAbs1p0_absMassDiff0p060to0p110_LamCKsP.root)
+OutFile=$(ls *AllEntries_pT4p0to6p0_yAbs1p0_absMassDiff0p060to0p110_LamCKsP.root)
 xrdcp $OutFile "${3}/$OutFile"
 echo "Finished"
