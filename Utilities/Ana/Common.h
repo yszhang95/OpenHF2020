@@ -88,6 +88,7 @@ public:
   DeDxSelection(const float turn1, const float turn2);
   DeDxSelection();
   bool operator() (const float p, const float dedx);
+  double getMean (const float p);
 private:
   float _turn1;
   float _turn2;

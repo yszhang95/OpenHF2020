@@ -172,6 +172,7 @@ struct MyNTuple
   UShort_t        trk_dau_nPixelHit[100];
   UShort_t        trk_dau_nStripHit[100];
   Float_t         trk_dau_dEdx_dedxHarmonic2[100];
+  Float_t         trk_dau_dEdxRes[100];
   Float_t         trk_dau_dEdx_dedxPixelHarmonic2[100];
   Float_t         trk_dau_nChi2[100];
   Float_t         trk_dau_pTErr[100];
@@ -196,11 +197,15 @@ struct MyNTuple
   UShort_t        trk_gdau_nPixelHit[100];
   UShort_t        trk_gdau_nStripHit[100];
   Float_t         trk_gdau_dEdx_dedxHarmonic2[100];
+  Float_t         trk_gdau_dEdxRes[100];
   Float_t         trk_gdau_dEdx_dedxPixelHarmonic2[100];
   Float_t         trk_gdau_nChi2[100];
   Float_t         trk_gdau_pTErr[100];
   Float_t         trk_gdau_xyDCASignificance[100];
   Float_t         trk_gdau_zDCASignificance[100];
+
+  // correct for dEdx
+  DeDxSelection dedxSel;
 
   MyNTuple(TTree* t) : t(t),
                        nDau(0), nGDau(0),

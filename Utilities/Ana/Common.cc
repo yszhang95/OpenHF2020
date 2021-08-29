@@ -94,4 +94,17 @@ bool DeDxSelection::operator() (const float p, const float dedx)
   return true;
 }
 
+double DeDxSelection::getMean(const float p)
+{
+  if (p<_turn1) {
+    return _pars[0] * exp(_pars[1]*p)+_pars[2];
+  }
+  else {
+    return
+      _pars[3]*exp(_pars[4]*p) + _pars[0]*exp(_pars[1]*_turn1)
+      + _pars[2] - _pars[3]*exp(_pars[4]*_turn1);
+  }
+  return 0;
+}
+
 #endif

@@ -225,6 +225,7 @@ void MyNTuple::initNTuple()
         t->Branch(Form("trk_dau%d_nPixelHit", iDau), &trk_dau_nPixelHit[iDau]);
         t->Branch(Form("trk_dau%d_nStripHit", iDau), &trk_dau_nStripHit[iDau]);
         t->Branch(Form("trk_dau%d_dEdx_dedxHarmonic2", iDau), &trk_dau_dEdx_dedxHarmonic2[iDau]);
+        t->Branch(Form("trk_dau%d_dEdxRes", iDau), &trk_dau_dEdxRes[iDau]);
         t->Branch(Form("trk_dau%d_dEdx_dedxPixelHarmonic2", iDau), &trk_dau_dEdx_dedxPixelHarmonic2[iDau]);
         t->Branch(Form("trk_dau%d_nChi2", iDau), &trk_dau_nChi2[iDau]);
         t->Branch(Form("trk_dau%d_pTErr", iDau), &trk_dau_pTErr[iDau]);
@@ -253,6 +254,7 @@ void MyNTuple::initNTuple()
       t->Branch(Form("trk_gdau%d_nPixelHit", iGDau), &trk_gdau_nPixelHit[iGDau]);
       t->Branch(Form("trk_gdau%d_nStripHit", iGDau), &trk_gdau_nStripHit[iGDau]);
       t->Branch(Form("trk_gdau%d_dEdx_dedxHarmonic2", iGDau), &trk_gdau_dEdx_dedxHarmonic2[iGDau]);
+      t->Branch(Form("trk_gdau%d_dEdxRes", iGDau), &trk_gdau_dEdxRes[iGDau]);
       t->Branch(Form("trk_gdau%d_dEdx_dedxPixelHarmonic2", iGDau), &trk_gdau_dEdx_dedxPixelHarmonic2[iGDau]);
       t->Branch(Form("trk_gdau%d_nChi2", iGDau), &trk_gdau_nChi2[iGDau]);
       t->Branch(Form("trk_gdau%d_pTErr", iGDau), &trk_gdau_pTErr[iGDau]);
@@ -388,6 +390,9 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
       this->trk_gdau_xyDCASignificance[gDauOffset] = p.trk_xyDCASignificance().at(trkIdx);
       this->trk_gdau_zDCASignificance[gDauOffset]  = p.trk_zDCASignificance().at(trkIdx);
       this->trk_gdau_dEdx_dedxHarmonic2[gDauOffset] = p.trk_dEdx_dedxHarmonic2().at(trkIdx);
+      // need to think about this
+      const double dedxMean = dedxSel.getMean(this->cand_gdau_pT[gDauOffset] * std::cosh(this->cand_gdau_eta[gDauOffset]));
+      this->trk_gdau_dEdxRes[gDauOffset] = (this->trk_gdau_dEdx_dedxHarmonic2[gDauOffset]-dedxMean)/dedxMean;
       this->trk_gdau_dEdx_dedxPixelHarmonic2[gDauOffset] = p.trk_dEdx_dedxPixelHarmonic2().at(trkIdx);
 
        gDauOffset++;
@@ -410,6 +415,8 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
       this->trk_dau_xyDCASignificance[iDau] = p.trk_xyDCASignificance().at(trkIdx);
       this->trk_dau_zDCASignificance[iDau] = p.trk_zDCASignificance().at(trkIdx);
       this->trk_dau_dEdx_dedxHarmonic2[iDau] = p.trk_dEdx_dedxHarmonic2().at(trkIdx);
+      const double dedxMean = dedxSel.getMean(this->cand_dau_pT[iDau] * std::cosh(this->cand_dau_eta[iDau]));
+      this->trk_dau_dEdxRes[iDau] = (this->trk_dau_dEdx_dedxHarmonic2[iDau]-dedxMean)/dedxMean;
       this->trk_dau_dEdx_dedxPixelHarmonic2[iDau] = p.trk_dEdx_dedxPixelHarmonic2().at(trkIdx);
     }
   }
@@ -486,6 +493,7 @@ float MyNTuple::value(const TString& s)
       if (s.Contains("xyDCASignificance")) return this->trk_dau_xyDCASignificance[index];
       if (s.Contains("zDCASignificance")) return this->trk_dau_zDCASignificance[index];
       if (s.Contains("dedxHarmonic2")) return this->trk_dau_dEdx_dedxHarmonic2[index];
+      if (s.Contains("dEdxRes")) return this->trk_dau_dEdxRes[index];
       if (s.Contains("dedxPixelHarmonic2")) return this->trk_dau_dEdx_dedxPixelHarmonic2[index];
     }
   } else if (s.Contains("_gdau")) {
@@ -504,6 +512,7 @@ float MyNTuple::value(const TString& s)
     if (s.Contains("xyDCASignificance")) return this->trk_gdau_xyDCASignificance[index];
     if (s.Contains("zDCASignificance")) return this->trk_gdau_zDCASignificance[index];
     if (s.Contains("dedxHarmonic2")) return this->trk_gdau_dEdx_dedxHarmonic2[index];
+    if (s.Contains("dEdxRes")) return this->trk_gdau_dEdxRes[index];
     if (s.Contains("dedxPixelHarmonic2")) return this->trk_gdau_dEdx_dedxPixelHarmonic2[index];
   } else if (s.Contains("Dau")) {
     auto index = TString(s[s.Length()-1]).Atoi();

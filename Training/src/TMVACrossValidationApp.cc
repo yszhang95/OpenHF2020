@@ -114,6 +114,9 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
   const bool isMC = configs.isMC();
   const bool saveMatchedOnly = configs.saveMatchedOnly();
   const bool flipEta = configs.flipEta();
+  const bool selectDeDx = configs.selectDeDx();
+
+  DeDxSelection dedxSel{0.7, 1.5, 0.75, 1.25};
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -434,6 +437,8 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
         }
         ntp.setMVAValues(mvaValues);
         if (selectMVA &&  !passMVA) continue;
+        if (selectDeDx && !dedxSel(ntp.cand_dau_pT[1] * std::cosh(ntp.cand_dau_eta[1]),
+                                   ntp.trk_dau_dEdx_dedxHarmonic2[1])) continue; // select proton
         if (saveTree) ntp.fillNTuple();
       }
     }
