@@ -807,13 +807,14 @@ void addFilesToChain(TChain* t, const vector<string>& fs)
     if (f.size() <=5 ) {
       cerr << "[EROOR] Cannot find correct file extension."
            << " Please checke the file name!" << endl;
+      continue;
     }
-    const auto extPos = f.size() - 5;
-    if ( f.find(".list", extPos) != std::string::npos ) {
+    const auto firstPos = 0;
+    if ( f.find(".list", firstPos) != std::string::npos ) {
       TFileCollection tf("tf", "", f.c_str());
       t->AddFileInfoList(tf.GetList());
     }
-    else if ( f.find(".root", extPos) != std::string::npos ) {
+    else if ( f.find(".root", firstPos) != std::string::npos ) {
       t->Add(f.c_str());
     }
   }
