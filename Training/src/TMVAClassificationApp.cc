@@ -84,15 +84,22 @@ int main( int argc, char** argv )
   else DEBUG = 0;
 
   tmvaConfigs configs(argv[1], DEBUG);
-  string tempOutFileName(gSystem->BaseName(argv[1]));
-  {
-    auto pos = tempOutFileName.find(".xml");
-    if (pos!=string::npos) { tempOutFileName.erase(pos, 4); }
-    if (tempOutFileName.size())
-      tempOutFileName.insert(0, "_");
+  if (configs.getOutFileName().empty()) {
+    string tempOutFileName(gSystem->BaseName(argv[1]));
+    {
+      auto pos = tempOutFileName.find(".xml");
+      if (pos!=string::npos) { tempOutFileName.erase(pos, 4); }
+      if (tempOutFileName.size())
+        tempOutFileName.insert(0, "_");
+    }
+    configs.setOutFileName("TMVA" + tempOutFileName +".root");
+  } else {
+    string tempOutFileName = configs.getOutFileName();
+    if (tempOutFileName.find(".root") == string::npos) {
+      tempOutFileName += ".root";
+    }
+    configs.setOutFileName("TMVA_" + tempOutFileName);
   }
-  configs.setOutFileName("TMVA" + tempOutFileName +".root");
-
   int code = TMVAClassificationApp(configs);
   return code;
 }
@@ -126,7 +133,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   // --- Here the preparation phase begins
 
   // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
-  TString outfileName = configs.getOutFileName();
+  TString outfileName = configs.getOutFileName().c_str();
   if (flipEta) {
     auto index = outfileName.Index(".root");
     if (index >0) {
@@ -219,13 +226,25 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
   // Read data
   // Prepare output histogram
+  const auto& binnings = configs.getHistoBinning();
   vector<unique_ptr<TH3D>> hMassPtMVA[2];
   for (size_t iy=0; iy<2; ++iy) {
     auto& vec = hMassPtMVA[iy];
     vec.resize(methodNames_copy.size());
     for (size_t i=0; i<methodNames.size(); i++) {
       auto& ptr = vec[i];
-      ptr = std::make_unique<TH3D>(Form("hMassPtMVA_%s_y%d", methodNames_copy[i].Data(), iy), ";mass;pT;MVA", 120, 2.15, 2.45, 10, 0., 10., 1000, 0., 1.);
+      const auto& binning = binnings.at(i);
+      if (binning.size() == 9) {
+        ptr = std::make_unique<TH3D>
+          (Form("hMassPtMVA_%s_y%d", methodNames_copy[i].Data(), iy),
+           ";mass;pT;MVA",
+           binning.at(0).Atoi(), binning.at(1).Atof(), binning.at(2).Atof(),
+           binning.at(3).Atoi(), binning.at(4).Atof(), binning.at(5).Atof(),
+           binning.at(6).Atoi(), binning.at(7).Atof(), binning.at(8).Atof());
+      } else {
+        throw std::runtime_error("Need to pass in TH3D binning!");
+      }
+
     }
   }
 

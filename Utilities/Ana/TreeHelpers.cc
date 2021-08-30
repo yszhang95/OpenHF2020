@@ -280,7 +280,7 @@ bool MyNTuple::setMVAValues(const std::vector<float>& vals)
 bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 {
   this->Ntrkoffline = isMC ? 0 : p.Ntrkoffline();
-  this->cand_Ntrkoffline = p.cand_Ntrkoffline().at(it);
+  this->cand_Ntrkoffline = isMC ? 0 : p.cand_Ntrkoffline().at(it);
   this->cand_pT     = p.cand_pT().at(it);
   this->cand_eta    = p.cand_eta().at(it);
   this->cand_phi    = p.cand_phi().at(it);

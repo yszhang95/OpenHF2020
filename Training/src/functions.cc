@@ -684,6 +684,44 @@ vector<TString> tmvaConfigs::getOptions() const
 }
 
 /**
+   Get the binning setup for each methods
+ */
+vector<vector<TString>> tmvaConfigs::getHistoBinning() const
+{
+  vector<vector<TString>> output;
+  if (_configs.count("histoBinning")
+      && _configs.at("histoBinning").size()) {
+    const auto& bins = _configs.at("histoBinning");
+    for (const auto& bin : bins) {
+      const TString binning = bin;
+      const auto foundQuote = binning.Index(":") > 0;
+      const auto foundComma = binning.Index(",") > 0;
+      if ( (foundQuote && foundComma) || (!foundQuote && !foundComma)) {
+        cerr << "Cannot find delimiter ':' or ',',"
+          " need one and only one type of delimiter!" << endl;
+        throw std::runtime_error("No delimiter found for histogram binning");
+      }
+      if (foundQuote) output.push_back(splitTString(binning, ":"));
+      if (foundComma) output.push_back(splitTString(binning, ","));
+    }
+    if (_debug) {
+      cout << "Histograms binnings are:" << endl;
+      size_t im=0;
+      for (const auto& m : output){
+        cout << "Method " << im++ << ":\t";
+        for (const auto& binning : m) {
+          cout << binning << "\t";
+        }
+        cout << endl;
+      }
+    }
+  } else {
+    throw std::runtime_error("cannot find histoBinning");
+  }
+  return output;
+}
+
+/**
    A helper class to convert tree content to values which are fed to TMVA reader
  */
 MVAHelper::MVAHelper(const vector<map<string, TString>> trainingVars,
@@ -793,7 +831,8 @@ vector<TString> splitTString(const TString& in, const char* delimiter)
     strStart = strEnd+1;
     strEnd = in.Index(delimiter, strStart);
   }
-  ss.push_back(in(strStart, in.Length()-strStart));
+  TString out = in(strStart, in.Length()-strStart);
+  ss.push_back(out.Strip());
 
   return ss;
 }

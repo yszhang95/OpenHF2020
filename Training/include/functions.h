@@ -86,6 +86,7 @@ public:
   std::vector<std::string>                    getSignalFileNames() const;
   std::vector<std::string>                    getBackgroundFileNames() const;
   std::vector<TString>                        getOptions() const;
+  std::vector<std::vector<TString>>           getHistoBinning() const;
   std::string                                 getOutFileName() const;
   void                                        setOutFileName(const std::string&);
   std::string                                 getOutDirName() const;

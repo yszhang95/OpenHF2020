@@ -86,14 +86,22 @@ int main( int argc, char** argv )
   else DEBUG = 0;
 
   tmvaConfigs configs(argv[1], DEBUG);
-  string tempOutFileName(gSystem->BaseName(argv[1]));
-  {
-    auto pos = tempOutFileName.find(".xml");
-    if (pos!=string::npos) { tempOutFileName.erase(pos, 4); }
-    if (tempOutFileName.size())
-      tempOutFileName.insert(0, "_");
+  if (configs.getOutFileName().empty()) {
+    string tempOutFileName(gSystem->BaseName(argv[1]));
+    {
+      auto pos = tempOutFileName.find(".xml");
+      if (pos!=string::npos) { tempOutFileName.erase(pos, 4); }
+      if (tempOutFileName.size())
+        tempOutFileName.insert(0, "_");
+    }
+    configs.setOutFileName("TMVA_CV" + tempOutFileName +".root");
+  } else {
+    string tempOutFileName = configs.getOutFileName();
+    if (tempOutFileName.find(".root") == string::npos) {
+      tempOutFileName += ".root";
+    }
+    configs.setOutFileName("TMVA_CV_" + tempOutFileName);
   }
-  configs.setOutFileName("TMVA" + tempOutFileName +".root");
 
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,8,0)
   int code = TMVACrossValidationApp(configs);
