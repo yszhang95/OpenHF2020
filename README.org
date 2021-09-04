@@ -1,0 +1,51 @@
+* OpenHF2020
+  This is a repository for open heavy flavor analysis with CMS
+  experiment. It is under test with =LCG_99=.
+** Scripts under top directory
+   - =prep.sh= :: This script will generate a tarball including compiled
+     libraries and executable. Usage is like:
+     : ./prep.sh [-f] [destination]
+     - =-f= means that force to create a file under the destination
+     - =destination= means that the destination where the tarball will
+       be copied to. Transferring of the tarball need =xrootd=
+       services. Make sure you properly set the authentication.  There
+       is a default path for destination. If you want to override it,
+       you need to add the option =-f= prior to destination.
+   - =setup.sh= :: This script set the environment
+     variables. Environment variables will be set via =LCG_99=. Does not
+     execute any programs for CMS-specifics. Besides the variables
+     overridden by =LCG_99=, a variable called =OPENHF2020TOP= will be
+     created and set to the top level of the git
+     package. =OPENHF2020TOP= is very important to the following
+     compiling. Make sure you have set it up before you do
+     anything. If you append =--enable-lib= when you source this script,
+     the directory =${OPENHF2020TOP}/Utilities/lib= will be added to the
+     list of paths specified by =LD_LIBRARY_PATH=.
+
+** GenParticleAnalysis
+   Deprecated.
+** Training
+   Under construction.
+
+   To compile, execute
+   #+begin_src shell
+     # assume you are under ${OPENHF2020TOP}/Training
+     make
+   #+end_src
+
+** Utilities
+   Common libraries for
+   - tree reader
+   - helper class for tree to ntuple conversion
+   - customized =RooFit= models
+   - small class for particle decay chain record and a helper function to check decay chain
+   - a simple functor for dE/dx selections
+   - small tools to extract four-momentum and three-momentum from =ParticleTree=
+
+   To compile, execute
+   #+begin_src shell
+     # assume you are under ${OPENHF2020TOP}/Utilities
+     make
+   #+end_src
+
+   These tools are still under construction.
