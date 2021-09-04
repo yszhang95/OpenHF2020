@@ -71,6 +71,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _outfileName(""), _outdirName(""),
   _signalFileList(""), _backgroundFileList(""),
   _signalWeight(1.), _backgroundWeight(1.),
+  _triggerIndex(-1), _filterIndex(-1),
   _saveTree(0), _saveDau(0), _selectMVA(0),
   _useEventWiseWeight(0), _isMC(0), _saveMatchedOnly(1),
   _flipEta(0), _selectDeDx(0),  _debug(debug)
@@ -137,6 +138,22 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   if (_debug) {
     cout << "SignalWeight=" << _signalWeight << endl;
     cout << "BackgroundWeight=" << _backgroundWeight << endl;
+  }
+
+  if (_configs.count("triggerIndex")
+      && !_configs.at("triggerIndex").empty()) {
+    const auto triggerIndex = _configs.at("triggerIndex").front();
+    _triggerIndex = std::stoi(triggerIndex);
+  }
+
+  if (_configs.count("filterIndex")
+      && !_configs.at("filterIndex").empty()) {
+    const auto filterIndex =  _configs.at("filterIndex").front();
+    _filterIndex = std::stoi(filterIndex);
+  }
+  if (_debug) {
+    cout << "The trigger index is " << _triggerIndex << endl;
+    cout << "The filter index is " << _filterIndex << endl;
   }
 
   _saveTree  = std::find(options.begin(), options.end(), "saveTree")  != options.end();
@@ -596,6 +613,28 @@ double tmvaConfigs::signalWeight() const
 double tmvaConfigs::backgroundWeight() const
 {
   return _backgroundWeight;
+}
+
+/**
+   Get the index which trigger users want to use
+ */
+
+int tmvaConfigs::triggerIndex() const
+{
+  if (_triggerIndex<0)
+    throw std::runtime_error("trigger index is not properly initialized.");
+  return _triggerIndex;
+}
+
+/**
+   Get the index which filter users want to use
+ */
+
+int tmvaConfigs::filterIndex() const
+{
+  if (_filterIndex<0)
+    throw std::runtime_error("filter index is not properly initialized.");
+  return _filterIndex;
 }
 
 /**

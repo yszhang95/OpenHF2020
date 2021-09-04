@@ -16,6 +16,8 @@ parser.add_argument('--mc', dest='isMC', help='intput is MC (default: input is d
 parser.add_argument('--flipEta', dest='flipEta', help='flip the (pseudo-) rapidities of particles', action='store_const', const=True, default=False)
 parser.add_argument('--saveAll', dest='saveAll', help='Save all candidates when intput is MC (default: not)', action='store_const', const=True, default=False)
 parser.add_argument('--selectDeDx', dest='selectDeDx', help='Select candidates using dE/dx (default: not)', action='store_const', const=True, default=False)
+parser.add_argument('--triggerIndex', dest='triggerIndex', help='trigger index', type=int, default=2)
+parser.add_argument('--filterIndex', dest='filterIndex', help='filter index', type=int, default=4)
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
@@ -35,6 +37,8 @@ conf.SetSaveMatchedOnly(not args.saveAll)
 conf.SetSelectDeDx(args.selectDeDx)
 conf.SetDeDxSelection((0.7, 1.5, 0.75, 1.25))
 conf.SetFlipEta(args.flipEta)
+conf.SetTriggerIndex(args.triggerIndex)
+conf.SetFilterIndex(args.filterIndex)
 
 Ks = r.Particle(310)
 Ks.selfConj(True);

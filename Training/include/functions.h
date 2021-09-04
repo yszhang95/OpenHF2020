@@ -97,6 +97,8 @@ public:
   std::string                                 backgroundFileList() const;
   double                                      signalWeight() const;
   double                                      backgroundWeight() const;
+  int                                         triggerIndex() const;
+  int                                         filterIndex() const;
   bool                                        saveTree()  const;
   bool                                        saveDau()   const;
   bool                                        selectMVA() const;
@@ -121,6 +123,8 @@ private:
   std::string _backgroundFileList;
   double _signalWeight;
   double _backgroundWeight;
+  int  _triggerIndex;
+  int  _filterIndex;
   bool _saveTree;
   bool _saveDau;
   bool _selectMVA;

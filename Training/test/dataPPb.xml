@@ -1,0 +1,56 @@
+<root>
+  <training_variables>
+    dedxRes := dau1_dEDxRes ? [0] ? cand_dau1_dEdxRes
+    cand_dau_dR := sqrt(pow(cand_etaDau1-cand_etaDau0, 2) + pow(cand_phiDau1-cand_phiDau0, 2)) ? sqrt(pow([0]-[1], 2)+pow([2]-[3], 2)) ? cand_etaDau1:cand_etaDau0:cand_phiDau1:cand_phiDau0
+    cos(cand_angle3D)? cos([0])? cand_angle3D
+    cand_dau1_p ? [0] * cosh([1])? cand_dau1_pT:cand_dau1_eta
+    cand_etaDau1 ? [0] ? cand_etaDau1
+  </training_variables>
+  <spectator_variables>
+    cand_pT? [0] ? cand_pT
+  </spectator_variables>
+  <outfileName>
+    pPb_LambdaCKsP3to4App
+  </outfileName>
+  <outputDir>
+    .
+  </outputDir>
+  <histoBinning>
+    120, 2.15, 2.45, 10, 0., 10., 120, -0.2, 1.
+    120, 2.15, 2.45, 10, 0., 10., 500, 0.0, 0.01
+  </histoBinning>
+  <trainXML>
+    BDTG_vars3D.xml
+    MLP_vars3D_pT3to4_Np2N.xml
+  </trainXML>
+  <treeInfo>
+    lambdacAna  ? 4122 ? -1
+  </treeInfo>
+  <methods>
+    BDT? BDTG_3D? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=30:MaxDepth=2
+    MLP? MLP3to4Np2N? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
+  </methods>
+  <options>
+    saveTree:selectDeDx
+  </options>
+  <mvaCutMin>
+    0.6
+    1
+  </mvaCutMin>
+  <common_cuts>
+    cand_pT &gt; 3. ? [0] &gt; 3 ? cand_pT
+    cand_pT &lt; 4. ? [0] &lt; 4 ? cand_pT
+    cand_dau0_decayLength3D/cand_dau0_decayLengthError3D &gt; 5. ? [0]/[1] &gt; 5 ? cand_dau0_decayLength3D:cand_dau0_decayLengthError3D
+    cand_dau0_dca &lt; 0.5 ? [0] &lt; 0.5 ? cand_dau0_dca
+    cos(cand_dau0_angle3D) &gt; 0.999 ? cos([0]) &gt; 0.999 ? cand_dau0_angle3D
+  </common_cuts>
+  <inputFiles>
+    dataHM3_pPb.list.100 
+  </inputFiles>
+  <triggerIndex>
+    2
+  </triggerIndex>
+  <filterIndex>
+    4
+  </filterIndex>
+</root>

@@ -116,6 +116,8 @@ int main( int argc, char** argv )
 int TMVACrossValidationApp(const tmvaConfigs& configs)
 {
   gROOT->SetBatch(true);
+  const int  triggerIndex = configs.triggerIndex();
+  const int  filterIndex  = configs.filterIndex();
   const bool saveTree = configs.saveTree();
   const bool saveDau = configs.saveDau();
   const bool selectMVA = configs.selectMVA();
@@ -310,8 +312,12 @@ int TMVACrossValidationApp(const tmvaConfigs& configs)
     if (jentry < 0) break;
     p.GetEntry(ientry);
 
-    // check pileup filter
-    if (!p.evtSel().at(4)) continue;
+    // check pileup filter and event selection filter
+    // if (!p.evtSel().at(4)) continue;
+    if (!isMC) {
+      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
+      if (!passEventSel) continue;
+    }
     if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();

@@ -68,6 +68,10 @@ public:
   void SetDeDxSelection(const DeDxSelection& sel){ _dEdxSelection = sel; }
   bool SelectDeDx() const { return _selectDeDx; }
   void SetSelectDeDx (const bool sel) { _selectDeDx = sel; }
+  int  GetTriggerIndex() const { return _triggerIndex; }
+  int  GetFilterIndex()  const { return _filterIndex;  }
+  void SetTriggerIndex(const int idx) { _triggerIndex = idx; }
+  void SetFilterIndex(const int idx)  { _filterIndex  = idx; }
 
 private:
   MatchCriterion _matchCriterion;
@@ -77,6 +81,8 @@ private:
   TString _postfix;
   TString _outDir;
   Long64_t _nentries;
+  int      _triggerIndex;
+  int      _filterIndex;
   bool     _isMC;
   bool     _flipEta;
   bool     _saveMatchedOnly;
@@ -109,6 +115,8 @@ int skimTree(const Config& conf,
   const auto postfix = conf.GetPostfix();
   const auto outDir = conf.GetOutDir();
   auto nentries = conf.GetNEntries();
+  const auto triggerIndex = conf.GetTriggerIndex();
+  const auto filterIndex  = conf.GetFilterIndex();
   const auto isMC = conf.isMC();
   const auto flipEta = conf.flipEta();
   const auto saveMatchedOnly = conf.SaveMatchedOnly();
@@ -189,7 +197,7 @@ int skimTree(const Config& conf,
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
     if (!isMC) {
-      const bool passEventSel = passEvent(p, 4, 2); // modify later
+      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
       if (!passEventSel) continue;
     }
 
