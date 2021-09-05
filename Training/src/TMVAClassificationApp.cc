@@ -229,6 +229,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   // Read data
   // Prepare output histogram
   const auto& binnings = configs.getHistoBinning();
+  vector<unique_ptr<TH3D>> hMassNtrkMVA;
   vector<unique_ptr<TH3D>> hMassPtMVA[2];
   for (size_t iy=0; iy<2; ++iy) {
     auto& vec = hMassPtMVA[iy];
@@ -248,6 +249,23 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       }
 
     }
+  }
+
+  hMassNtrkMVA.resize(methodNames_copy.size());
+  for (size_t i=0; i!=methodNames.size(); i++) {
+    auto& ptr = hMassNtrkMVA[i];
+    const auto& binning = binnings.at(i);
+    if (binning.size() == 9) {
+      ptr = std::make_unique<TH3D>
+        (Form("hMassNtrkMVA_%s", methodNames_copy[i].Data()),
+         ";mass;pT;MVA",
+         binning.at(0).Atoi(), binning.at(1).Atof(), binning.at(2).Atof(),
+         250, 0., 250.,
+         binning.at(6).Atoi(), binning.at(7).Atof(), binning.at(8).Atof());
+    } else {
+      throw std::runtime_error("Need to pass in TH3D binning!");
+    }
+
   }
 
   // Prepare input tree (this must be replaced by your data source)
@@ -446,6 +464,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           } else if (abs(ntp.cand_y)<2.) {
             hMassPtMVA[1][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
           }
+          hMassNtrkMVA[i]->Fill(ntp.cand_mass, ntp.cand_Ntrkoffline, mvaValues[i]);
         }
         ntp.setMVAValues(mvaValues);
         if (selectMVA &&  !passMVA) continue;
@@ -462,6 +481,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   for (const auto& vec : hMassPtMVA) {
     for (const auto& h : vec) h->Write();
   }
+  for (const auto& h : hMassNtrkMVA) h->Write();
 
   std::cout << "==> Wrote root file: " << outputFile.GetName() << std::endl;
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;
