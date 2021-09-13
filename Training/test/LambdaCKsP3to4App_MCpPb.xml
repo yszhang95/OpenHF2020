@@ -34,13 +34,14 @@
   </treeInfo>
   <inputFiles>
     ../Lists/MC_pPb.list
+    #root://cmseos.fnal.gov///store/user/yousen/MC/OpenHF2020/LambdaC_KsP/LambdaC-KsPr_LCpT-0p9_pPb-EmbEPOS_8p16_Pythia8/ParticleTreeMC_pPb_PALambdaC_KsP_20210805/210806_025229/0000/lambdacana_mc_1.root
   </inputFiles>
   <methods>
     BDT? BDTG_3D? !H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=30:MaxDepth=2
     MLP? MLP3to4Np2N? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
   </methods>
   <options>
-    saveTree:saveDau:selectMVA:saveMatchedOnly:isMC:selectDeDx
+    saveTree:saveDau:selectMVA:!saveMatchedOnly:isMC:selectDeDx
   </options>
   <mvaCutMin>
     -1

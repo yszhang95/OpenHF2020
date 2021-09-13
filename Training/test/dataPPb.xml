@@ -31,11 +31,11 @@
     MLP? MLP3to4Np2N? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
   </methods>
   <options>
-    saveTree:selectDeDx
+    saveTree:selectDeDx:saveDau:selectMVA
   </options>
   <mvaCutMin>
-    0.6
-    1
+    1.0
+    0.0024
   </mvaCutMin>
   <common_cuts>
     cand_pT &gt; 3. ? [0] &gt; 3 ? cand_pT

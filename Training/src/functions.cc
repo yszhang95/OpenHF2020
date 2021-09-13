@@ -621,8 +621,8 @@ double tmvaConfigs::backgroundWeight() const
 
 int tmvaConfigs::triggerIndex() const
 {
-  if (_triggerIndex<0)
-    throw std::runtime_error("trigger index is not properly initialized.");
+  //if (_triggerIndex<0)
+  //  throw std::runtime_error("trigger index is not properly initialized.");
   return _triggerIndex;
 }
 
@@ -632,8 +632,8 @@ int tmvaConfigs::triggerIndex() const
 
 int tmvaConfigs::filterIndex() const
 {
-  if (_filterIndex<0)
-    throw std::runtime_error("filter index is not properly initialized.");
+  //if (_filterIndex<0)
+  //  throw std::runtime_error("filter index is not properly initialized.");
   return _filterIndex;
 }
 
