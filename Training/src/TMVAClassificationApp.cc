@@ -225,7 +225,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     methodNames.push_back(methodName);
   }
 
-
   // Read data
   // Prepare output histogram
   const auto& binnings = configs.getHistoBinning();
@@ -268,6 +267,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
   }
 
+  // histograms
+  varHists hists(configs);
+
   // Prepare input tree (this must be replaced by your data source)
   const auto inputFileNames = configs.getInputFileNames();
   const auto treeInfo = configs.getTreeInfo();
@@ -294,6 +296,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
+
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
   ntp.dropDau = !saveDau;
@@ -303,6 +306,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
+  std::vector<TString> keptBranches{"cand_mass", "cand_pTDau0", "cand_etaDau0"};
+  ntp.pruneNTuple(keptBranches);
+  cout << "NTuple prepared" << endl;
 
   TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
 
@@ -467,6 +473,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           hMassNtrkMVA[i]->Fill(ntp.cand_mass, ntp.cand_Ntrkoffline, mvaValues[i]);
         }
         ntp.setMVAValues(mvaValues);
+        if (abs(ntp.cand_y)<1.)
+          hists.fillHists(ntp);
         if (selectMVA &&  !passMVA) continue;
         if (selectDeDx && !dedxSel(ntp.cand_dau_pT[1] * std::cosh(ntp.cand_dau_eta[1]),
                                    ntp.trk_dau_dEdx_dedxHarmonic2[1])) continue; // select proton
@@ -482,6 +490,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     for (const auto& h : vec) h->Write();
   }
   for (const auto& h : hMassNtrkMVA) h->Write();
+  hists.writeHists();
 
   std::cout << "==> Wrote root file: " << outputFile.GetName() << std::endl;
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;

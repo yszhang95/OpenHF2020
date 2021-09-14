@@ -526,7 +526,45 @@ float MyNTuple::value(const TString& s)
     if (s.Contains("pTDau")) return this->cand_pTDau[index];
     if (s.Contains("phiDau")) return this->cand_phiDau[index];
   }
+
+  if (s.Contains("mva")) {
+    auto begPos = s.Index("[");
+    ++begPos;
+    auto endPos = s.Index("]");
+    --endPos;
+    TString num = s(begPos, endPos);
+    int i = num.Atoi();
+    return this->cand_MVA[i];
+  }
   std::cerr << "[ERROR] Not found variable " << s <<" in NTuple" << std::endl;
   return 0;
+}
+
+void MyNTuple::pruneNTuple(const std::vector<TString>& keptBranchesVec)
+{
+#if 0
+  // std::set_difference need sorted inputs
+  std::set<TString> keptBranches(keptBranchesVec.begin(), keptBranchesVec.end());
+  std::set<TString> branches;
+  auto tbranches = t->GetListOfBranches();
+  for (auto it = tbranches->begin(); it != tbranches->end(); ++it) {
+    auto ins = branches.insert( (*it)->GetName() );
+    if (ins.second) std::cout << "Branch " << *ins.first << " found" << std::endl;
+  }
+
+  std::set<TString> removedBranches;
+  std::set_difference(branches.begin(), branches.end(),
+                      keptBranches.begin(), keptBranches.end(),
+                      std::inserter(removedBranches, removedBranches.end())
+                      );
+#endif
+  t->SetBranchStatus("*", 0);
+  for (const auto& b : keptBranchesVec) {
+    std::cout << "Enabled branch " << b << std::endl;
+    t->SetBranchStatus(b.Data(), 1);
+  }
+  TTree* oldtree = t->CloneTree(0);
+  TTree* temp = t;
+  t = oldtree;
 }
 #endif

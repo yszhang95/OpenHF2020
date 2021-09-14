@@ -17,10 +17,15 @@
 
 #include "TString.h"
 #include "TF1.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
 
 #include "TMVA/Types.h"
 
 #include "Ana/TreeHelpers.h"
+
+class varHists;
 
 static int DEBUG = 0;
 
@@ -65,6 +70,7 @@ static inline std::string trim_copy(std::string s) {
 class tmvaConfigs
 {
 public:
+  friend class varHists;
   tmvaConfigs(std::string, bool debug=false);
   tmvaConfigs(const tmvaConfigs&) = delete;
   ~tmvaConfigs() {};
@@ -162,4 +168,22 @@ struct MVAHelper
 void addFilesToChain(TChain* t, const std::vector<std::string>& fs);
 
 std::vector<TString> splitTString(const TString& in, const char* delimiter);
+
+class varHists
+{
+ public:
+  explicit varHists(const tmvaConfigs& config);
+  void fillHists(MyNTuple&);
+  void writeHists();
+ private:
+  varHists(const varHists&);
+  varHists& operator=(const varHists&);
+  std::vector<std::unique_ptr<TH1D>> hist1Ds;
+  std::vector<std::unique_ptr<TH2D>> hist2Ds;
+  std::vector<std::unique_ptr<TH3D>> hist3Ds;
+  std::vector<std::vector<TString>> var1Ds;
+  std::vector<std::vector<TString>> var2Ds;
+  std::vector<std::vector<TString>> var3Ds;
+};
+
 #endif

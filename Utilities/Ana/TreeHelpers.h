@@ -230,6 +230,7 @@ struct MyNTuple
   bool  setMVAValues(const std::vector<float>&);
   bool  retrieveTreeInfo(ParticleTree&, Long64_t);
   float value(const TString& s);
+  void  pruneNTuple(const std::vector<TString>&);
 };
 
 

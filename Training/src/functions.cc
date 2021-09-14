@@ -4,6 +4,10 @@
 
 #include <algorithm>
 
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
+
 #include "TClonesArray.h"
 #include "TObjString.h"
 #include "TPRegexp.h"
@@ -867,13 +871,99 @@ vector<TString> splitTString(const TString& in, const char* delimiter)
   int strStart = 0;
   int strEnd = in.Index(delimiter, 0);
   while (strEnd >= 0) {
-    ss.push_back(in(strStart, strEnd-strStart));
+    TString temp = in(strStart, strEnd-strStart);
+    ss.push_back(temp.Strip(TString::kBoth));
     strStart = strEnd+1;
     strEnd = in.Index(delimiter, strStart);
   }
   TString out = in(strStart, in.Length()-strStart);
-  ss.push_back(out.Strip());
+  out = out.Strip(TString::kBoth);
+  ss.push_back(out);
 
   return ss;
+}
+
+varHists::varHists(const tmvaConfigs& config)
+{
+  if (config._configs.count("varHists")) {
+    const auto& var_hists = config._configs.at("varHists");
+    for (const auto& pars : var_hists) {
+      // cout << pars << endl;
+      const TString parList = pars;
+      const auto foundQuote = parList.Index(":") > 0;
+      const auto foundComma = parList.Index(",") > 0;
+      if ( (foundQuote && foundComma) || (!foundQuote && !foundComma)) {
+        cerr << "Cannot find delimiter ':' or ',',"
+          " need one and only one type of delimiter!" << endl;
+        throw std::runtime_error("No delimiter found for histogram binning");
+      }
+      vector<TString> parameters;
+      if (foundQuote) parameters = splitTString(parList, ":");
+      else if (foundComma) parameters = splitTString(parList, ",");
+
+      // TH3
+      if (parList.Index("TH3:", 0)>=0 || parList.Index("TH3,", 0)>=0) {
+        cout << "Initializing TH3" << endl;
+        // TH3([1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11])
+        hist3Ds.push_back
+          (std::make_unique<TH3D>
+           (parameters.at(1).Data(), parameters.at(2).Data(),
+            parameters.at(3).Atoi(), parameters.at(4).Atof(), parameters.at(5).Atof(),
+            parameters.at(6).Atoi(), parameters.at(7).Atof(), parameters.at(8).Atof(),
+            parameters.at(9).Atoi(), parameters.at(10).Atof(), parameters.at(11).Atof()
+            ));
+        var3Ds.push_back(parameters);
+      }
+      if (parList.Index("TH2:")>=0 || parList.Index("TH2,")>=0) {
+        // TH2([1], [2], [3], [4], [5], [6], [7], [8])
+        hist2Ds.push_back
+          (std::make_unique<TH2D>
+           (parameters.at(1).Data(), parameters.at(2).Data(),
+            parameters.at(3).Atoi(), parameters.at(4).Atof(), parameters.at(5).Atof(),
+            parameters.at(6).Atoi(), parameters.at(7).Atof(), parameters.at(8).Atof()
+            ));
+        var2Ds.push_back(parameters);
+      }
+      if (parList.Index("TH1:")>=0 || parList.Index("TH1,")>=0) {
+        // TH2([1], [2], [3], [4], [5])
+        hist1Ds.push_back
+          (std::make_unique<TH1D>
+           (parameters.at(1).Data(), parameters.at(2).Data(),
+            parameters.at(3).Atoi(), parameters.at(4).Atof(), parameters.at(5).Atof()
+            ));
+        var1Ds.push_back(parameters);
+      }
+    }
+  }
+}
+
+void varHists::fillHists(MyNTuple& t)
+{
+  for (size_t i=0; i != hist3Ds.size(); ++i) {
+    auto& h3D = hist3Ds.at(i);
+    // std::cout << var3Ds.at(i).at(12).Length() << var3Ds.at(i).at(12) << std::endl;
+    const double x = t.value(var3Ds.at(i).at(12));
+    const double y = t.value(var3Ds.at(i).at(13));
+    const double z = t.value(var3Ds.at(i).at(14));
+    h3D->Fill(x, y, z);
+  }
+  for (size_t i=0; i != hist2Ds.size(); ++i) {
+    auto& h2D = hist2Ds.at(i);
+    const double x = t.value(var2Ds.at(i).at(9));
+    const double y = t.value(var2Ds.at(i).at(10));
+    h2D->Fill(x, y);
+  }
+  for (size_t i=0; i != hist1Ds.size(); ++i) {
+    auto& h1D = hist1Ds.at(i);
+    const double x= t.value(var1Ds.at(i).at(6));
+    h1D->Fill(x);
+  }
+}
+
+void varHists::writeHists()
+{
+  for (auto& h : hist1Ds) h->Write();
+  for (auto& h : hist2Ds) h->Write();
+  for (auto& h : hist3Ds) h->Write();
 }
 #endif
