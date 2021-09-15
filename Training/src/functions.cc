@@ -128,13 +128,14 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
     cout << "outdirName: " << _outdirName << endl;
   }
 
-  const auto options = getOptions();
+  auto options = getOptions();
+  for (auto& op : options) op.ToLower();
   auto it_SW = std::find_if(options.begin(), options.end(),
                             [](const TString& str)
-                            { return str.Contains("SiganlWeight=");});
+                            { return str.Contains("siganlweight=");});
   auto it_BW = std::find_if(options.begin(), options.end(),
                             [](const TString& str)
-                            { return str.Contains("BackgroundWeight=");});
+                            { return str.Contains("backgroundweight=");});
   if (it_SW != options.end())
     _signalWeight = TString((*it_SW)(12, it_SW->Length()-1)).Atof();
   if (it_BW != options.end())
@@ -160,16 +161,16 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
     cout << "The filter index is " << _filterIndex << endl;
   }
 
-  _saveTree  = std::find(options.begin(), options.end(), "saveTree")  != options.end();
-  _saveDau   = std::find(options.begin(), options.end(), "saveDau")   != options.end();
+  _saveTree  = std::find(options.begin(), options.end(), "savetree")  != options.end();
+  _saveDau   = std::find(options.begin(), options.end(), "savedau")   != options.end();
   _selectMVA = std::find(options.begin(), options.end(), "selectMVA") != options.end();
-  _useEventWiseWeight = std::find(options.begin(), options.end(), "useEventWiseWeight")
+  _useEventWiseWeight = std::find(options.begin(), options.end(), "useeventwiseweight")
     != options.end();
-  _isMC      = std::find(options.begin(), options.end(), "isMC")      != options.end();
-  _saveMatchedOnly = std::find (options.begin(), options.end(), "!saveMatchedOnly")
+  _isMC      = std::find(options.begin(), options.end(), "ismc")      != options.end();
+  _saveMatchedOnly = std::find (options.begin(), options.end(), "!savematchedonly")
     == options.end();
-  _flipEta   = std::find(options.begin(), options.end(), "flipEta") != options.end();
-  _selectDeDx = std::find(options.begin(), options.end(), "selectDeDx") != options.end();
+  _flipEta   = std::find(options.begin(), options.end(), "flipeta") != options.end();
+  _selectDeDx = std::find(options.begin(), options.end(), "selectdedx") != options.end();
 
   if (_configs.count("signalFileList")
       && _configs.at("signalFileList").size())
@@ -903,7 +904,6 @@ varHists::varHists(const tmvaConfigs& config)
 
       // TH3
       if (parList.Index("TH3:", 0)>=0 || parList.Index("TH3,", 0)>=0) {
-        cout << "Initializing TH3" << endl;
         // TH3([1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11])
         hist3Ds.push_back
           (std::make_unique<TH3D>
