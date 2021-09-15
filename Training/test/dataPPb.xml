@@ -57,4 +57,12 @@
   <varHists>
     TH3, hTestMLP3to4Np2N, Mass(X)Pt(y)MVA(Z);Mass (GeV);p_{T} (GeV);MVA, 120, 2.15, 2.45, 10, 0., 10., 500, 0.0, 0.01,cand_mass,cand_pT,mva[1]
   </varHists>
+  <KeptBranchNames>
+    trk_dau1_dEdxRes:trk_dau1_dEdx_dedxHarmonic2
+    cand_massDau0:cand_pTDau0:cand_etaDau0:cand_phiDau0:
+    cand_massDau1:cand_pTDau1:cand_etaDau1:cand_phiDau1:
+    cand_mass:cand_pT:cand_eta:cand_mass:cand_y
+    cand_angle3D:cand_dauCosOpenAngle3D:cand_Ntrkoffline
+    MLP3to4Np2N:BDTG_3D
+  </KeptBranchNames>
 </root>

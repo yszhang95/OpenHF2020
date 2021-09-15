@@ -92,6 +92,7 @@ public:
   std::vector<std::string>                    getSignalFileNames() const;
   std::vector<std::string>                    getBackgroundFileNames() const;
   std::vector<TString>                        getOptions() const;
+  std::vector<TString>                        getKeptBranchNames() const;
   std::vector<std::vector<TString>>           getHistoBinning() const;
   std::string                                 getOutFileName() const;
   void                                        setOutFileName(const std::string&);
@@ -105,6 +106,7 @@ public:
   double                                      backgroundWeight() const;
   int                                         triggerIndex() const;
   int                                         filterIndex() const;
+  bool                                        pruneNTuple() const;
   bool                                        saveTree()  const;
   bool                                        saveDau()   const;
   bool                                        selectMVA() const;
@@ -123,6 +125,7 @@ private:
   std::vector<std::map<std::string, TString>> getVarExps(const std::string&) const;
   std::map<std::string, TString>              getVarExp(const std::string&) const;
   std::map<std::string, std::vector<std::string>> _configs;
+  std::vector<TString> _keptBranchNames;
   std::string _outfileName;
   std::string _outdirName;
   std::string _signalFileList;

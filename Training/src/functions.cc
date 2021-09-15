@@ -182,6 +182,25 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
     cout << "signalFileList: " << _signalFileList << endl;
     cout << "backgroundFileList: " << _backgroundFileList << endl;
   }
+
+  if (_configs.count("KeptBranchNames")) {
+    const auto& branches = _configs.at("KeptBranchNames");
+    for (const auto& bs : branches) {
+      TString temp = bs;
+      auto bnames = splitTString(temp, ":");
+      for (const auto& b : bnames) {
+        if (b.Length() && !b.IsWhitespace()) {
+          _keptBranchNames.push_back(b);
+        }
+      }
+    }
+    if (_debug) {
+      cout << "Kept branch names are: \n";
+      for (const auto& b : _keptBranchNames) {
+        cout << "\t" << b << endl;
+      }
+    }
+  }
 }
 
 /**
@@ -643,6 +662,14 @@ int tmvaConfigs::filterIndex() const
 }
 
 /**
+   Return if prune the ntuple
+ */
+bool tmvaConfigs::pruneNTuple() const
+{
+  return !_keptBranchNames.empty();
+}
+
+/**
    Return if the tree with MVA will be saved
  */
 bool tmvaConfigs::saveTree() const
@@ -728,6 +755,14 @@ vector<TString> tmvaConfigs::getOptions() const
 }
 
 /**
+   Return the collection of kept branch names
+ */
+vector<TString> tmvaConfigs::getKeptBranchNames() const
+{
+  return _keptBranchNames;
+}
+
+/**
    Get the binning setup for each methods
  */
 vector<vector<TString>> tmvaConfigs::getHistoBinning() const
@@ -762,6 +797,7 @@ vector<vector<TString>> tmvaConfigs::getHistoBinning() const
   } else {
     throw std::runtime_error("cannot find histoBinning");
   }
+
   return output;
 }
 

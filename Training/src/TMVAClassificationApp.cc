@@ -117,6 +117,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool saveMatchedOnly = configs.saveMatchedOnly();
   const bool flipEta = configs.flipEta();
   const bool selectDeDx = configs.selectDeDx();
+  const bool pruneNTuple = configs.pruneNTuple();
 
   DeDxSelection dedxSel{0.7, 1.5, 0.75, 1.25};
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
@@ -306,8 +307,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
-  std::vector<TString> keptBranches{"cand_mass", "cand_pTDau0", "cand_etaDau0"};
-  ntp.pruneNTuple(keptBranches);
+  // std::vector<TString> keptBranches{"cand_mass", "cand_pTDau0", "cand_etaDau0"};
+  const auto keptBranches = configs.getKeptBranchNames();
+  if (pruneNTuple) ntp.pruneNTuple(keptBranches);
   cout << "NTuple prepared" << endl;
 
   TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
