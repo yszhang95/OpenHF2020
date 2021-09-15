@@ -163,7 +163,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
 
   _saveTree  = std::find(options.begin(), options.end(), "savetree")  != options.end();
   _saveDau   = std::find(options.begin(), options.end(), "savedau")   != options.end();
-  _selectMVA = std::find(options.begin(), options.end(), "selectMVA") != options.end();
+  _selectMVA = std::find(options.begin(), options.end(), "selectmva") != options.end();
   _useEventWiseWeight = std::find(options.begin(), options.end(), "useeventwiseweight")
     != options.end();
   _isMC      = std::find(options.begin(), options.end(), "ismc")      != options.end();
