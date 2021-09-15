@@ -169,7 +169,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _saveMatchedOnly = std::find (options.begin(), options.end(), "!saveMatchedOnly")
     == options.end();
   _flipEta   = std::find(options.begin(), options.end(), "flipEta") != options.end();
-  _selectDeDx = std::find(options.begin(), options.end(), "selectDedx") != options.end();
+  _selectDeDx = std::find(options.begin(), options.end(), "selectDeDx") != options.end();
 
   if (_configs.count("signalFileList")
       && _configs.at("signalFileList").size())

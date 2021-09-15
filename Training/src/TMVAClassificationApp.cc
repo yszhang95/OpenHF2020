@@ -460,6 +460,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           if (!passCuts) break;
         }
         if (!passCuts) continue;
+        if (selectDeDx && !dedxSel(ntp.cand_dau_pT[1] * std::cosh(ntp.cand_dau_eta[1]),
+                                   ntp.trk_dau_dEdx_dedxHarmonic2[1])) continue; // select proton
         bool passMVA = false;
         for (size_t i=0; i<methodNames.size(); i++) {
           const auto& methodName = methodNames.at(i);
@@ -476,8 +478,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
         if (abs(ntp.cand_y)<1.)
           hists.fillHists(ntp);
         if (selectMVA &&  !passMVA) continue;
-        if (selectDeDx && !dedxSel(ntp.cand_dau_pT[1] * std::cosh(ntp.cand_dau_eta[1]),
-                                   ntp.trk_dau_dEdx_dedxHarmonic2[1])) continue; // select proton
         if (saveTree) ntp.fillNTuple();
       }
     }

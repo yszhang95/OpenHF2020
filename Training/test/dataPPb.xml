@@ -35,7 +35,7 @@
   </options>
   <mvaCutMin>
     1.0
-    0.0024
+    0.00
   </mvaCutMin>
   <common_cuts>
     cand_pT &gt; 3. ? [0] &gt; 3 ? cand_pT
