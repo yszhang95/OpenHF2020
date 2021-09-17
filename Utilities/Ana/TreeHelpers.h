@@ -125,6 +125,7 @@ struct MyNTuple
   Float_t         cand_vtxProb;
 
   Float_t         cand_dauCosOpenAngle3D;
+  Float_t         cand_dau_dR;
 
   unsigned short  nDau;
   Float_t         cand_etaDau[100];

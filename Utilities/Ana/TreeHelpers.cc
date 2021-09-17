@@ -174,6 +174,7 @@ void MyNTuple::initNTuple()
 
     if (nDau == 2) {
       t->Branch("cand_dauCosOpenAngle3D", &cand_dauCosOpenAngle3D);
+      t->Branch("cand_dau_dR", &cand_dau_dR);
     }
   }
 
@@ -313,6 +314,7 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
     PtEtaPhi_t dauP1 = getRecoDauP3(it, 1, p);
     const auto dauCosAngle = dauP0.Dot(dauP1)/dauP0.R()/dauP1.R();
     cand_dauCosOpenAngle3D = dauCosAngle;
+    cand_dau_dR = ROOT::Math::VectorUtil::DeltaR(dauP0, dauP1);
 
     // const auto p0 = this->cand_pTDau[0] * std::cosh(this->cand_etaDau[0]);
     // const auto p1 = this->cand_pTDau[1] * std::cosh(this->cand_etaDau[1]);
@@ -452,6 +454,8 @@ float MyNTuple::value(const TString& s)
   if (s == "cand_pseudoDecayLengthError3D") return this->cand_pseudoDecayLengthError3D;
   if (s == "cand_vtxChi2") return this->cand_vtxChi2;
   if (s == "cand_vtxProb") return this->cand_vtxProb;
+  if (s == "cand_dauCosOpenAngle3D") return this->cand_dauCosOpenAngle3D;
+  if (s == "cand_dau_dR") return this->cand_dau_dR;
 
   if (s.Contains("_dau")) {
     const auto index = s.Contains("cand") ? TString(s[8]).Atoi() : TString(s[7]).Atoi();

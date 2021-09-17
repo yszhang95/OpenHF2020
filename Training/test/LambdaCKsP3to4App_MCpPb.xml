@@ -1,12 +1,12 @@
 <root>
   <training_variables>
     dedxRes := dau1_dEDxRes ? [0] ? cand_dau1_dEdxRes
-    cand_dau_dR := sqrt(pow(cand_etaDau1-cand_etaDau0, 2) + pow(cand_phiDau1-cand_phiDau0, 2)) ? sqrt(pow([0]-[1], 2)+pow([2]-[3], 2)) ? cand_etaDau1:cand_etaDau0:cand_phiDau1:cand_phiDau0
+    cand_dau_dR ? [0] ? cand_dau_dR
     cos(cand_angle3D)? cos([0])? cand_angle3D
     cand_dau1_p ? [0] * cosh([1])? cand_dau1_pT:cand_dau1_eta
     cand_etaDau1 ? [0] ? cand_etaDau1
           #dedxRes := dau1_dEDxRes ? dE/dx residue of protons ? ? F
-          #cand_dau_dR := sqrt(pow(cand_etaDau1-cand_etaDau0, 2) + pow(cand_phiDau1-cand_phiDau0, 2)) ? dR between Ks and proton ? ? F
+          #cand_dau_dR ? dR between Ks and proton ? ? F
           #cos(cand_angle3D)? cosine 3D pointing angle of Lc? ? F ? -1. ? 1.
           #cand_dau1_p ? proton momentum? GeV? F? 0.3? \
           #cand_etaDau1 ? proton eta ? ? F? -2.4? 2.4
