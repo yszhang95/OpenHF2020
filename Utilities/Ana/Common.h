@@ -96,4 +96,36 @@ private:
   float _lower;
   std::vector<float> _pars;
 };
+
+template<typename T>
+class EfficiencyTable
+{
+public:
+  explicit EfficiencyTable(T*) = delete;
+  double getEfficiency(double) = delete;
+  double getWeight(double) = delete;
+  double getEfficiency(int) = delete;
+  double getWeight(int) = delete;
+};
+
+class TGraph;
+template<>
+class EfficiencyTable<TGraph>
+{
+public:
+  explicit EfficiencyTable(TGraph*);
+  double getEfficiency(double);
+  double getWeight(double);
+  double getEfficiency(int);
+  double getWeight(int);
+
+private:
+  std::vector<double> x;
+  std::vector<double> xErrHigh;
+  std::vector<double> xErrLow;
+  std::vector<double> y;
+  std::vector<double> yErrHigh;
+  std::vector<double> yErrLow;
+  int n;
+};
 #endif

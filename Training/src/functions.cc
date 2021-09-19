@@ -1002,4 +1002,5 @@ void varHists::writeHists()
   for (auto& h : hist2Ds) h->Write();
   for (auto& h : hist3Ds) h->Write();
 }
+
 #endif
