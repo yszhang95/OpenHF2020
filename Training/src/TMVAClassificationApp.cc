@@ -108,6 +108,8 @@ int main( int argc, char** argv )
 int TMVAClassificationApp(const tmvaConfigs& configs)
 {
   gROOT->SetBatch(true);
+  const UShort_t NtrkHigh = configs.NtrkHigh();
+  const UShort_t NtrkLow = configs.NtrkLow();
   const int  triggerIndex = configs.triggerIndex();
   const int  filterIndex  = configs.filterIndex();
   const bool saveTree = configs.saveTree();
@@ -334,6 +336,15 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     auto jentry =  p.LoadTree(ientry);
     if (jentry < 0) break;
     p.GetEntry(ientry);
+
+    // check Ntrkoffline range
+    if (!isMC) {
+      const auto noCandidate = p.cand_mass().empty();
+      if (noCandidate) continue;
+      if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
+      const auto Ntrk = p.cand_Ntrkoffline().at(0);
+      if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
+    }
 
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;

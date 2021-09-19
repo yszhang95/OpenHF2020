@@ -76,6 +76,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _signalFileList(""), _backgroundFileList(""),
   _signalWeight(1.), _backgroundWeight(1.),
   _triggerIndex(-1), _filterIndex(-1),
+  _NtrkLow(0), _NtrkHigh(UShort_t(-1)),
   _saveTree(0), _saveDau(0), _selectMVA(0),
   _useEventWiseWeight(0), _isMC(0), _saveMatchedOnly(1),
   _flipEta(0), _selectDeDx(0),  _debug(debug)
@@ -159,6 +160,18 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   if (_debug) {
     cout << "The trigger index is " << _triggerIndex << endl;
     cout << "The filter index is " << _filterIndex << endl;
+  }
+
+  if (_configs.count("NtrkRange")
+      && !_configs.at("NtrkRange").empty()) {
+    const TString NtrkRange = _configs.at("NtrkRange").front();
+    vector<TString> Ntrks;
+    if (NtrkRange.Index(",")>0) Ntrks = splitTString(NtrkRange, ",");
+    else if (NtrkRange.Index(":")>0) Ntrks = splitTString(NtrkRange, ":");
+    const auto NtrkLow = Ntrks.front();
+    _NtrkLow = static_cast<UShort_t>(NtrkLow.Atoi());
+    const auto NtrkHigh = Ntrks.back();
+    _NtrkHigh = static_cast<UShort_t>(NtrkHigh.Atoi());
   }
 
   _saveTree  = std::find(options.begin(), options.end(), "savetree")  != options.end();
@@ -659,6 +672,22 @@ int tmvaConfigs::filterIndex() const
   //if (_filterIndex<0)
   //  throw std::runtime_error("filter index is not properly initialized.");
   return _filterIndex;
+}
+
+/**
+   Return the lower bound of Ntrkoffline (included).
+ */
+UShort_t tmvaConfigs::NtrkLow() const
+{
+  return _NtrkLow;
+}
+
+/**
+   Return the lower bound of Ntrkoffline (excluded).
+ */
+UShort_t tmvaConfigs::NtrkHigh() const
+{
+  return _NtrkHigh;
 }
 
 /**

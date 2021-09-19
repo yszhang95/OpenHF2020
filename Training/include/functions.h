@@ -106,6 +106,8 @@ public:
   double                                      backgroundWeight() const;
   int                                         triggerIndex() const;
   int                                         filterIndex() const;
+  UShort_t                                    NtrkLow() const;
+  UShort_t                                    NtrkHigh() const;
   bool                                        pruneNTuple() const;
   bool                                        saveTree()  const;
   bool                                        saveDau()   const;
@@ -134,6 +136,8 @@ private:
   double _backgroundWeight;
   int  _triggerIndex;
   int  _filterIndex;
+  UShort_t _NtrkLow;
+  UShort_t _NtrkHigh;
   bool _saveTree;
   bool _saveDau;
   bool _selectMVA;
