@@ -18,6 +18,9 @@
 
 #include "TChain.h"
 #include "TFile.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
+#include "TGraphAsymmErrors.h"
 #include "TH1I.h"
 #include "TH3D.h"
 #include "TTree.h"
@@ -122,6 +125,25 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool pruneNTuple = configs.pruneNTuple();
 
   DeDxSelection dedxSel{0.7, 1.5, 0.75, 1.25};
+
+  TFile effFile(configs.getEffFileName().c_str());
+  TGraph* g(nullptr);
+  if (effFile.IsOpen()) {
+    if (configs.getEffGraphType() == "TGraphAsymmErrors") {
+      const auto effname = configs.getEffGraphName();
+      g = (TGraphAsymmErrors*) effFile.Get(effname.c_str());
+    }
+    else if (configs.getEffGraphType() == "TGraphErrors") {
+      const auto effname = configs.getEffGraphName();
+      g = (TGraphErrors*) effFile.Get(effname.c_str());
+    }
+  }
+
+  const bool reweightEvent = g;
+  if (DEBUG) { cout << "Do reweighting: " << reweightEvent << endl;}
+
+  EfficiencyTable<TGraph> effTab(g);
+
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
   // if you use your private .rootrc, or run from a different directory, please copy the
   // corresponding lines from .rootrc
@@ -307,6 +329,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   ntp.flipEta = flipEta;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
+  if (reweightEvent) { ntp.initWeightBranch(); }
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
   // std::vector<TString> keptBranches{"cand_mass", "cand_pTDau0", "cand_etaDau0"};
@@ -337,6 +360,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     if (jentry < 0) break;
     p.GetEntry(ientry);
 
+    // event weight
+    double eventWeight = 1;
     // check Ntrkoffline range
     if (!isMC) {
       const auto noCandidate = p.cand_mass().empty();
@@ -344,7 +369,11 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
       const auto Ntrk = p.cand_Ntrkoffline().at(0);
       if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
+      eventWeight = effTab.getWeight(Ntrk);
+      // cout << "Ntrk: " << Ntrk << ", efficiency: " << effTab.getEfficiency(Ntrk) << endl;
     }
+
+    if (reweightEvent) ntp.setEventWeight(eventWeight);
 
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
@@ -352,7 +381,14 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
       if (!passEventSel) continue;
     }
-    if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
+    if (!isMC) {
+      double ntrkWeight = 1.;
+      const auto ntrk = p.Ntrkoffline();
+      if (reweightEvent) {
+        ntrkWeight = effTab.getWeight(ntrk);
+      }
+      hNtrkoffline.Fill(ntrk, ntrkWeight);
+    }
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
@@ -481,15 +517,15 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           mvaValues[i] = reader->EvaluateMVA(methodName);
           passMVA = passMVA || (selectMVA && mvaValues[i] > std::stod(configs.getMVACutMins().at(i)));
           if (abs(ntp.cand_y)<1.) {
-            hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+            hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i], eventWeight);
           } else if (abs(ntp.cand_y)<2.) {
-            hMassPtMVA[1][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i]);
+            hMassPtMVA[1][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i], eventWeight);
           }
-          hMassNtrkMVA[i]->Fill(ntp.cand_mass, ntp.cand_Ntrkoffline, mvaValues[i]);
+          hMassNtrkMVA[i]->Fill(ntp.cand_mass, ntp.cand_Ntrkoffline, mvaValues[i], eventWeight);
         }
         ntp.setMVAValues(mvaValues);
         if (abs(ntp.cand_y)<1.)
-          hists.fillHists(ntp);
+          hists.fillHists(ntp, eventWeight);
         if (selectMVA &&  !passMVA) continue;
         if (saveTree) ntp.fillNTuple();
       }

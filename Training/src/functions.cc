@@ -174,6 +174,30 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
     _NtrkHigh = static_cast<UShort_t>(NtrkHigh.Atoi());
   }
 
+  if (_configs.count("effTable")) {
+    const auto temp = _configs.at("effTable");
+    if (!temp.empty()) {
+      const TString names = temp.front();
+      if (names.Index(".root") > 0) {
+        auto v = splitTString(names, ":");
+        _effFileName = v.at(0).Data();
+        _effGraphName = v.at(1).Data();
+        TString effType = v.at(2);
+        effType.ToLower();
+        if (effType == "tgrapherrors") {
+          _effGraphType = "TGraphErrors";
+        } else if (effType == "tgraphasymmerrors") {
+          _effGraphType = "TGraphAsymmErrors";
+        }
+        if (_debug) {
+          std::cout << "_effFileName is " << _effFileName << endl;
+          std::cout << "_effGraphName is " << _effGraphName << endl;
+          std::cout << "_effGraphType is " << _effGraphType << endl;
+        }
+      }
+    }
+  }
+
   _saveTree  = std::find(options.begin(), options.end(), "savetree")  != options.end();
   _saveDau   = std::find(options.begin(), options.end(), "savedau")   != options.end();
   _selectMVA = std::find(options.begin(), options.end(), "selectmva") != options.end();
@@ -568,6 +592,32 @@ vector<string> tmvaConfigs::getBackgroundFileNames() const
 string tmvaConfigs::getOutFileName() const
 {
   return _outfileName;
+}
+
+/**
+   Get the file name saving efficiency table
+ */
+string tmvaConfigs::getEffFileName() const
+{
+  return _effFileName;
+}
+
+/**
+   Get the name of efficiency table
+ */
+string tmvaConfigs::getEffGraphName() const
+{
+  return _effGraphName;
+}
+
+/**
+   Get the type name of efficiency table
+ */
+string tmvaConfigs::getEffGraphType() const
+{
+  if (_effGraphType.empty())
+    throw std::runtime_error("Type of efficiency table is not given");
+  return _effGraphType;
 }
 
 /**
@@ -1002,7 +1052,7 @@ varHists::varHists(const tmvaConfigs& config)
   }
 }
 
-void varHists::fillHists(MyNTuple& t)
+void varHists::fillHists(MyNTuple& t, const double weight)
 {
   for (size_t i=0; i != hist3Ds.size(); ++i) {
     auto& h3D = hist3Ds.at(i);
@@ -1010,18 +1060,18 @@ void varHists::fillHists(MyNTuple& t)
     const double x = t.value(var3Ds.at(i).at(12));
     const double y = t.value(var3Ds.at(i).at(13));
     const double z = t.value(var3Ds.at(i).at(14));
-    h3D->Fill(x, y, z);
+    h3D->Fill(x, y, z, weight);
   }
   for (size_t i=0; i != hist2Ds.size(); ++i) {
     auto& h2D = hist2Ds.at(i);
     const double x = t.value(var2Ds.at(i).at(9));
     const double y = t.value(var2Ds.at(i).at(10));
-    h2D->Fill(x, y);
+    h2D->Fill(x, y, weight);
   }
   for (size_t i=0; i != hist1Ds.size(); ++i) {
     auto& h1D = hist1Ds.at(i);
     const double x= t.value(var1Ds.at(i).at(6));
-    h1D->Fill(x);
+    h1D->Fill(x, weight);
   }
 }
 

@@ -15,6 +15,9 @@
   <outputDir>
     .
   </outputDir>
+  <effTable>
+    eff.root:Ntrk185:TGraphAsymmErrors
+  </effTable>
   <histoBinning>
     120, 2.15, 2.45, 10, 0., 10., 120, -0.2, 1.
     120, 2.15, 2.45, 10, 0., 10., 500, 0.0, 0.01
@@ -67,5 +70,6 @@
     cand_mass:cand_pT:cand_eta:cand_mass:cand_y
     cand_angle3D:cand_dauCosOpenAngle3D:cand_Ntrkoffline
     MLP3to4Np2N:BDTG_3D
+    eventWeight
   </KeptBranchNames>
 </root>

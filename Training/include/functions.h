@@ -102,6 +102,9 @@ public:
   std::string                                 getFactoryConfig() const;
   std::string                                 signalFileList() const;
   std::string                                 backgroundFileList() const;
+  std::string                                 getEffFileName() const;
+  std::string                                 getEffGraphName() const;
+  std::string                                 getEffGraphType() const;
   double                                      signalWeight() const;
   double                                      backgroundWeight() const;
   int                                         triggerIndex() const;
@@ -132,6 +135,9 @@ private:
   std::string _outdirName;
   std::string _signalFileList;
   std::string _backgroundFileList;
+  std::string _effFileName;
+  std::string _effGraphName;
+  std::string _effGraphType;
   double _signalWeight;
   double _backgroundWeight;
   int  _triggerIndex;
@@ -180,7 +186,7 @@ class varHists
 {
  public:
   explicit varHists(const tmvaConfigs& config);
-  void fillHists(MyNTuple&);
+  void fillHists(MyNTuple&, const double w=1.);
   void writeHists();
  private:
   varHists(const varHists&);

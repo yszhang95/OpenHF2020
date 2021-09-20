@@ -125,6 +125,17 @@ void MyNTuple::setNDau(const unsigned short ndau,
   }
 }
 
+void MyNTuple::initWeightBranch()
+{
+  eventWeight = 1.;
+  t->Branch("eventWeight", &eventWeight);
+}
+
+void MyNTuple::setEventWeight(const float weight)
+{
+  eventWeight = weight;
+}
+
 void MyNTuple::initMVABranches(const vector<TString>& methods)
 {
   cand_nMVA = methods.size();
