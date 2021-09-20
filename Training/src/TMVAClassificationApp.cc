@@ -21,7 +21,7 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
-#include "TH1I.h"
+#include "TH1D.h"
 #include "TH3D.h"
 #include "TTree.h"
 #include "TString.h"
@@ -337,7 +337,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   if (pruneNTuple) ntp.pruneNTuple(keptBranches);
   cout << "NTuple prepared" << endl;
 
-  TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
 
   // hard code for LambdaC begin
   MatchCriterion  matchCriterion(0.03, 0.1);
