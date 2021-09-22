@@ -12,6 +12,9 @@
 
 #include "TChain.h"
 #include "TFileCollection.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
+#include "TGraphAsymmErrors.h"
 #include "THashList.h"
 #include "TH1D.h"
 #include "TH2D.h"
@@ -46,7 +49,9 @@ public:
   Config(const bool isMC): Config(-1, isMC) {}
   Config(const Long64_t n, const bool isMC): Config(n, isMC, 0.03, 0.1) {}
   Config(const Long64_t n, const bool isMC, const float dR, const float dPt):
-    _matchCriterion(dR, dPt),_nentries(n), _isMC(isMC),
+    _matchCriterion(dR, dPt),
+    _ntrkLow(0), _ntrkHigh(UShort_t(-1)),
+    _nentries(n), _isMC(isMC),
     _saveMatchedOnly(1), _selectDeDx(0) {}
   TString GetInputList() const { return _inputList; }
   void SetInputList(const TString s) { _inputList = s; }
@@ -72,17 +77,41 @@ public:
   int  GetFilterIndex()  const { return _filterIndex;  }
   void SetTriggerIndex(const int idx) { _triggerIndex = idx; }
   void SetFilterIndex(const int idx)  { _filterIndex  = idx; }
+  void SetKeptBranchNames(const std::vector<TString> names)
+  {
+    _keptBranchNames = names;
+  }
+  std::vector<TString> GetKeptBranchNames() const
+  { return _keptBranchNames; }
+
+  UShort_t NtrkLow() const { return _ntrkLow; }
+  UShort_t NtrkHigh() const { return _ntrkHigh; }
+  void NtrkLow(unsigned short n) { _ntrkLow = n; }
+  void NtrkHigh(unsigned short n) { _ntrkHigh = n; }
+
+  void SetEffFileName(const std::string s) { _effFileName = s; }
+  void SetEffGraphName(const std::string s) { _effGraphName = s; }
+  void SetEffGraphType(const std::string s) { _effGraphType = s; }
+  std::string GetEffFileName() const { return _effFileName; }
+  std::string GetEffGraphName() const { return _effGraphName; }
+  std::string GetEffGraphType() const { return _effGraphType; }
 
 private:
   MatchCriterion _matchCriterion;
   DeDxSelection  _dEdxSelection;
+  std::vector<TString> _keptBranchNames;
   TString _inputList;
   TString _treeDir;
   TString _postfix;
   TString _outDir;
+  std::string _effFileName;
+  std::string _effGraphName;
+  std::string _effGraphType;
   Long64_t _nentries;
   int      _triggerIndex;
   int      _filterIndex;
+  UShort_t _ntrkLow;
+  UShort_t _ntrkHigh;
   bool     _isMC;
   bool     _flipEta;
   bool     _saveMatchedOnly;
@@ -121,6 +150,9 @@ int skimTree(const Config& conf,
   const auto flipEta = conf.flipEta();
   const auto saveMatchedOnly = conf.SaveMatchedOnly();
   const auto selectDeDx = conf.SelectDeDx();
+  const auto keptBranches = conf.GetKeptBranchNames();
+  const auto ntrkLow = conf.NtrkLow();
+  const auto ntrkHigh = conf.NtrkHigh();
   DeDxSelection   dEdxSelection  = conf.GetDeDxSelection();
   MatchCriterion  matchCriterion = conf.GetMatchCriterion();
 
@@ -141,7 +173,7 @@ int skimTree(const Config& conf,
     }
     firstPos = basename.Index(".");
   }
-  
+
   basename += nentries > 0 ? Form("%s%lld_", treeDir.Data(), nentries) : (treeDir + "_AllEntries_");
   basename += getPhaseSpaceString(kins);
   if (postfix.Length()) basename += "_";
@@ -155,6 +187,24 @@ int skimTree(const Config& conf,
       outName.Replace(index, 5, "_etaFlipped.root");
     }
   }
+
+  TFile effFile(conf.GetEffFileName().c_str());
+  TGraph* g(nullptr);
+  if (effFile.IsOpen()) {
+    if (conf.GetEffGraphType() == "TGraphAsymmErrors") {
+      const auto effname = conf.GetEffGraphName();
+      g = (TGraphAsymmErrors*) effFile.Get(effname.c_str());
+    }
+    else if (conf.GetEffGraphType() == "TGraphErrors") {
+      const auto effname = conf.GetEffGraphName();
+      g = (TGraphErrors*) effFile.Get(effname.c_str());
+    }
+  }
+
+  const bool reweightEvent = g;
+
+  EfficiencyTable<TGraph> effTab(g);
+
   TFile ofile(outName, "recreate");
   cout << "Created " << ofile.GetName() << endl;
 
@@ -179,6 +229,8 @@ int skimTree(const Config& conf,
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
   ntp.initNTuple();
+  if (reweightEvent) { ntp.initWeightBranch(); }
+  if (!keptBranches.empty()) ntp.pruneNTuple(keptBranches);
   Int_t ievent=0;
   ntp.t->Branch("eventID", &ievent);
 
@@ -192,7 +244,6 @@ int skimTree(const Config& conf,
     auto jentry =  p.LoadTree(ientry);
     if (jentry < 0) break;
     p.GetEntry(ientry);
-
 
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
@@ -255,6 +306,17 @@ int skimTree(const Config& conf,
     }
 
     // loop over particles
+    bool passNtrk = true;
+    if (recosize > 0) {
+      const auto ntrk = p.cand_Ntrkoffline().front();
+      passNtrk =  ntrk < ntrkHigh && ntrk >= ntrkLow;
+      if (reweightEvent && !isMC) {
+        double eventWeight = 1;
+        eventWeight = effTab.getWeight(ntrk);
+        ntp.setEventWeight(eventWeight);
+      }
+    }
+    if (!passNtrk && !isMC) continue;
     for (size_t ireco=0; ireco<recosize; ireco++) {
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle.id())) {

@@ -39,6 +39,19 @@ conf.SetDeDxSelection((0.7, 1.5, 0.75, 1.25))
 conf.SetFlipEta(args.flipEta)
 conf.SetTriggerIndex(args.triggerIndex)
 conf.SetFilterIndex(args.filterIndex)
+conf.SetKeptBranchNames(
+    ("cand_mass", "cand_pT", "cand_y", "cand_eta", "cand_phi",
+     "cand_massDau0", "cand_etaDau0", "cand_pTDau0", "cand_phiDau0",
+     "cand_massDau1", "cand_etaDau1", "cand_pTDau1", "cand_phiDau1",
+     "trk_dau1_dEdxRes", "trk_dau1_dEdx_dedxHarmonic2",
+     "cand_angle3D", "cand_dauCosOpenAngle3D",
+     "cand_Ntrkoffline", "eventWeight")
+)
+conf.NtrkLow(185)
+conf.NtrkHigh(250)
+conf.SetEffGraphName("Ntrk185")
+conf.SetEffGraphType("TGraphAsymmErrors")
+conf.SetEffFileName("../test/eff.root")
 
 Ks = r.Particle(310)
 Ks.selfConj(True);
