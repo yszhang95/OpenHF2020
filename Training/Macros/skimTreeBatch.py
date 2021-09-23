@@ -19,6 +19,7 @@ parser.add_argument('--saveAll', dest='saveAll', help='Save all candidates when 
 parser.add_argument('--selectDeDx', dest='selectDeDx', help='Select candidates using dE/dx (default: not)', action='store_const', const=True, default=False)
 parser.add_argument('--triggerIndex', dest='triggerIndex', help='trigger index', type=int, default=2)
 parser.add_argument('--filterIndex', dest='filterIndex', help='filter index', type=int, default=4)
+parser.add_argument('--effFile', dest='effFile', help='file saving efficiency', type=str, default="eff.root")
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
@@ -62,7 +63,7 @@ conf.NtrkLow(185)
 conf.NtrkHigh(250)
 conf.SetEffGraphName("Ntrk185")
 conf.SetEffGraphType("TGraphAsymmErrors")
-conf.SetEffFileName("../test/eff.root")
+conf.SetEffFileName(args.effFile)
 
 Ks = r.Particle(310)
 Ks.selfConj(True);
