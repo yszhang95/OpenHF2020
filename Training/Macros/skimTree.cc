@@ -310,13 +310,13 @@ int skimTree(const Config& conf,
     if (recosize > 0) {
       const auto ntrk = p.cand_Ntrkoffline().front();
       passNtrk =  ntrk < ntrkHigh && ntrk >= ntrkLow;
+      if (!passNtrk && !isMC) continue;
       if (reweightEvent && !isMC) {
         double eventWeight = 1;
         eventWeight = effTab.getWeight(ntrk);
         ntp.setEventWeight(eventWeight);
       }
     }
-    if (!passNtrk && !isMC) continue;
     for (size_t ireco=0; ireco<recosize; ireco++) {
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle.id())) {
