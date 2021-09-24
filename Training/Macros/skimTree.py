@@ -18,7 +18,9 @@ parser.add_argument('--saveAll', dest='saveAll', help='Save all candidates when 
 parser.add_argument('--selectDeDx', dest='selectDeDx', help='Select candidates using dE/dx (default: not)', action='store_const', const=True, default=False)
 parser.add_argument('--triggerIndex', dest='triggerIndex', help='trigger index', type=int, default=2)
 parser.add_argument('--filterIndex', dest='filterIndex', help='filter index', type=int, default=4)
-parser.add_argument('--effFile', dest='effFile', help='file saving efficiency', type=str, default="eff.root")
+parser.add_argument('--effFile', dest='effFile', help='file saving efficiency', type=str, default="")
+parser.add_argument('--NtrkLow', dest='NtrkLow', help='lowest multiplicity', type=int, default=0)
+parser.add_argument('--NtrkHigh', dest='NtrkHigh', help='highest multiplicity', type=int, default=1000)
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
@@ -46,10 +48,12 @@ conf.SetKeptBranchNames(
      "cand_massDau1", "cand_etaDau1", "cand_pTDau1", "cand_phiDau1",
      "trk_dau1_dEdxRes", "trk_dau1_dEdx_dedxHarmonic2",
      "cand_angle3D", "cand_dauCosOpenAngle3D",
+     "cand_dau_dR", "cand_dau0_angle3D",
+     "cand_dau0_decayLength3D", "cand_dau0_decayLengthError3D", "cand_dau0_dca",
      "cand_Ntrkoffline", "eventWeight")
 )
-conf.NtrkLow(185)
-conf.NtrkHigh(250)
+conf.NtrkLow(args.NtrkLow)
+conf.NtrkHigh(args.NtrkHigh)
 conf.SetEffGraphName("Ntrk185")
 conf.SetEffGraphType("TGraphAsymmErrors")
 conf.SetEffFileName(args.effFile)
