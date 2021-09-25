@@ -3,12 +3,20 @@ import argparse
 parser = argparse.ArgumentParser(description='generate condor configuration.')
 parser.add_argument('-i', dest='inputCert', help='input certificate', type=str)
 parser.add_argument('--exe', dest='userexe', help='executable', type=str)
+parser.add_argument('--dataset', dest='dataset', help='dataset, e.g. dataHM1, dataMB1', type=str)
+parser.add_argument('--boost', dest='boost', help='pPb vs. Pbp', type=str)
+#parser.add_argument('--triggerIndex', dest='triggerIndex', help='trigger index', type=int, default=2)
+#parser.add_argument('--filterIndex', dest='filterIndex', help='filter index', type=int, default=4)
 args = parser.parse_args()
 
 import os
 import subprocess
 
-mylists = os.listdir('/eos/cms/store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileListsV2/')
+mylists = ""
+if "HM" in args.dataset:
+  mylists = os.listdir('/eos/cms/store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileListsV3/')
+elif "MB" in args.dataset:
+  mylists = os.listdir('/eos/cms/store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileListsV4/')
 
 cmd='''
 # this is config for submitting condor jobs
@@ -24,15 +32,18 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_output_files = ""
 #requirements = (OpSysAndVer =?= "CntOS7")
-+JobFlavour = "espresso"
-#+MaxRunTime = 360
+#+JobFlavour = "espresso"
+#+MaxRunTime = 1800
++JobFlavour = "microcentury"
 #max_transfer_output_mb = 2000
 ''' % (args.inputCert, args.userexe)
 
 num = 0
 for l in mylists:
-    #if "dataHM1" in l:
-    #    continue
+    if not args.dataset in l:
+        continue
+    if not args.boost in l:
+        continue
     cmd += "#%d" % num
     cmd += '''
 Arguments = $(Proxy_filename) %s root://eoscms.cern.ch//store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep
@@ -43,7 +54,7 @@ queue
     num = num+1
 
 #print (cmd)
-with open("sub.jdl", 'w') as f:
+with open("sub_%s_%s.jdl" % (args.dataset, args.boost), 'w') as f:
   f.write(cmd)
   f.close
 #subprocess.run(['ls'])
