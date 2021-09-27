@@ -18,7 +18,7 @@ LDFLAGS=$(shell root-confi --libs)
 LIBS = $(shell root-config --libdir)
 INCS = $(shell root-config --incdir)
 
-BIN = bin bin/TMVACrossValidation bin/TMVACrossValidationApp bin/TMVAClassification bin/TMVAClassificationApp
+BIN = bin bin/TMVACrossValidation bin/TMVACrossValidationApp bin/TMVAClassification bin/TMVAClassificationApp bin/TMVAClassificationAppNtuple
 
 default : $(BIN)
 
