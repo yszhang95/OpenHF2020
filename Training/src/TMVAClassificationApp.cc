@@ -369,7 +369,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
       const auto Ntrk = p.cand_Ntrkoffline().at(0);
       if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
-      eventWeight = effTab.getWeight(Ntrk);
+      if (reweightEvent) eventWeight = effTab.getWeight(Ntrk);
       // cout << "Ntrk: " << Ntrk << ", efficiency: " << effTab.getEfficiency(Ntrk) << endl;
     }
 
