@@ -360,6 +360,21 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     if (jentry < 0) break;
     p.GetEntry(ientry);
 
+    // check pileup filter
+    // if (!p.evtSel().at(4)) continue;
+    if (!isMC) {
+      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
+      if (!passEventSel) continue;
+    }
+    if (!isMC) {
+      double ntrkWeight = 1.;
+      const auto ntrk = p.Ntrkoffline();
+      if (reweightEvent) {
+        ntrkWeight = effTab.getWeight(ntrk);
+      }
+      hNtrkoffline.Fill(ntrk, ntrkWeight);
+    }
+
     // event weight
     double eventWeight = 1;
     // check Ntrkoffline range
@@ -375,20 +390,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
     if (reweightEvent) ntp.setEventWeight(eventWeight);
 
-    // check pileup filter
-    // if (!p.evtSel().at(4)) continue;
-    if (!isMC) {
-      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
-      if (!passEventSel) continue;
-    }
-    if (!isMC) {
-      double ntrkWeight = 1.;
-      const auto ntrk = p.Ntrkoffline();
-      if (reweightEvent) {
-        ntrkWeight = effTab.getWeight(ntrk);
-      }
-      hNtrkoffline.Fill(ntrk, ntrkWeight);
-    }
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
