@@ -19,8 +19,6 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
                const double lw, const double up, TCanvas* c)
 {
   c->cd(1);
-  // TF1 fMC("fMC", "[0]*([1]*gausn(2) + (1-[1])*gausn(4))");
-  // TF1 fMC("fMC", "[0]*([1] * TMath::Gaus(x, [2], [3], true) + (1-[1]) * TMath::Gaus(x, [2], [4], true))");
   TF1 fMC("fMC", "[0]*([1] * TMath::Gaus(x, [2], [3]*(1+[5]), true) + (1-[1]) * TMath::Gaus(x, [2], [4]*(1+[5]), true))");
   fMC.SetParameter(0, 100);
   fMC.SetParameter(1, 0.5);
@@ -29,8 +27,8 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
   fMC.SetParameter(3, 0.005);
   fMC.SetParameter(4, 0.01);
   fMC.FixParameter(5, 0);
-  hMC->Fit(&fMC, "R", "", 2.24, 2.32);
-  hMC->Fit(&fMC, "R", "", 2.24, 2.32);
+  hMC->Fit(&fMC, "R", "", 2.2, 2.38);
+  hMC->Fit(&fMC, "R", "", 2.2, 2.38);
   c->cd(2);
   gROOT->ForceStyle();
   gStyle->SetOptFit(1111);
@@ -38,7 +36,6 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
   auto fbkgReject = make_shared<TF1>
     ("fbkgReject", bkgRejctPeak, lw, up, 4);
   auto fbkg = make_shared<TF1>("fbkg", &chebyshev, lw, up, 4);
-  // auto f = make_shared<TF1>("f", "gausn(0)+cheb3(3)", lw, up);
 
   auto f = make_shared<TF1>("f", "fMC + cheb3(6)", lw, up);
 
@@ -48,7 +45,6 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
 
   for (int i=0; i<fbkgReject->GetNpar(); ++i) {
     fbkg->SetParameter(i, fbkgReject->GetParameter(i));
-    // f->FixParameter(i+3, fbkgReject->GetParameter(i));
     f->FixParameter(i+6, fbkgReject->GetParameter(i));
   }
    // f->SetParameter(0, 50);
@@ -75,11 +71,9 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
    h->Fit(f.get(), "RM", "", lw, up);
    h->Fit(f.get(), "RME", "", lw, up);
 
-   // cout << "Done " << c->GetName()<< end
    c->Draw();
 
    c->cd();
-   // h->Draw("E");
    f->Draw("SAME");
    fbkg->SetLineColor(kBlue);
    fbkg->SetLineStyle(2);
@@ -97,258 +91,7 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
              f->GetParErrors()+f->GetNpar(),
              std::back_inserter(output));
    return output;
-
-  // return vector<double>();
 }
-/*
-map<string, std::vector<pair<double, double>>> fit()
-{
-  gStyle->SetOptFit(11111);
-  gStyle->SetOptStat(0);
-  gROOT->ForceStyle();
-  TFile* f = TFile::Open("hists.root");
-  // TCanvas* cBDT = new TCanvas("cBDT", "BDT", 600, 500);
-  auto cBDT = std::unique_ptr<TCanvas>
-    (new TCanvas("cBDT", "", 600, 500));
-  auto hBDT = f->Get<TH1>("mass_BDT");
-  hBDT->SetTitle("BDT");
-  hBDT->Sumw2();
-  // TCanvas* cMLP = new TCanvas("cMLP", "MLP", 600, 500);
-  auto cMLP = std::unique_ptr<TCanvas>
-    (new TCanvas("cMLP", "", 600, 500));
-  auto hMLP = f->Get<TH1>("mass_MLP");
-  hMLP->SetTitle("MLP");
-  hMLP->Sumw2();
-  const double mlp [] = {6000, 20000, 5000, 5000};
-  const double bdt [] = {2000, 40000, 500, 5000};
-  // simpleFit(hBDT, bdt, 2.21, 2.42, cBDT);
-  // simpleFit(hMLP, mlp, 2.2, 2.42, cMLP);
-  map<string, vector<pair<double, double>>> output;
-  output["BDT"] = simpleFit(hBDT, bdt, 2.21, 2.4, cBDT.get());
-  output["MLP"] = simpleFit(hMLP, mlp, 2.2, 2.42, cMLP.get());
-  return output;
-}
-
-TH1* getInt(TH3* h3, const char* name="", int nbins = -1)
-{
-  double pTMin = 3.0;
-  double pTMax = 4.0;
-  auto pTMinBin = h3->GetYaxis()->FindBin(pTMin);
-  auto pTMaxBin = h3->GetYaxis()->FindBin(pTMax) - 1;
-  auto massBinLw = h3->GetXaxis()->FindBin(2.2865-0.016);
-  auto massBinUp = h3->GetXaxis()->FindBin(2.2865+0.016);
-
-  auto hYields = h3->ProjectionZ(Form("peakYields_%s", name), 1, 100000, pTMinBin, pTMaxBin);
-  if (nbins > 0) hYields->Rebin(nbins);
-  for (int i=0; i<hYields->GetNbinsX()+2; i++) {
-    hYields->SetBinContent(i, 0);
-    hYields->SetBinError(i, 0);
-    int ibin = i;
-    if (nbins > 0) ibin = h3->GetZaxis()->FindBin(hYields->GetBinCenter(i));
-    auto h =  h3->ProjectionX("yields", pTMinBin, pTMaxBin, ibin, 100000);
-    double yields, error;
-    yields = h->IntegralAndError(massBinLw, massBinUp, error);
-    hYields->SetBinContent(i, yields);
-    hYields->SetBinError(i, error);
-    delete h;
-  }
-  return hYields;
-}
-
-
-TH1* calSignificance(double s, TH1* sEffOriginal, TH1* b, const char* name,
-                     vector<tuple<TF1, double, double>>& fs)
-
-{
-  auto sEff = dynamic_cast<TH1*>(sEffOriginal->Clone(Form("%s_sEffcopy", name)));
-
-  TH1* hSig = dynamic_cast<TH1*>( sEff->Clone(Form("sig_%s", name)) );
-  for (int i=0; i<hSig->GetNbinsX(); ++i) {
-    double sig = s * sEff->GetBinContent(i)/
-      sqrt( b->GetBinContent(i) - s * sEff->GetBinContent(i) );
-    double sigError = sig *
-      sqrt(
-           pow(sEff->GetBinError(i)/sEff->GetBinContent(i), 2) +
-           pow(0.5 * b->GetBinError(i)/b->GetBinContent(i), 2)
-           );
-    // cout << "s: " << s * sEff->GetBinContent(i) << endl;
-    // cout << "b: " << b->GetBinContent(i) << endl;
-    if (isnan(sig)) sig=0;
-    hSig->SetBinContent(i, sig);
-    // hSig->SetBinError(i, sigError);
-  }
-  TCanvas c("sig", "", 600, 500);
-  c.cd();
-  for (auto& f : fs) {
-    const double lw = std::get<1>(f);
-    const double up = std::get<2>(f);
-    auto& func = std::get<0>(f);
-    hSig->Fit(&func, "R+", "", lw, up);
-    hSig->Fit(&func, "R+", "", lw, up);
-    cout << func.GetMaximumX() << ": " << func.GetMaximum() << endl;
-  }
-  hSig->SetStats(0);
-  hSig->SetMinimum(0);
-  hSig->SetTitle(name);
-  hSig->GetYaxis()->SetTitle("S/#sqrt{S+B}");
-  hSig->Draw("E");
-  c.Modified();
-  c.Update();
-  hSig->GetYaxis()->SetRangeUser(0, c.GetUymax());
-  double rightmax = 1.1* sEff->GetMaximum();
-  double rightmin = sEff->GetMinimum();
-  cout << c.GetUymax() << endl;
-  cout << c.GetUymin() << endl;
-  cout << rightmax << endl;
-  cout << rightmin << endl;
-  double scale = c.GetUymax()/rightmax;
-  cout << "c uymax " << c.GetUymax() << endl;
-  cout << "c uymin " << c.GetUymin() << endl;
-  cout << "scale " << scale << endl;
-  cout << "sEff " << sEff->GetMaximum() << endl;
-  cout << "sEff " << sEff->GetMaximumBin() << endl;
-  sEff->Scale(scale);
-  cout << "sEff " << sEff->GetMaximum() << endl;
-  cout << "sEff " << sEff->GetMaximumBin() << endl;
-  // TF1 foffset("foffset", "[0]", -1 ,1 );
-  // foffset.SetParameter(0, c.GetUymin());
-  // sEff->Add(&foffset);
-  sEff->SetLineColor(kRed);
-  sEff->SetMarkerColor(kRed);
-  sEff->Draw("ESAME");
-  // sEff->Draw();
-  TGaxis axis(c.GetUxmax(),c.GetUymin(),
-                            c.GetUxmax(), c.GetUymax(),
-              0, rightmax, 510, "+L");
-  axis.SetLineColor(kRed);
-  axis.SetLabelColor(kRed);
-  axis.SetTitle("Signal efficiency");
-  axis.Draw();
-  TLine l;
-  TLatex tex;
-  tex.SetTextSize(0.03);
-  tex.SetTextFont(42);
-  l.SetLineStyle(2);
-  for (const auto & f : fs) {
-    const auto& func = std::get<0>(f);
-    double xMax = func.GetMaximumX();
-    l.DrawLine(xMax, c.GetUymin(),
-               xMax, c.GetUymax());
-    tex.DrawLatex(xMax, 1.0+c.GetUymin(), Form("MVA: %g", xMax));
-    tex.DrawLatex(xMax, 0.5*(c.GetUymin()+c.GetUymin()), Form("Max: %g", func.GetMaximum()));
-  }
-  c.Print(Form("%s.pdf", hSig->GetName()));
-  return hSig;
-}
-
-void calSig()
-{
-  TFile* fS = TFile::Open("TMVA_MC_pPb_LambdaCKsP3to4App.root");
-  auto h3S_BDT = fS->Get<TH3>("lambdacAna_mc/hMassPtMVA_BDTG_3D_y0");
-  auto h3S_MLP = fS->Get<TH3>("lambdacAna_mc/hMassPtMVA_MLP3to4Np2N_y0");
-  auto fB = TFile::Open("TMVA_pPb_LambdaCKsP3to4App.root");
-  auto h3B_BDT = fB->Get<TH3>("lambdacAna/hMassPtMVA_BDTG_3D_y0");
-  auto h3B_MLP = fB->Get<TH3>("lambdacAna/hMassPtMVA_MLP3to4Np2N_y0");
-  if (!h3B_BDT) { cout << "Empty" << endl; return; }
-  auto sEffBDT = getEff(true, h3S_BDT, "BDT");
-  auto sEffMLP = getEff(true, h3S_MLP, "MLP");
-  auto sEffMLPRebin = getEff(true, h3S_MLP, "MLPRebin", 10);
-  auto bEffBDT = getEff(false, h3B_BDT, "BDT");
-  auto bEffMLP = getEff(false, h3B_MLP, "MLP");
-
-  auto yields = fit();
-  auto signalYieldsBDT = yields["BDT"].front().first/sEffBDT->GetBinContent(85);
-  auto signalYieldsMLP = yields["MLP"].front().first/sEffMLP->GetBinContent(260);
-
-  auto hBackgroundBDT = getInt(h3B_BDT, "BDT");
-  auto hBackgroundMLP = getInt(h3B_MLP, "MLP");
-  auto hBackgroundMLPRebin = getInt(h3B_MLP, "MLPRebin", 10);
-
-  vector<tuple<TF1, double, double>>  bdt;
-  TF1 fBDT("fBDT", "pol3", 0.4, 0.7);
-  bdt.push_back(make_tuple(fBDT, 0.4, 0.7));
-  auto hSigBDT = calSignificance(signalYieldsBDT, sEffBDT, hBackgroundBDT, "BDT", bdt);
-  vector<tuple<TF1, double, double>>  mlp;
-  TF1 fMLP1("MLP1", "pol3", 0.001, 0.0025);
-  TF1 fMLP2("MLP2", "pol3", 0.0035, 0.008);
-  mlp.push_back(make_tuple(fMLP1, 0.001, 0.0025));
-  mlp.push_back(make_tuple(fMLP2, 0.0035, 0.008));
-  auto hSigMLP = calSignificance(signalYieldsMLP, sEffMLP, hBackgroundMLP, "MLP", mlp);
-  auto hSigMLPRebin =calSignificance(signalYieldsMLP, sEffMLPRebin, hBackgroundMLPRebin, "MLPRebin", mlp);
-}
-
-void calSigUp()
-{
-  TFile* fS = TFile::Open("TMVA_MC_pPb_LambdaCKsP3to4App.root");
-  auto h3S_BDT = fS->Get<TH3>("lambdacAna_mc/hMassPtMVA_BDTG_3D_y0");
-  auto h3S_MLP = fS->Get<TH3>("lambdacAna_mc/hMassPtMVA_MLP3to4Np2N_y0");
-  auto fB = TFile::Open("TMVA_pPb_LambdaCKsP3to4App.root");
-  auto h3B_BDT = fB->Get<TH3>("lambdacAna/hMassPtMVA_BDTG_3D_y0");
-  auto h3B_MLP = fB->Get<TH3>("lambdacAna/hMassPtMVA_MLP3to4Np2N_y0");
-  if (!h3B_BDT) { cout << "Empty" << endl; return; }
-  auto sEffBDT = getEff(true, h3S_BDT, "BDT");
-  auto sEffMLP = getEff(true, h3S_MLP, "MLP");
-  auto sEffMLPRebin = getEff(true, h3S_MLP, "MLPRebin", 10);
-  auto bEffBDT = getEff(false, h3B_BDT, "BDT");
-  auto bEffMLP = getEff(false, h3B_MLP, "MLP");
-
-  auto yields = fit();
-  auto signalYieldsBDT = yields["BDT"].at(1).first/sEffBDT->GetBinContent(85);
-  auto signalYieldsMLP = yields["MLP"].at(1).first/sEffMLP->GetBinContent(260);
-
-  auto hBackgroundBDT = getInt(h3B_BDT, "BDT");
-  auto hBackgroundMLP = getInt(h3B_MLP, "MLP");
-  auto hBackgroundMLPRebin = getInt(h3B_MLP, "MLPRebin", 10);
-
-  vector<tuple<TF1, double, double>>  bdt;
-  TF1 fBDT("fBDT", "pol3", 0.4, 0.7);
-  bdt.push_back(make_tuple(fBDT, 0.4, 0.7));
-  auto hSigBDT = calSignificance(signalYieldsBDT, sEffBDT, hBackgroundBDT, "BDTUp", bdt);
-  vector<tuple<TF1, double, double>>  mlp;
-  TF1 fMLP1("MLP1", "pol3", 0.001, 0.0025);
-  TF1 fMLP2("MLP2", "pol3", 0.0035, 0.008);
-  mlp.push_back(make_tuple(fMLP1, 0.001, 0.0025));
-  mlp.push_back(make_tuple(fMLP2, 0.0035, 0.008));
-  auto hSigMLP = calSignificance(signalYieldsMLP, sEffMLP, hBackgroundMLP, "MLPUp", mlp);
-  auto hSigMLPRebin =calSignificance(signalYieldsMLP, sEffMLPRebin, hBackgroundMLPRebin, "MLPRebinUp", mlp);
-}
-
-void calSigLw()
-{
-  TFile* fS = TFile::Open("TMVA_MC_pPb_LambdaCKsP3to4App.root");
-  auto h3S_BDT = fS->Get<TH3>("lambdacAna_mc/hMassPtMVA_BDTG_3D_y0");
-  auto h3S_MLP = fS->Get<TH3>("lambdacAna_mc/hMassPtMVA_MLP3to4Np2N_y0");
-  auto fB = TFile::Open("TMVA_pPb_LambdaCKsP3to4App.root");
-  auto h3B_BDT = fB->Get<TH3>("lambdacAna/hMassPtMVA_BDTG_3D_y0");
-  auto h3B_MLP = fB->Get<TH3>("lambdacAna/hMassPtMVA_MLP3to4Np2N_y0");
-  if (!h3B_BDT) { cout << "Empty" << endl; return; }
-  auto sEffBDT = getEff(true, h3S_BDT, "BDT");
-  auto sEffMLP = getEff(true, h3S_MLP, "MLP");
-  auto sEffMLPRebin = getEff(true, h3S_MLP, "MLPRebin", 10);
-  auto bEffBDT = getEff(false, h3B_BDT, "BDT");
-  auto bEffMLP = getEff(false, h3B_MLP, "MLP");
-
-  auto yields = fit();
-  auto signalYieldsBDT = yields["BDT"].at(2).first/sEffBDT->GetBinContent(85);
-  auto signalYieldsMLP = yields["MLP"].at(2).first/sEffMLP->GetBinContent(260);
-
-  auto hBackgroundBDT = getInt(h3B_BDT, "BDT");
-  auto hBackgroundMLP = getInt(h3B_MLP, "MLP");
-  auto hBackgroundMLPRebin = getInt(h3B_MLP, "MLPRebin", 10);
-
-  vector<tuple<TF1, double, double>>  bdt;
-  TF1 fBDT("fBDT", "pol3", 0.4, 0.7);
-  bdt.push_back(make_tuple(fBDT, 0.4, 0.7));
-  auto hSigBDT = calSignificance(signalYieldsBDT, sEffBDT, hBackgroundBDT, "BDTLw", bdt);
-  vector<tuple<TF1, double, double>>  mlp;
-  TF1 fMLP1("MLP1", "pol3", 0.001, 0.0025);
-  TF1 fMLP2("MLP2", "pol3", 0.0035, 0.008);
-  mlp.push_back(make_tuple(fMLP1, 0.001, 0.0025));
-  mlp.push_back(make_tuple(fMLP2, 0.0035, 0.008));
-  auto hSigMLP = calSignificance(signalYieldsMLP, sEffMLP, hBackgroundMLP, "MLPLW", mlp);
-  auto hSigMLPRebin =calSignificance(signalYieldsMLP, sEffMLPRebin, hBackgroundMLPRebin, "MLPRebinLw", mlp);
-}
-*/
 
 double getEffError(double total, double pass)
 {
@@ -428,82 +171,140 @@ TH1* proj1D(TH3* h3, const char* name,
   return h;
 }
 
-
-void optimizer()
+/**
+  Parameters we need:
+  1. input data file
+  2. input MC file
+  3. input TH3D name in data
+  4. input TH3D name in MC
+  5. pTMin
+  6. pTMax
+  7. MVA name
+  8. MVA range
+ */
+struct PARS
 {
-  TFile f("../test/TMVA_pPb_LambdaCKsP3to4App_dataHM1to6_pPbBoost_noDR.root");
-  TH3D* hBDT;
-  TH3D* hMLP;
-  f.GetObject("lambdacAna/hMassPtMVA_BDTG_3D_noDR_y0;1", hBDT);
-  f.GetObject("lambdacAna/hMassPtMVA_MLP3to4Np2N_noDR_y0;1", hMLP);
-  if (!hBDT) { cout << "bad pointer hBDT" << endl; }
-  if (!hMLP) { cout << "bad pointer hMLP" << endl; }
+  std::string dataFileName;
+  std::string dataHistName;
 
-  TFile fMC("TMVA_MC_pPb_LambdaCKsP3to4App_noDR.root");
-  TH3D* hBDTMC;
-  TH3D* hMLPMC;
-  fMC.GetObject("lambdacAna_mc/hMassPtMVA_BDTG_3D_noDR_y0;1", hBDTMC);
-  fMC.GetObject("lambdacAna_mc/hMassPtMVA_MLP3to4Np2N_noDR_y0;1", hMLPMC);
-  if (!hBDTMC) { cout << "bad pointer hBDTMC" << endl; }
-  if (!hMLPMC) { cout << "bad pointer hMLPMC" << endl; }
+  std::string mcFileName;
+  std::string mcHistName;
 
-  const double pTMin = 3.0;
-  const double pTMax = 4.0;
-  auto hEff = getEff(true, hMLPMC, "MLP", pTMin, pTMax);
-  /*const double mvaCuts[] = {0.003, 0.0035, 0.004, 0.0045, 0.005, 0.0055, 0.006, 0.007};*/
-  const int nMVA = 30;
-  double mvaCuts[nMVA];
-  for (size_t i=0; i != nMVA; ++i) {
-    mvaCuts[i] = 0.003 + 0.0002 * i;
+  std::string mvaName;
+
+  std::vector<double> mvaRange;
+
+  double pTMin;
+  double pTMax;
+
+  PARS(const double start, const double end, const double step)
+    : pTMin(0), pTMax(0)
+  {
+    const double n_double = std::round((end - start)/step);
+    const unsigned int n = static_cast<unsigned int> (n_double);
+    for (int i=0; i<n; ++i) {
+      mvaRange.push_back( start + i * step );
+    }
+    mvaRange.shrink_to_fit();
   }
-  std::vector<TH1*> hMLP1Ds;
-  std::vector<TH1*> hMCMLP1Ds;
-  std::vector<double> dataSig;
-  std::vector<double> yields_data;
-  std::vector<double> yields_MC;
-  std::vector<double> yieldsErr_MC;
+};
+
+void optimizer(PARS mypars)
+{
+  TFile f( mypars.dataFileName.c_str() );
+  TH3D* hMVA;
+  f.GetObject(mypars.dataHistName.c_str(), hMVA);
+  if (!hMVA) { cout << "bad pointer for " << mypars.mvaName << endl; }
+
+  TFile fMC(mypars.mcFileName.c_str());
+  TH3D* hMVAMC;
+  fMC.GetObject(mypars.mcHistName.c_str(), hMVAMC);
+  if (!hMVAMC) { cout << "bad pointer for " << mypars.mcHistName << endl; }
+
+  const double pTMin = mypars.pTMin;
+  const double pTMax = mypars.pTMax;
+  auto hEff = getEff(true, hMVAMC, mypars.mvaName.c_str(), pTMin, pTMax);
+
+  const auto mvaCuts = mypars.mvaRange;
+  const auto nMVA = mvaCuts.size();
+
+  std::vector<TH1*> hMVA1Ds;
+  std::vector<TH1*> hMVA1DMCs;
+
+  // yields of data histogram within (-/+ 2.6 width)
   std::vector<double> histInt;
+
+  // yields without MVA cuts, using yields data (within -/+2.6 width)
+  // divided by MC efficiency (not account for mass range)
+  std::vector<double> yields_MC;
+  // error on yields_MC
+  std::vector<double> yieldsErr_MC;
+
+  // signal yields from fit
+  std::vector<double> yields_data;
+  // error on signal yields from fit
+  std::vector<double> yieldsErr_data;
+  // significance from yields_data/yieldsErr_data
+  std::vector<double> sigFit;
+
+  // significance calculated using S/sqrt(S+B), S and S+B are from data fit, integral over -/+ 2.6 wdith
+  std::vector<double> dataSig;
+  // S+B integral within -/+ 2.6 * width (see below), from data fit
   std::vector<double> fitInt;
+  // width for signal,sqrt( c1*sigma1**2 + (1-c1)*sigma2**2 )
   std::vector<double> widths;
+
   for (const auto mvaCut : mvaCuts) {
-    TString mvaCutStr = Form("mva%f", mvaCut);
+    TString mvaCutStr = Form("%s_%f_pT%.1fto%.1f", mypars.mvaName.c_str(),
+                             mvaCut, pTMin, pTMax);
     auto pos = mvaCutStr.Index(".");
-    mvaCutStr.Replace(pos, 1, "p");
-    auto h = proj1D(hMLP, mvaCutStr,
+    for ( ; pos>=0 ;) {
+      mvaCutStr.Replace(pos, 1, "p");
+      pos = mvaCutStr.Index(".");
+    }
+
+    auto h = proj1D(hMVA, mvaCutStr,
                     pTMin, pTMax, mvaCut, 1);
     // h->Rebin();
-    auto hMC = proj1D(hMLPMC, mvaCutStr+"MC",
+    auto hMC = proj1D(hMVAMC, mvaCutStr+"MC",
                       pTMin, pTMax, mvaCut, 1);
-    h->SetTitle(Form("MLP>%f", mvaCut));
-    hMC->SetTitle(Form("MC MLP>%f", mvaCut));
+    h->SetTitle(Form("%s>%f", mypars.mvaName.c_str(), mvaCut));
+    hMC->SetTitle(Form("MC %s>%f", mypars.mvaName.c_str(), mvaCut));
     h->GetXaxis()->SetTitle("M_{K_{s}^{0}p} (GeV)");
     hMC->GetXaxis()->SetTitle("M_{K_{s}^{0}p} (GeV)");
     h->GetYaxis()->SetTitle(Form("Events / %.3f GeV", h->GetBinWidth(1)));
     hMC->GetYaxis()->SetTitle(Form("Events / %.3f GeV", hMC->GetBinWidth(1)));
-    hMLP1Ds.push_back(h);
-    hMCMLP1Ds.push_back(hMC);
+    hMVA1Ds.push_back(h);
+    hMVA1DMCs.push_back(hMC);
     TCanvas c("c"+mvaCutStr, "", 600*2, 450);
     c.Divide(2, 1);
     const double pars[] = {20000, -5000, 100, 200};
     auto parameters = simpleFit(hMC, h, pars,
               2.15, 2.45, &c);
-    // TF1 f("f", "gausn(0)+cheb3(3)", 2.15, 2.45);
     TF1 f("f", "[0]*([1] * TMath::Gaus(x, [2], [3]*(1+[5]), true) + (1-[1]) * TMath::Gaus(x, [2], [4]*(1+[5]), true)) + cheb3(6)", 2.15, 2.45);
     f.SetParameters(parameters.data());
     const double width = sqrt(pow(parameters.at(3), 2) * parameters.at(1)
                               + pow(parameters.at(4), 2) * (1-parameters.at(1)));
     widths.push_back(width);
+
     const double sPlusBFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
     fitInt.push_back(sPlusBFit);
+    // const double par0 = f.GetParameter(0);
+    // f.SetParameter(0, 0);
+    // const double sPlusBFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
+    // fitInt.push_back(sPlusBFit);
+    // f.SetParameter(0, par0);
 
     for (int i=6; i<10; ++i) {
       f.SetParameter(i, 0);
     }
+
     const double sDataFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
-    // const double sDataFit = f.GetParameter(0) / h->GetBinWidth(1);
     dataSig.push_back(sDataFit/std::sqrt(sPlusBFit));
 
     yields_data.push_back( parameters.at(0)/h->GetBinWidth(1) );
+    yieldsErr_data.push_back( parameters.at(0+parameters.size()/2)/h->GetBinWidth(1) );
+    sigFit.push_back(yields_data.back()/yieldsErr_data.back());
 
     const auto massLw = h->FindBin(2.2865-2.6*width);
     const auto massUp = h->FindBin(2.2865+2.6*width);
@@ -517,8 +318,6 @@ void optimizer()
   }
 
   for (const auto e : dataSig) cout << e << endl;
-  for (auto h : hMLP1Ds) h->Delete();
-  for (auto h : hMCMLP1Ds) h->Delete();
   // for (const auto e : yields_data) cout << e/yields_data.at(1) << endl;
 
   for (size_t i=0; i != yields_MC.size(); ++i) {
@@ -535,239 +334,144 @@ void optimizer()
     gYields.SetPointError(i, 0, yieldsErr_MC.at(i));
   }
   gYields.SetMarkerStyle(20);
-  TF1 fConstant("yields", "[0]", 0, 0.02);
+  TF1 fConstant("yields", "[0]", mvaCuts[0], mvaCuts[nMVA-1]);
   fConstant.SetParameter(0, yields_MC.front());
   gYields.Fit(&fConstant, "R", "", mvaCuts[0], mvaCuts[nMVA-1]);
   const double total = fConstant.GetParameter(0);
-  gYields.Fit(&fConstant, "R", "", mvaCuts[0]-0.0005, mvaCuts[nMVA-1]+0.0005);
+  gYields.Fit(&fConstant, "R", "", mvaCuts[0], mvaCuts[nMVA-1]);
   auto hYieldsFrame = gYields.GetHistogram();
   hYieldsFrame->SetTitle("Expected yields w/o MVA cuts;MVA;s'");
   gYields.Draw("AP");
-  cYields.Print("plots/yieldsMLP.pdf");
+
 
   TCanvas c("sig", "", 600, 450);
-  // TH1D* hSig = (TH1D*)hEff->Clone("sigMLP");
   TGraphErrors gSig(nMVA);
-  // const double total = yields_MC.at(5);
 
   for (int i=0; i != nMVA; ++i) {
     const auto mvaCut = mvaCuts[i];
-    const double pTMin = 3.0;
-    const double pTMax = 4.0;
-    TString mvaCutStr = Form("mva%f", mvaCut);
+    TString mvaCutStr = Form("%s_%f_pT%.1fto%.1f", mypars.mvaName.c_str(),
+                             mvaCut, pTMin, pTMax);
     auto pos = mvaCutStr.Index(".");
-    mvaCutStr.Replace(pos, 1, "p");
-    auto h = proj1D(hMLP, mvaCutStr,
+    for ( ; pos>=0 ;) {
+      mvaCutStr.Replace(pos, 1, "p");
+      pos = mvaCutStr.Index(".");
+    }
+    /*
+    auto h = proj1D(hMVA, mvaCutStr,
                     pTMin, pTMax, mvaCut, 1);
+    */
+    auto h = hMVA1Ds.at(i);
     const double halfWindow = 2.6 * widths.at(i);
-    // const double halfWindow = 2.6 * 0.01;
-    const auto effbin = hEff->FindBin(mvaCut+1E-4);
-    cout << mvaCut << " effbin " << effbin << endl;
+    const auto effbin = hEff->FindBin(mvaCut);
+    // cout << mvaCut << " effbin " << effbin << endl;
     const double yields = total * hEff->GetBinContent(effbin);
+    /*
     const auto massLw = h->FindBin(2.2865-halfWindow);
     const auto massUp = h->FindBin(2.2865+halfWindow);
     // cout << widths.at(i) << endl;
     double sPlusB = h->Integral(massLw, massUp);
-    sPlusB = sPlusB - yields;
+    */
     // cout << sPlusB << endl;
-    const double sig = yields/sqrt(sPlusB);
-    const double err = total/sqrt(sPlusB) * hEff->GetBinError(effbin);
+    // sPlusB = sPlusB - yields;
+    // cout << sPlusB << endl;
+    //const double sig = yields/sqrt(sPlusB);
+    const double sig = yields/sqrt(fitInt.at(i));
+    // const double err = total/sqrt(sPlusB) * hEff->GetBinError(effbin);
+    const double err = total/sqrt(fitInt.at(i)) * hEff->GetBinError(effbin);
     gSig.SetPoint(i, mvaCut, sig);
-    cout << sig << endl;
+    // cout << sig << endl;
     gSig.SetPointError(i, 0, err);
     h->Delete();
   }
   gSig.SetMarkerStyle(kFullCircle);
   auto hframe = gSig.GetHistogram();
-  hframe->GetYaxis()->SetRangeUser(4., 7.);
-  hframe->SetTitle("MLP;MVA;S/#sqrt{S+B}");
-  TF1 fitToSig("fitToSig", "pol3", 0.004, 0.0075);
+  const double sigMin = 2.0;
+  const double sigMax = 12.0;
+  hframe->GetYaxis()->SetRangeUser(sigMin, sigMax);
+  hframe->SetTitle(Form("%s pT %.1f to %.1f;MVA;S/#sqrt{S+B}",
+                        mypars.mvaName.c_str(), pTMin, pTMax));
+  TF1 fitToSig("fitToSig", "pol3", mvaCuts[0], mvaCuts[nMVA-1]);
   fitToSig.SetParameter(0, 5);
   fitToSig.SetParameter(1, 0.01);
   fitToSig.SetParameter(2, -0.01);
-  gSig.Fit(&fitToSig, "R", "", 0.004, 0.008);
-  cout << fitToSig.GetMaximumX() << endl;
+  //gSig.Fit(&fitToSig, "R", "", 0.004, 0.008);
+  gSig.Fit(&fitToSig, "R", "", mvaCuts[0], mvaCuts[nMVA-1]);
+  // cout << fitToSig.GetMaximumX() << endl;
   gSig.Draw("APE");
-  TGraph sig(nMVA, mvaCuts, dataSig.data());
+  TGraph sig(nMVA, mvaCuts.data(), dataSig.data());
   sig.SetMarkerStyle(kOpenSquare);
   sig.Draw("PE");
+  TGraph sigDataFit(nMVA, mvaCuts.data(), sigFit.data());
+  sigDataFit.SetMarkerStyle(kFullSquare);
+  sigDataFit.Draw("PE");
   TLine l;
   l.SetLineStyle(2);
-  l.DrawLine(fitToSig.GetMaximumX(), 4., fitToSig.GetMaximumX(), 7.);
+  l.DrawLine(fitToSig.GetMaximumX(), sigMin, fitToSig.GetMaximumX(), sigMax);
   TLegend leg(0.15, 0.7, 0.35, 0.85);
   leg.SetFillStyle(0);
   leg.SetBorderSize(0);
   leg.AddEntry( &gSig, "MC", "P");
   leg.AddEntry( &sig, "data", "P");
   leg.Draw();
-  c.Print("plots/sigMLP.pdf");
+  TString outputPlotName = Form("%s_pT%.1f_%.1f", mypars.mvaName.c_str(), pTMin, pTMax);
+  for (auto pos = outputPlotName.Index("."); pos>=0; ) {
+    outputPlotName = outputPlotName.Replace(pos, 1, "p");
+    pos = outputPlotName.Index(".");
+  }
+
+  c.Print("plots/sig_" + outputPlotName + ".pdf");
+
+  cYields.Print(Form("plots/yields_%s.pdf", outputPlotName.Data()));
+
+  // for (auto h : hMVA1Ds) h->Delete();
+  // for (auto h : hMVA1DMCs) h->Delete();
 }
 
-
-void optimizerBDT()
+void optimizer()
 {
-  TFile f("../test/TMVA_pPb_LambdaCKsP3to4App_dataHM1to6_pPbBoost_noDR.root");
-  TH3D* hBDT;
-  TH3D* hMLP;
-  f.GetObject("lambdacAna/hMassPtMVA_BDTG_3D_noDR_y0;1", hBDT);
-  f.GetObject("lambdacAna/hMassPtMVA_MLP3to4Np2N_noDR_y0;1", hMLP);
-  if (!hBDT) { cout << "bad pointer hBDT" << endl; }
-  if (!hMLP) { cout << "bad pointer hMLP" << endl; }
+  // 2 to 3 MB
+  /*
+  PARS mypars(0.0002, 0.0016, 0.0001);
+  mypars.dataFileName = "TMVA_MB_LamCKsP2to3App.root";
+  mypars.mcFileName = "Merged_MC_LambdaCKsP2to3App.root";
+  mypars.dataHistName = "hMassPtMVA_MLP2to3MBNp2N_noDR_y0_Total";
+  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP2to3MBNp2N_noDR_y0";
+  mypars.mvaName = "MLP2to3MBNp2N_noDR";
+  mypars.pTMin = 2.0;
+  mypars.pTMax = 3.0;
+  optimizer(mypars);
+  */
 
-  TFile fMC("TMVA_MC_pPb_LambdaCKsP3to4App_noDR.root");
-  TH3D* hBDTMC;
-  TH3D* hMLPMC;
-  fMC.GetObject("lambdacAna_mc/hMassPtMVA_BDTG_3D_noDR_y0;1", hBDTMC);
-  fMC.GetObject("lambdacAna_mc/hMassPtMVA_MLP3to4Np2N_noDR_y0;1", hMLPMC);
-  if (!hBDTMC) { cout << "bad pointer hBDTMC" << endl; }
-  if (!hMLPMC) { cout << "bad pointer hMLPMC" << endl; }
+  PARS mypars(0.0002, 0.008, 0.0001);
+  mypars.dataFileName = "dataMB_pPb_3to4.root";
+  mypars.mcFileName = "TMVA_MC_pPb_LambdaCKsP3to4App_MB.root";
+  mypars.dataHistName = "lambdacAna/hMassPtMVA_MLP3to4MBNp2N_noDR_y0";
+  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP3to4MBNp2N_noDR_y0";
+  mypars.mvaName = "MLP3to4MBNp2N_noDR";
+  mypars.pTMin = 3.0;
+  mypars.pTMax = 4.0;
+  optimizer(mypars);
 
-  const double pTMin = 3.0;
-  const double pTMax = 4.0;
-  auto hEff = getEff(true, hBDTMC, "BDT", pTMin, pTMax);
-  /*const double mvaCuts[] = {0.003, 0.0035, 0.004, 0.0045, 0.005, 0.0055, 0.006, 0.007};*/
-  const int nMVA = 40;
-  double mvaCuts[nMVA];
-  for (size_t i=0; i != nMVA; ++i) {
-    mvaCuts[i] = 0.4 + 0.01 * i;
-  }
-  std::vector<TH1*> hBDT1Ds;
-  std::vector<TH1*> hMCBDT1Ds;
-  std::vector<double> dataSig;
-  std::vector<double> yields_data;
-  std::vector<double> yields_MC;
-  std::vector<double> yieldsErr_MC;
-  std::vector<double> histInt;
-  std::vector<double> fitInt;
-  std::vector<double> widths;
-  for (const auto mvaCut : mvaCuts) {
-    TString mvaCutStr = Form("mva%f", mvaCut);
-    auto pos = mvaCutStr.Index(".");
-    mvaCutStr.Replace(pos, 1, "p");
-    auto h = proj1D(hBDT, mvaCutStr,
-                    pTMin, pTMax, mvaCut, 1);
-    // h->Rebin();
-    auto hMC = proj1D(hBDTMC, mvaCutStr+"MC",
-                      pTMin, pTMax, mvaCut, 1);
-    h->SetTitle(Form("BDT>%f", mvaCut));
-    hMC->SetTitle(Form("MC BDT>%f", mvaCut));
-    hBDT1Ds.push_back(h);
-    hMCBDT1Ds.push_back(hMC);
-    TCanvas c("c"+mvaCutStr, "", 600*2, 450);
-    c.Divide(2, 1);
-    const double pars[] = {20000, -5000, 100, 200};
-    auto parameters = simpleFit(hMC, h, pars,
-              2.15, 2.45, &c);
-    // TF1 f("f", "gausn(0)+cheb3(3)", 2.15, 2.45);
-    TF1 f("f", "[0]*([1] * TMath::Gaus(x, [2], [3]*(1+[5]), true) + (1-[1]) * TMath::Gaus(x, [2], [4]*(1+[5]), true)) + cheb3(6)", 2.15, 2.45);
-    f.SetParameters(parameters.data());
-    const double width = sqrt(pow(parameters.at(3), 2) * parameters.at(1)
-                              + pow(parameters.at(4), 2) * (1-parameters.at(1)));
-    widths.push_back(width);
-    const double sPlusBFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
-    fitInt.push_back(sPlusBFit);
-
-    for (int i=6; i<10; ++i) {
-      f.SetParameter(i, 0);
-    }
-    const double sDataFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
-    // const double sDataFit = f.GetParameter(0) / h->GetBinWidth(1);
-    dataSig.push_back(sDataFit/std::sqrt(sPlusBFit));
-
-    yields_data.push_back( parameters.at(0)/h->GetBinWidth(1) );
-
-    const auto massLw = h->FindBin(2.2865-2.6*width);
-    const auto massUp = h->FindBin(2.2865+2.6*width);
-    const auto sPlusBHist = h->Integral(massLw, massUp);
-    histInt.push_back(sPlusBHist);
-
-    const auto mvaBin = hEff->FindBin(mvaCut);
-    const auto eff = hEff->GetBinContent(mvaBin);
-    yields_MC.push_back(yields_data.back()/eff);
-    yieldsErr_MC.push_back( parameters.at( f.GetNpar() ) / h->GetBinWidth(1) /eff);
-  }
-
-  for (const auto e : dataSig) cout << e << endl;
-  for (auto h : hBDT1Ds) h->Delete();
-  for (auto h : hMCBDT1Ds) h->Delete();
-  // for (const auto e : yields_data) cout << e/yields_data.at(1) << endl;
-
-  for (size_t i=0; i != yields_MC.size(); ++i) {
-    cout << mvaCuts[i] << ", "  << yields_MC.at(i)
-         << " +/- " << yieldsErr_MC.at(i)
-         << " " << yields_MC.at(i)/yieldsErr_MC.at(i) << endl;
-  }
-
-  TCanvas cYields("cYields", "", 600, 480);
-  cYields.SetLeftMargin(0.15);
-  TGraphErrors gYields(nMVA);
-  for (int i=0; i != nMVA; ++i) {
-    gYields.SetPoint(i, mvaCuts[i], yields_MC.at(i));
-    gYields.SetPointError(i, 0, yieldsErr_MC.at(i));
-  }
-  gYields.SetMarkerStyle(20);
-  TF1 fConstant("yields", "[0]", 0, 0.02);
-  fConstant.SetParameter(0, yields_MC.front());
-  gYields.Fit(&fConstant);
-  auto hYieldsFrame = gYields.GetHistogram();
-  hYieldsFrame->SetTitle("Expected yields w/o MVA cuts;MVA;s'");
-  gYields.Draw("AP");
-  cYields.Print("plots/yieldsBDT.pdf");
-
-  const double total = fConstant.GetParameter(0);
-  TCanvas c("sig", "", 600, 450);
-  // TH1D* hSig = (TH1D*)hEff->Clone("sigBDT");
-  TGraphErrors gSig(nMVA);
-  // const double total = yields_MC.at(5);
-
-  for (int i=0; i != nMVA; ++i) {
-    const auto mvaCut = mvaCuts[i];
-    const double pTMin = 3.0;
-    const double pTMax = 4.0;
-    TString mvaCutStr = Form("mva%f", mvaCut);
-    auto pos = mvaCutStr.Index(".");
-    mvaCutStr.Replace(pos, 1, "p");
-    auto h = proj1D(hBDT, mvaCutStr,
-                    pTMin, pTMax, mvaCut, 1);
-    const double halfWindow = 2.6 * widths.at(i);
-    // const double halfWindow = 2.6 * 0.01;
-    const auto effbin = hEff->FindBin(mvaCut+1E-4);
-    cout << mvaCut << " effbin " << effbin << endl;
-    const double yields = total * hEff->GetBinContent(effbin);
-    const auto massLw = h->FindBin(2.2865-halfWindow);
-    const auto massUp = h->FindBin(2.2865+halfWindow);
-    // cout << widths.at(i) << endl;
-    const double sPlusB = h->Integral(massLw, massUp);
-    // cout << sPlusB << endl;
-    const double sig = yields/sqrt(sPlusB);
-    const double err = total/sqrt(sPlusB) * hEff->GetBinError(effbin);
-    gSig.SetPoint(i, mvaCut, sig);
-    cout << sig << endl;
-    gSig.SetPointError(i, 0, err);
-    h->Delete();
-  }
-  gSig.SetMarkerStyle(kFullCircle);
-  auto hframe = gSig.GetHistogram();
-  hframe->GetYaxis()->SetRangeUser(3., 8.);
-  hframe->SetTitle("BDT;MVA;S/#sqrt{S+B}");
-  TF1 fitToSig("fitToSig", "pol3", mvaCuts[0]-0.001, mvaCuts[nMVA-1]+0.001);
-  fitToSig.SetParameter(0, 5);
-  fitToSig.SetParameter(1, 0.01);
-  fitToSig.SetParameter(2, -0.01);
-  gSig.Fit(&fitToSig, "R", "", mvaCuts[0]-0.001, mvaCuts[nMVA-1]+0.001);
-  cout << fitToSig.GetMaximumX() << endl;
-  gSig.Draw("APE");
-  TGraph sig(nMVA, mvaCuts, dataSig.data());
-  sig.SetMarkerStyle(kOpenSquare);
-  sig.Draw("PE");
-  TLine l;
-  l.SetLineStyle(2);
-  l.DrawLine(fitToSig.GetMaximumX(), 3., fitToSig.GetMaximumX(), 8.);
-  TLegend leg(0.15, 0.7, 0.35, 0.85);
-  leg.SetFillStyle(0);
-  leg.SetBorderSize(0);
-  leg.AddEntry( &gSig, "MC", "P");
-  leg.AddEntry( &sig, "data", "P");
-  leg.Draw();
-  c.Print("plots/sigBDT.pdf");
+  /*
+  PARS mypars(0.0002, 0.006, 0.0001);
+  mypars.dataFileName = "dataMB_pPb_4to6.root";
+  mypars.mcFileName = "TMVA_MC_pPb_LambdaCKsP4to6App_MB.root";
+  mypars.dataHistName = "lambdacAna/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
+  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
+  mypars.mvaName = "MLP4to6MBNp2N_noDR";
+  mypars.pTMin = 4.0;
+  mypars.pTMax = 5.0;
+  optimizer(mypars);
+  */
+  /*
+  PARS mypars(0.0002, 0.006, 0.0001);
+  mypars.dataFileName = "dataMB_pPb_4to6.root";
+  mypars.mcFileName = "TMVA_MC_pPb_LambdaCKsP4to6App_MB.root";
+  mypars.dataHistName = "lambdacAna/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
+  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
+  mypars.mvaName = "MLP4to6MBNp2N_noDR";
+  mypars.pTMin = 5.0;
+  mypars.pTMax = 6.0;
+  optimizer(mypars);
+  */
 }
