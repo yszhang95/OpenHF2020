@@ -12,23 +12,33 @@ cd ${WorkDir}
 
 cp ${TopDir}/$1 .
 
-xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/SplitFileLists/${2} ${WorkDir}/$2
+FileDir=""
+TrigIdx=""
+if [[ $2 = *"HM"* ]]; then
+    FileDir="SplitFileListsV3"
+    TrigIdx="2"
+elif [[ $2 = *"MB"* ]]; then
+    FileDir="SplitFileListsV4"
+    TrigIdx="4"
+fi
+
+xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/${FileDir}/${2} ${TopDir}/$2
+xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/${FileDir}/${2} ${WorkDir}/$2
 
 xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/Package/OpenHF2020.tar.gz .
 tar zxf OpenHF2020.tar.gz
 rm OpenHF2020.tar.gz
-cd ${WorkDir}/OpenHF2020
-source setup.sh --enable-lib
-echo ${OPENHF2020TOP}
-cd ${OPENHF2020TOP}/Utilities
-make -f Makefile
 
-cd $WorkDir
-cat > .rootrc <<- _EOF_
-Unix.*.Root.MacroPath:    .:${OPENHF2020TOP}/Training/Macros/
-ACLiC.BuildDir:        .compiles
-ACLiC.IncludePaths:     -I${OPENHF2020TOP}/Utilities
-_EOF_
+RunDir=${WorkDir}/OpenHF2020
+cd ${WorkDir}/OpenHF2020
+cd ${RunDir}
+source setup.sh --enable-lib
+echo OpenHF2020TOP ${OPENHF2020TOP}
+
+
+cd ${RunDir}
+cp ${TopDir}/$1 .
+cp ${TopDir}/$2 .
 
 TreeDir=""
 if [[ $2 == *"data"* ]]; then
@@ -38,17 +48,18 @@ if [[ $2 == *"MC"* ]]; then
   TreeDir="lambdacAna_mc"
 fi
 
-Options=""
+Options="--triggerIndex $TrigIdx --filterIndex 4"
 if [[ $2 == *"data"* ]]; then
-  Options="--treeDir $TreeDir"
+  Options="--treeDir $TreeDir ${Options}"
 fi
 if [[ $2 == *"MC"* ]]; then
-  Options="--treeDir $TreeDir --mc"
+  Options="--treeDir $TreeDir --mc ${Options}"
 fi
 
 Exe=skimTreeRectCuts.py
-echo "./OpenHF2020/Training/Macros/${Exe} -i $2 $Options"
-./OpenHF2020/Training/Macros/${Exe} -i $2 $Options
+echo "${OPENHF2020TOP}/Training/Macros/${Exe} -i $2 $Options"
+ROOT_INCLUDE_PATH=${ROOT_INCLUDE_PATH}:${OPENHF2020TOP}/Utilities ${OPENHF2020TOP}/Training/Macros/${Exe} -i $2 $Options
+
 
 ls
 FileName=$(basename -- "$2")

@@ -44,7 +44,9 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
                      const TString& postfix, const TString& outDir,
                      Particle particle,
                      Long64_t nentries=-1, const bool isMC=false,
-                     const bool saveMatchedOnly=true)
+                     const bool saveMatchedOnly=true,
+                     const int filterIndex=4,
+                     const int triggerIndex=2)
 {
   TString basename(gSystem->BaseName(inputList));
   const auto firstPos = basename.Index(".list");
@@ -93,7 +95,10 @@ int skimTreeRectCuts(const TString& inputList, const TString& treeDir,
 
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
-    if (!isMC && !passEvent(p))  continue; // temporary
+    if (!isMC) {
+      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
+      if (!passEventSel) continue;
+    }
     if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();

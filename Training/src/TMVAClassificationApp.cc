@@ -360,21 +360,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     if (jentry < 0) break;
     p.GetEntry(ientry);
 
-    // event weight
-    double eventWeight = 1;
-    // check Ntrkoffline range
-    if (!isMC) {
-      const auto noCandidate = p.cand_mass().empty();
-      if (noCandidate) continue;
-      if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
-      const auto Ntrk = p.cand_Ntrkoffline().at(0);
-      if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
-      eventWeight = effTab.getWeight(Ntrk);
-      // cout << "Ntrk: " << Ntrk << ", efficiency: " << effTab.getEfficiency(Ntrk) << endl;
-    }
-
-    if (reweightEvent) ntp.setEventWeight(eventWeight);
-
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
     if (!isMC) {
@@ -389,6 +374,22 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       }
       hNtrkoffline.Fill(ntrk, ntrkWeight);
     }
+
+    // event weight
+    double eventWeight = 1;
+    // check Ntrkoffline range
+    if (!isMC) {
+      const auto noCandidate = p.cand_mass().empty();
+      if (noCandidate) continue;
+      if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
+      const auto Ntrk = p.cand_Ntrkoffline().at(0);
+      if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
+      if (reweightEvent) eventWeight = effTab.getWeight(Ntrk);
+      // cout << "Ntrk: " << Ntrk << ", efficiency: " << effTab.getEfficiency(Ntrk) << endl;
+    }
+
+    if (reweightEvent) ntp.setEventWeight(eventWeight);
+
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();

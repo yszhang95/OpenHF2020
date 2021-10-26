@@ -20,11 +20,16 @@ cd ../Training
 make
 cd ..
 cat > .rootrc <<- _EOF_
+Unix.*.Root.DynamicPath:    .:${OPENHF2020TOP}/Utilities/lib:${OPENHF2020TOP}/Training/Macros/
 Unix.*.Root.MacroPath:    .:${OPENHF2020TOP}/Training/Macros/
 ACLiC.IncludePaths:     -I${OPENHF2020TOP}/Utilities
 _EOF_
 root -b <<- _EOF_
 .L skimTree.cc+
+.q
+_EOF_
+root -b <<- _EOF_
+.L skimTreeRectCuts.cc+
 .q
 _EOF_
 
