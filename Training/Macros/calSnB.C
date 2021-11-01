@@ -37,7 +37,7 @@ void calSnBFromNTuple()
     };
 
   std::vector<std::string> MC5p9 = {
-    "root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep/MC_pPb_pT5p9_lambdacAna_mc_AllEntries_pT0p9to20p0_yAbs1p0_absMassDiff20p000_LamCKsP.root",
+    "root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep/MC_pPb_lambdacAna_mc_AllEntries_LamCKsP.root",
     "root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep/MC_pPb_pT5p9_lambdacAna_mc_AllEntries_pT0p9to20p0_yAbs1p0_absMassDiff20p000_LamCKsP.root"
   };
 
@@ -100,6 +100,7 @@ void calSnBFromNTuple()
     std::cout << "Before cuts" << std::endl;
     std::cout << "S: " << sPrime << std::endl;
     std::cout << "B: " << bPrime << std::endl;
+    std::cout << std::endl;
   }
 }
 
@@ -116,9 +117,10 @@ void calSnBFromHist()
   inputs["HM"]["MC"] = "root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/TrainPrep/MC_pPb_lambdacAna_mc_AllEntries_LamCKsP_Cutbase.root";
   pTVecs["HM"] = {2.0, 3.0, 4.0, 6.0, 8.0, 10.0};
   // 0 signal, 1 background, 2, eff_S, 3, eff_B
-  std::vector<std::vector<double>> yields;
 
   for (const auto e : inputs) {
+    std::vector<std::vector<double>> yields;
+
     const auto label = e.first.c_str();
     const auto dataFile = e.second.at("data");
     const auto mcFile = e.second.at("MC");
@@ -175,7 +177,7 @@ void calSnBFromHist()
       const double sPrime = S/EffS;
       const double bPrime = B/EffB;
 
-      std::cout << "MB: " << pTMin << " " << pTMax << std::endl;
+      std::cout << label << ": " << pTMin << " " << pTMax << std::endl;
       std::cout << "After cuts" << std::endl;
       std::cout << "EffS: " << EffS << std::endl;
       std::cout << "EffB: " << EffB << std::endl;
@@ -184,6 +186,7 @@ void calSnBFromHist()
       std::cout << "Before cuts" << std::endl;
       std::cout << "S: " << sPrime << std::endl;
       std::cout << "B: " << bPrime << std::endl;
+      std::cout << std::endl;
     }
   }
 }
