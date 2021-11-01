@@ -1,3 +1,5 @@
+#ifndef FIT_HIST
+#define FIT_HIST
 double bkgRejctPeak(double* x, double* pars)
 {
   if (x[0] > 2.2865-0.016 && x[0] < 2.2865+0.016) {
@@ -69,7 +71,8 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
    c->Update();
    c->Draw();
    TString outputName = c->GetName();
-   c->Print(outputName+ "_cutbase.pdf");
+   //c->Print(outputName+ "_cutbase.pdf");
+   c->Print(Form("StoB/%s.pdf", h->GetName()));
 
    vector<double> output;
    std::copy(f->GetParameters(),
@@ -141,3 +144,4 @@ std::vector<double> simpleFit(TH1* hData, TH1* hMC,
 
   return yields;
 }
+#endif
