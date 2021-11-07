@@ -102,7 +102,9 @@ std::string floatInStrToStr(std::string str)
 std::string runSkimMass(const float pTMin, const float pTMax, const char* dataset,
 			const std::vector<std::string>& dataFiles,
 			const std::vector<std::string>& mcFiles,
-			const std::string commonCuts, const std::string specialCuts
+			const std::string commonCuts, const std::string specialCuts,
+      const bool fromNTuple=false,
+      const bool selectHM=false
 			)
 {
   const std::string ptCuts =
@@ -111,15 +113,20 @@ std::string runSkimMass(const float pTMin, const float pTMax, const char* datase
 					    Form("pT%.1f_%.1f_y1p0", pTMin, pTMax));
   // data
   {
-    const std::string histName = 
+    std::string histName = 
       Form("cand_mass_%s_%s", dataset, ptStr.c_str());
     const std::string histTitle = Form("%s pT %.1f to %.1f GeV;"
 				       "M_{K_{S}^{0}p} (GeV);Events per bin", dataset, pTMin, pTMax);
-    const std::string outputFileName =
-      "StoB/output_" + histName + ".root";
     const bool isMC = false;
 
-    Pars pars(dataFiles, commonCuts, ptCuts, specialCuts,
+    string newCommonCuts = commonCuts;
+    if (selectHM) newCommonCuts = newCommonCuts + " && cand_Ntrkoffline >= 185 && cand_Ntrkoffline < 250";
+    if (fromNTuple) histName = histName + "_fromNTuple";
+
+    const std::string outputFileName =
+      "StoB/output_" + histName + ".root";
+
+    Pars pars(dataFiles, newCommonCuts, ptCuts, specialCuts,
 	      histName, histTitle, outputFileName, isMC);
 
     skimMass(pars);
@@ -127,12 +134,13 @@ std::string runSkimMass(const float pTMin, const float pTMax, const char* datase
 
   // MC
   {
-    const std::string histName = 
+    std::string histName = 
       Form("cand_mass_MC_%s_%s", dataset, ptStr.c_str());
     const std::string histTitle = Form("MB pT %.1f to %.1f GeV;"
 				       "M_{K_{S}^{0}p} (GeV);Events per bin", pTMin, pTMax);
-    const std::string outputFileName = "StoB/output_" + histName + ".root";
     const bool isMC = true;
+    if (fromNTuple) histName = histName + "_fromNTuple";
+    const std::string outputFileName = "StoB/output_" + histName + ".root";
 
     Pars pars(mcFiles, commonCuts, ptCuts, specialCuts,
 	      histName, histTitle, outputFileName, isMC);
