@@ -238,6 +238,22 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
       }
     }
   }
+
+  if (_configs.count("RooWorkspace")) {
+    const auto& ws = _configs.at("RooWorkspace");
+    if (!ws.empty()) {
+      auto strs = ws.front();
+      _workspaceStrs = splitTString(strs, ":");
+    }
+  }
+
+  if (_configs.count("RooDataSet")) {
+    const auto& ds = _configs.at("RooDataSet");
+    if (!ds.empty()) {
+      auto strs = ds.front();
+      _dataSetStrs = splitTString(strs, ":");
+    }
+  }
 }
 
 /**
@@ -839,6 +855,22 @@ vector<TString> tmvaConfigs::getOptions() const
 vector<TString> tmvaConfigs::getKeptBranchNames() const
 {
   return _keptBranchNames;
+}
+
+/**
+   Return the name + title of RooWorkspace
+ */
+vector<TString> tmvaConfigs::getWorkspaceStrs() const
+{
+  return _workspaceStrs;
+}
+
+/**
+   Return the name + title of RooDataSet
+ */
+vector<TString> tmvaConfigs::getDataSetStrs() const
+{
+  return _dataSetStrs;
 }
 
 /**
