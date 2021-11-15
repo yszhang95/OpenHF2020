@@ -160,10 +160,10 @@ void MyNTuple::initNTuple()
   if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
   if (!isMC) {
     for (UInt_t i=0; i<nTrigs; ++i) {
-      t->Branch(Form("trigBit_%z", i), &trigBit[i]);
+      t->Branch(Form("trigBit_%u", i), &trigBit[i]);
     }
     for (UInt_t i=0; i<nFilters; ++i) {
-      t->Branch(Form("filterBit_%z", i), &filterBit[i]);
+      t->Branch(Form("filterBit_%u", i), &filterBit[i]);
     }
   }
   // particle level
@@ -301,12 +301,12 @@ bool MyNTuple::setMVAValues(const std::vector<float>& vals)
 bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 {
   const auto passHLT = p.passHLT();
-  this->nTrigs = passHLT.size();
+  //this->nTrigs = passHLT.size();
   for (UInt_t i=0; i< this->nTrigs; ++i) {
     this->trigBit[i] = passHLT.at(i);
   }
   const auto passFilter = p.evtSel();
-  this->nFilters = passFilter.size();
+  //this->nFilters = passFilter.size();
   for (UInt_t i=0; i<this->nFilters; ++i) {
     this->filterBit[i] = passFilter.at(i);
   }

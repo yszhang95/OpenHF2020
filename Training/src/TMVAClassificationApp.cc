@@ -216,13 +216,17 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   // at most 9 variables in old ROOT
   RooArgSet cols(cand_mass, cand_pT, cand_eta, cand_y, cand_phi,
                  cand_decayLength3D, cand_decayLengthSig3D, cand_cosAngle3D);
-            cols.add(cand_dau0_mass); cols.add(cand_dau0_pT);
-            cols.add(cand_dau0_eta); cols.add(cand_dau0_phi),
-            cols.add(cand_dau1_pT); cols.add(cand_dau1_eta);
-            cols.add(cand_dau1_phi); cols.add(trk_dau1_dEdxRes);
-            cols.add(NtrkPV); cols.add(passHM); cols.add(passMB);
-            cols.add(passDz1p0); cols.add(passGplus);
-            cols.add(MVA);
+  cols.add(cand_dau0_mass); cols.add(cand_dau0_pT);
+  cols.add(cand_dau0_eta); cols.add(cand_dau0_phi);
+  cols.add(cand_dau1_pT); cols.add(cand_dau1_eta);
+  cols.add(cand_dau1_phi); cols.add(trk_dau1_dEdxRes);
+  cols.add(NtrkPV); cols.add(passHM); cols.add(passMB);
+  cols.add(passDz1p0); cols.add(passGplus);
+  cols.add(MVA);
+  // weight
+  RooRealVar wgtVar("weight", "event weight", 0, 100);
+  if (reweightEvent) cols.add(wgtVar);
+  // workspace and dataset
   RooWorkspace ws(wsStrs.at(0), wsStrs.at(1));
   const char* wgtVarName = reweightEvent ? "weight" : 0;
   RooDataSet ds(dsStrs.at(0), dsStrs.at(1), cols, wgtVarName);
@@ -635,6 +639,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           // MVA
           MVA.setVal(ntp.cand_MVA[0]);
           if (reweightEvent) {
+            wgtVar.setVal(eventWeight);
             ds.add(cols, eventWeight);
           } else
             ds.add(cols);
