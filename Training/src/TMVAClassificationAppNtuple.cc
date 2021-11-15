@@ -143,9 +143,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   }
   */
 
-  const bool reweightEvent = g;
-  if (DEBUG) { cout << "Do reweighting: " << reweightEvent << endl;}
-
   //EfficiencyTable<TGraph> effTab(g);
 
   // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
@@ -164,7 +161,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   // --- Here the preparation phase begins
 
   // Create a ROOT output file where TMVA will store ntuples, histograms, etc.
-  TString outfileName = configs.getOutFileName().c_str();
+  TString outfileName = configs.getOutDirName() + configs.getOutFileName().c_str();
   if (flipEta) {
     auto index = outfileName.Index(".root");
     if (index >0) {
@@ -339,7 +336,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
         cand_dau0_decayLength3D,
         cand_dau0_decayLengthError3D,
         trk_dau1_dEdx_dedxHarmonic2,
-        trk_dau1_dEdxRes;
+        trk_dau1_dEdxRes,
+        eventWeight;
+  eventWeight = 1.;
   unsigned short cand_Ntrkoffline;
 
   t.SetBranchAddress("cand_Ntrkoffline", &cand_Ntrkoffline);
@@ -366,6 +365,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   t.SetBranchAddress("cand_dau0_decayLengthError3D", &cand_dau0_decayLengthError3D);
   t.SetBranchAddress("trk_dau1_dEdx_dedxHarmonic2", &trk_dau1_dEdx_dedxHarmonic2);
   t.SetBranchAddress("trk_dau1_dEdxRes", &trk_dau1_dEdxRes);
+  t.SetBranchAddress("eventWeight", &eventWeight);
 
   // hard code to read tree/chain end
 
@@ -376,10 +376,24 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   }
   if (mycuts.Length() == 0) mycuts = "1";
   else if (mycuts(0, 2) == "&&") mycuts = mycuts(2, mycuts.Length()-1);
+  std::cout << "fCuts: " << mycuts << std::endl;
   TTreeFormula fCuts("fCuts", mycuts, &t);
 
   outputFile.mkdir(treeDir);
   outputFile.cd(treeDir);
+
+  auto keptBranches = configs.getKeptBranchNames();
+  for (const auto& b : methodNames_copy) {
+    if ( std::find(keptBranches.begin(), keptBranches.end(), b)
+          == keptBranches.end() ) {
+      keptBranches.push_back(b);
+    }
+  }
+
+  const bool reweightEvent =
+    std::find(keptBranches.begin(), keptBranches.end(), "eventWeight")
+    != keptBranches.end();
+  if (DEBUG) { cout << "Do reweighting: " << reweightEvent << endl;}
 
   TTree tt("ParticleNTuple", "ParticleNTuple");
   MyNTuple ntp(&tt);
@@ -387,7 +401,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   ntp.setNDau(2, 2, dauNGDau);
   if (reweightEvent) { ntp.initWeightBranch(); }
   ntp.initMVABranches(methodNames_copy);
-  if (pruneNTuple) ntp.pruneNTuple(methodNames_copy);
+  ntp.initNTuple();
+  if (pruneNTuple) ntp.pruneNTuple(keptBranches);
   cout << "NTuple prepared" << endl;
 
   TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
@@ -407,6 +422,11 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     if (jentry < 0) break;
     t.GetEntry(ientry);
 
+    const auto Ntrk = cand_Ntrkoffline;
+    if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
+
+    if (!reweightEvent) eventWeight = 1.;
+
     // not sure if TTreeFormula::EvalInstance() will automatically iterate to next entry
     // or I have to load GetEntry manually
     // Let us use GetEntry manually, as we did above
@@ -420,11 +440,11 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     const int passCuts = static_cast<int>(std::round(passCutsVal));
 
     // event weight
-    double eventWeight = 1;
+    //double eventWeight = 1;
     // check Ntrkoffline range
     // efficiency correction and Ntrk selections should be done in skimTree.cc
 
-    //if (reweightEvent) ntp.setEventWeight(eventWeight);
+    if (reweightEvent) ntp.setEventWeight(eventWeight);
 
     // check pileup filter
     // done in skimTree.cc
@@ -493,10 +513,11 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
                                    */
     // does not selectMVA anymore
     bool passMVA = false;
+    const auto& mvaCutMins = configs.getMVACutMins();
     for (size_t i=0; i<methodNames.size(); i++) {
       const auto& methodName = methodNames.at(i);
       mvaValues[i] = reader->EvaluateMVA(methodName);
-      //passMVA = passMVA || (selectMVA && mvaValues[i] > std::stod(configs.getMVACutMins().at(i)));
+      passMVA = passMVA || (selectMVA && mvaValues[i] > std::stod(mvaCutMins.at(i)));
       if (abs(ntp.cand_y)<1.) {
         if (passCuts)
           hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i], eventWeight);
@@ -511,10 +532,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     if (abs(ntp.cand_y)<1. && passCuts) {
           hists.fillHists(ntp, eventWeight);
     }
-    /*
-       if (selectMVA &&  !passMVA) continue;
-       */
-    if (saveTree) ntp.fillNTuple();
+    if (selectMVA && !passMVA) continue;
+    if (saveTree && passCuts && selectMVA) ntp.fillNTuple();
     // hard code end
   }
   // Save the output
