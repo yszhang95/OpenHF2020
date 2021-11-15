@@ -215,10 +215,12 @@ struct MyNTuple
   // correct for dEdx
   DeDxSelection dedxSel;
 
+  // temporarily I know number of trigger bits is 5
+  // and number of filter bits is 6
   MyNTuple(TTree* t) : t(t),
                        nDau(0), nGDau(0),
                        cand_nMVA(0), dropDau(0),
-                       flipEta(0)
+                       flipEta(0), nTrigs(5), nFilters(6)
   {
     if (!t) {
       std::cerr << "[ERROR] Nullptr of TTree is given to NTuple!" << std::endl;
