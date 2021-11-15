@@ -97,6 +97,11 @@ struct MyNTuple
   //  Float_t         bestvtxZ;
   Float_t         hltRecordLumi;
 
+  UInt_t          nTrigs;
+  Int_t           trigBit[100];
+  UInt_t          nFilters;
+  Int_t           filterBit[100];
+
   Float_t         eventWeight;
 
   UInt_t          cand_nMVA;
