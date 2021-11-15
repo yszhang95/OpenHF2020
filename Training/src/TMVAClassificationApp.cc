@@ -184,7 +184,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const auto wsStrs = configs.getWorkspaceStrs();
   const auto dsStrs = configs.getDataSetStrs();
   const bool useWS = !wsStrs.empty();
-  RooRealVar Ntrkoffline("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
+  RooRealVar NtrkPV("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
   // LambdaC kinematic info
   RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.15, 2.45, "GeV");
   RooRealVar cand_pT  ("cand_pT", "p_{T} of #Lambda_{c}^{+} candidate",  1.9, 100., "GeV");
@@ -213,12 +213,16 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   RooRealVar passGplus("filterBit_5", "pass Gplus", -1, 2, "");
   // MVA
   RooRealVar MVA("cand_mva", "first method in MVA collection", -1, 1, "");
+  // at most 9 variables in old ROOT
   RooArgSet cols(cand_mass, cand_pT, cand_eta, cand_y, cand_phi,
-                 cand_decayLength3D, cand_decayLengthSig3D, cand_cosAngle3D,
-                 cand_dau0_mass, cand_dau0_pT, cand_dau0_eta, cand_dau0_phi,
-                 cand_dau1_pT, cand_dau1_eta, cand_dau1_phi, trk_dau1_dEdxRes,
-                 Ntrkoffline, passHM, passMB, passDz1p0, passGplus,
-                 MVA);
+                 cand_decayLength3D, cand_decayLengthSig3D, cand_cosAngle3D);
+            cols.add(cand_dau0_mass); cols.add(cand_dau0_pT);
+            cols.add(cand_dau0_eta); cols.add(cand_dau0_phi),
+            cols.add(cand_dau1_pT); cols.add(cand_dau1_eta);
+            cols.add(cand_dau1_phi); cols.add(trk_dau1_dEdxRes);
+            cols.add(NtrkPV); cols.add(passHM); cols.add(passMB);
+            cols.add(passDz1p0); cols.add(passGplus);
+            cols.add(MVA);
   RooWorkspace ws(wsStrs.at(0), wsStrs.at(1));
   const char* wgtVarName = reweightEvent ? "weight" : 0;
   RooDataSet ds(dsStrs.at(0), dsStrs.at(1), cols, wgtVarName);
@@ -601,7 +605,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
         if (selectMVA &&  !passMVA) continue;
         if (saveTree) ntp.fillNTuple();
         if (useWS) {
-          Ntrkoffline.setVal( NtrkInFloat );
+          NtrkPV.setVal( NtrkInFloat );
           // LambdaC kinematic info
           cand_mass.setVal( ntp.cand_mass );
           cand_pT  .setVal( ntp.cand_pT   );
