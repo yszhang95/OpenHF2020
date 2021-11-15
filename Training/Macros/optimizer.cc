@@ -70,6 +70,8 @@ simpleFit(TH1* hMC, TH1* h, const double* bkgvars,
 
    h->Fit(f.get(), "RM", "", lw, up);
    h->Fit(f.get(), "RME", "", lw, up);
+   //h->GetXaxis()->SetLimits(lw, up);
+   h->GetXaxis()->SetRangeUser(lw, up);
 
    c->Draw();
 
@@ -194,6 +196,8 @@ struct PARS
 
   std::vector<double> mvaRange;
 
+  double nsigma;
+
   double pTMin;
   double pTMax;
 
@@ -212,14 +216,16 @@ struct PARS
 void optimizer(PARS mypars)
 {
   TFile f( mypars.dataFileName.c_str() );
+  if (f.IsOpen()) { std::cout << "Opened " << f.GetName() << std::endl;}
   TH3D* hMVA;
   f.GetObject(mypars.dataHistName.c_str(), hMVA);
-  if (!hMVA) { cout << "bad pointer for " << mypars.mvaName << endl; }
+  if (!hMVA) { std::cout << "bad pointer for " << mypars.mvaName << " " << mypars.dataHistName << std::endl; }
 
   TFile fMC(mypars.mcFileName.c_str());
+  if (fMC.IsOpen()) { std::cout << "Opened " << fMC.GetName() << std::endl;}
   TH3D* hMVAMC;
   fMC.GetObject(mypars.mcHistName.c_str(), hMVAMC);
-  if (!hMVAMC) { cout << "bad pointer for " << mypars.mcHistName << endl; }
+  if (!hMVAMC) { std::cout << "bad pointer for " << mypars.mcHistName << std::endl;; }
 
   const double pTMin = mypars.pTMin;
   const double pTMax = mypars.pTMax;
@@ -230,6 +236,8 @@ void optimizer(PARS mypars)
 
   std::vector<TH1*> hMVA1Ds;
   std::vector<TH1*> hMVA1DMCs;
+
+  const double nsigma = mypars.nsigma;
 
   // yields of data histogram within (-/+ 2.6 width)
   std::vector<double> histInt;
@@ -265,6 +273,7 @@ void optimizer(PARS mypars)
 
     auto h = proj1D(hMVA, mvaCutStr,
                     pTMin, pTMax, mvaCut, 1);
+    std::cout << "data entries for " << mvaCutStr << " " << h->GetEntries() << std::endl;
     // h->Rebin();
     auto hMC = proj1D(hMVAMC, mvaCutStr+"MC",
                       pTMin, pTMax, mvaCut, 1);
@@ -280,34 +289,34 @@ void optimizer(PARS mypars)
     c.Divide(2, 1);
     const double pars[] = {20000, -5000, 100, 200};
     auto parameters = simpleFit(hMC, h, pars,
-              2.15, 2.45, &c);
-    TF1 f("f", "[0]*([1] * TMath::Gaus(x, [2], [3]*(1+[5]), true) + (1-[1]) * TMath::Gaus(x, [2], [4]*(1+[5]), true)) + cheb3(6)", 2.15, 2.45);
+              2.15, 2.42, &c);
+    TF1 f("f", "[0]*([1] * TMath::Gaus(x, [2], [3]*(1+[5]), true) + (1-[1]) * TMath::Gaus(x, [2], [4]*(1+[5]), true)) + cheb3(6)", 2.15, 2.42);
     f.SetParameters(parameters.data());
     const double width = sqrt(pow(parameters.at(3), 2) * parameters.at(1)
                               + pow(parameters.at(4), 2) * (1-parameters.at(1)));
     widths.push_back(width);
 
-    const double sPlusBFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
+    //const double sPlusBFit = f.Integral(2.2865-nsigma*width, 2.2865+nsigma*width) / h->GetBinWidth(1);
+    //fitInt.push_back(sPlusBFit);
+    const double par0 = f.GetParameter(0);
+    f.SetParameter(0, 0);
+    const double sPlusBFit = f.Integral(2.2865-nsigma*width, 2.2865+nsigma*width) / h->GetBinWidth(1);
     fitInt.push_back(sPlusBFit);
-    // const double par0 = f.GetParameter(0);
-    // f.SetParameter(0, 0);
-    // const double sPlusBFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
-    // fitInt.push_back(sPlusBFit);
-    // f.SetParameter(0, par0);
+    f.SetParameter(0, par0);
 
     for (int i=6; i<10; ++i) {
       f.SetParameter(i, 0);
     }
 
-    const double sDataFit = f.Integral(2.2865-2.6*width, 2.2865+2.6*width) / h->GetBinWidth(1);
+    const double sDataFit = f.Integral(2.2865-nsigma*width, 2.2865+nsigma*width) / h->GetBinWidth(1);
     dataSig.push_back(sDataFit/std::sqrt(sPlusBFit));
 
     yields_data.push_back( parameters.at(0)/h->GetBinWidth(1) );
     yieldsErr_data.push_back( parameters.at(0+parameters.size()/2)/h->GetBinWidth(1) );
     sigFit.push_back(yields_data.back()/yieldsErr_data.back());
 
-    const auto massLw = h->FindBin(2.2865-2.6*width);
-    const auto massUp = h->FindBin(2.2865+2.6*width);
+    const auto massLw = h->FindBin(2.2865-nsigma*width);
+    const auto massUp = h->FindBin(2.2865+nsigma*width);
     const auto sPlusBHist = h->Integral(massLw, massUp);
     histInt.push_back(sPlusBHist);
 
@@ -317,14 +326,14 @@ void optimizer(PARS mypars)
     yieldsErr_MC.push_back( parameters.at( f.GetNpar() ) / h->GetBinWidth(1) /eff);
   }
 
-  for (const auto e : dataSig) cout << e << endl;
+  //for (const auto e : dataSig) cout << e << endl;
   // for (const auto e : yields_data) cout << e/yields_data.at(1) << endl;
 
-  for (size_t i=0; i != yields_MC.size(); ++i) {
-    cout << mvaCuts[i] << ", "  << yields_MC.at(i)
-         << " +/- " << yieldsErr_MC.at(i)
-         << " " << yields_MC.at(i)/yieldsErr_MC.at(i) << endl;
-  }
+  //for (size_t i=0; i != yields_MC.size(); ++i) {
+  //  cout << mvaCuts[i] << ", "  << yields_MC.at(i)
+  //       << " +/- " << yieldsErr_MC.at(i)
+  //       << " " << yields_MC.at(i)/yieldsErr_MC.at(i) << endl;
+  //}
 
   TCanvas cYields("cYields", "", 600, 480);
   cYields.SetLeftMargin(0.15);
@@ -361,7 +370,7 @@ void optimizer(PARS mypars)
                     pTMin, pTMax, mvaCut, 1);
     */
     auto h = hMVA1Ds.at(i);
-    const double halfWindow = 2.6 * widths.at(i);
+    const double halfWindow = nsigma * widths.at(i);
     const auto effbin = hEff->FindBin(mvaCut);
     // cout << mvaCut << " effbin " << effbin << endl;
     const double yields = total * hEff->GetBinContent(effbin);
@@ -371,13 +380,16 @@ void optimizer(PARS mypars)
     // cout << widths.at(i) << endl;
     double sPlusB = h->Integral(massLw, massUp);
     */
-    // cout << sPlusB << endl;
-    // sPlusB = sPlusB - yields;
-    // cout << sPlusB << endl;
-    //const double sig = yields/sqrt(sPlusB);
-    const double sig = yields/sqrt(fitInt.at(i));
-    // const double err = total/sqrt(sPlusB) * hEff->GetBinError(effbin);
-    const double err = total/sqrt(fitInt.at(i)) * hEff->GetBinError(effbin);
+    const auto  BOnly = histInt.at(i) - yields;
+    cout << "mvaCut: " << mvaCut << "\t";
+    cout << "BOnly " << BOnly << "\t";
+    cout << "yields " << yields << "\t";
+    const double sig = yields/sqrt(BOnly);
+    cout << "eff " << hEff->GetBinContent(effbin) << "\t";
+    cout << "sig " << sig << endl;
+    const double err = total/sqrt(BOnly) * hEff->GetBinError(effbin);
+    //const double sig = yields/sqrt(fitInt.at(i));
+    //const double err = total/sqrt(fitInt.at(i)) * hEff->GetBinError(effbin);
     gSig.SetPoint(i, mvaCut, sig);
     // cout << sig << endl;
     gSig.SetPointError(i, 0, err);
@@ -425,53 +437,4 @@ void optimizer(PARS mypars)
 
   // for (auto h : hMVA1Ds) h->Delete();
   // for (auto h : hMVA1DMCs) h->Delete();
-}
-
-void optimizer()
-{
-  // 2 to 3 MB
-  /*
-  PARS mypars(0.0002, 0.0016, 0.0001);
-  mypars.dataFileName = "TMVA_MB_LamCKsP2to3App.root";
-  mypars.mcFileName = "Merged_MC_LambdaCKsP2to3App.root";
-  mypars.dataHistName = "hMassPtMVA_MLP2to3MBNp2N_noDR_y0_Total";
-  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP2to3MBNp2N_noDR_y0";
-  mypars.mvaName = "MLP2to3MBNp2N_noDR";
-  mypars.pTMin = 2.0;
-  mypars.pTMax = 3.0;
-  optimizer(mypars);
-  */
-
-  PARS mypars(0.0002, 0.008, 0.0001);
-  mypars.dataFileName = "dataMB_pPb_3to4.root";
-  mypars.mcFileName = "TMVA_MC_pPb_LambdaCKsP3to4App_MB.root";
-  mypars.dataHistName = "lambdacAna/hMassPtMVA_MLP3to4MBNp2N_noDR_y0";
-  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP3to4MBNp2N_noDR_y0";
-  mypars.mvaName = "MLP3to4MBNp2N_noDR";
-  mypars.pTMin = 3.0;
-  mypars.pTMax = 4.0;
-  optimizer(mypars);
-
-  /*
-  PARS mypars(0.0002, 0.006, 0.0001);
-  mypars.dataFileName = "dataMB_pPb_4to6.root";
-  mypars.mcFileName = "TMVA_MC_pPb_LambdaCKsP4to6App_MB.root";
-  mypars.dataHistName = "lambdacAna/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
-  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
-  mypars.mvaName = "MLP4to6MBNp2N_noDR";
-  mypars.pTMin = 4.0;
-  mypars.pTMax = 5.0;
-  optimizer(mypars);
-  */
-  /*
-  PARS mypars(0.0002, 0.006, 0.0001);
-  mypars.dataFileName = "dataMB_pPb_4to6.root";
-  mypars.mcFileName = "TMVA_MC_pPb_LambdaCKsP4to6App_MB.root";
-  mypars.dataHistName = "lambdacAna/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
-  mypars.mcHistName = "lambdacAna_mc/hMassPtMVA_MLP4to6MBNp2N_noDR_y0";
-  mypars.mvaName = "MLP4to6MBNp2N_noDR";
-  mypars.pTMin = 5.0;
-  mypars.pTMax = 6.0;
-  optimizer(mypars);
-  */
 }
