@@ -435,7 +435,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     double NtrkInFloat = 0;
     if (!isMC) {
       const auto ntrk = p.Ntrkoffline();
-      if (reweightEvent) {
+      if (reweightEvent && ntrk < 400) {
         ntrkWeight = effTab.getWeight(ntrk);
       }
       hNtrkoffline.Fill(ntrk, ntrkWeight);
