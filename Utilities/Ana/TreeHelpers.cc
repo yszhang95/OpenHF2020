@@ -157,6 +157,15 @@ void MyNTuple::initNTuple()
   if (!isMC) t->Branch("hltRecordLumi", &hltRecordLumi);
   if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
   if (!isMC) t->Branch("cand_Ntrkoffline", &cand_Ntrkoffline);
+  if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
+  if (!isMC) {
+    for (UInt_t i=0; i<nTrigs; ++i) {
+      t->Branch(Form("trigBit_%u", i), &trigBit[i]);
+    }
+    for (UInt_t i=0; i<nFilters; ++i) {
+      t->Branch(Form("filterBit_%u", i), &filterBit[i]);
+    }
+  }
   // particle level
   t->Branch("cand_charge", &cand_charge);
   t->Branch("cand_eta", &cand_eta);
@@ -291,6 +300,17 @@ bool MyNTuple::setMVAValues(const std::vector<float>& vals)
 
 bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 {
+  const auto passHLT = p.passHLT();
+  //this->nTrigs = passHLT.size();
+  for (UInt_t i=0; i< this->nTrigs; ++i) {
+    this->trigBit[i] = passHLT.at(i);
+  }
+  const auto passFilter = p.evtSel();
+  //this->nFilters = passFilter.size();
+  for (UInt_t i=0; i<this->nFilters; ++i) {
+    this->filterBit[i] = passFilter.at(i);
+  }
+
   this->Ntrkoffline = isMC ? 0 : p.Ntrkoffline();
   this->cand_Ntrkoffline = isMC ? 0 : p.cand_Ntrkoffline().at(it);
   this->cand_pT     = p.cand_pT().at(it);

@@ -37,6 +37,9 @@
 #include "TClonesArray.h"
 #include "TObjString.h"
 
+#include "RooWorkspace.h"
+#include "RooDataSet.h"
+#include "RooRealVar.h"
 
 #include "TMVA/Factory.h"
 #include "TMVA/Tools.h"
@@ -167,6 +170,67 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       outfileName.Replace(index, 5, "_etaFlipped.root");
     }
   }
+
+  TString outfileNameWS = outfileName;
+  {
+    auto index =  outfileNameWS.Index(".root");
+    if (index > 0) {
+      outfileNameWS.Replace(index, 5, "_ws.root");
+    }
+  }
+
+  TFile outputFileWS( outfileNameWS, "RECREATE" );
+  RooAbsData::setDefaultStorageType(RooAbsData::Tree);
+  const auto wsStrs = configs.getWorkspaceStrs();
+  const auto dsStrs = configs.getDataSetStrs();
+  const bool useWS = !wsStrs.empty();
+  RooRealVar NtrkPV("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
+  // LambdaC kinematic info
+  RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.15, 2.45, "GeV");
+  RooRealVar cand_pT  ("cand_pT", "p_{T} of #Lambda_{c}^{+} candidate",  1.9, 100., "GeV");
+  RooRealVar cand_eta("cand_eta", "#eta of #Lambda_{c}^{+} candidate", -2.4, 2.4, "");
+  RooRealVar cand_y("cand_y", "rapidity of #Lambda_{c}^{+} candidate", -1.0, 1.0, "");
+  const double piVal = TMath::Pi();
+  RooRealVar cand_phi("cand_phi", "#phi of #Lambda_{c}^{+} candidate", -piVal, piVal, "");
+  // LambdaC decay info
+  RooRealVar cand_decayLength3D("cand_decayLength3D", "3D decay length of #Lambda_{c}^{+} candidate", 0, 20, "cm");
+  RooRealVar cand_decayLengthSig3D("cand_decayLength3DSig", "3D decay length significance of #Lambda_{c}^{+} candidate", 0, 50);
+  RooRealVar cand_cosAngle3D("cand_cosAngle3D", "Cosine of 3D pointing angle of #Lambda_{c}^{+} candidate", -1., 1.);
+  // Ks kinematic info
+  RooRealVar cand_dau0_mass("cand_dau0_mass", "mass of K_{S}^{0}", 0.46, 0.54, "GeV");
+  RooRealVar cand_dau0_pT("cand_dau0_pT", "p_{T} of K_{S}^{0}", 0, 100, "GeV");
+  RooRealVar cand_dau0_eta("cand_dau0_eta", "#eta of K_{S}^{0}", -2.4, 2.4, "");
+  RooRealVar cand_dau0_phi("cand_dau0_phi", "#phi of K_{S}^0", -piVal, piVal, "");
+  // proton info
+  RooRealVar cand_dau1_pT("cand_dau1_pT", "p_{T} of proton", 0, 100, "GeV");
+  RooRealVar cand_dau1_eta("cand_dau1_eta", "#eta of proton", -2.4, 2.4, "");
+  RooRealVar cand_dau1_phi("cand_dau1_phi", "#phi of proton", -piVal, piVal, "");
+  RooRealVar trk_dau1_dEdxRes("trk_dau1_dEdxRes", "dE/dx residual for proton", -1., 1., "");
+  // trigger bits
+  RooRealVar passHM("trigBit_2", "pass HM185", -1, 2, "");
+  RooRealVar passMB("trigBit_4", "pass MB", -1, 2, "");
+  RooRealVar passDz1p0("filterBit_4", "pass dz1p0", -1, 2, "");
+  RooRealVar passGplus("filterBit_5", "pass Gplus", -1, 2, "");
+  // MVA
+  RooRealVar MVA("cand_mva", "first method in MVA collection", -1, 1, "");
+  // at most 9 variables in old ROOT
+  RooArgSet cols(cand_mass, cand_pT, cand_eta, cand_y, cand_phi,
+                 cand_decayLength3D, cand_decayLengthSig3D, cand_cosAngle3D);
+  cols.add(cand_dau0_mass); cols.add(cand_dau0_pT);
+  cols.add(cand_dau0_eta); cols.add(cand_dau0_phi);
+  cols.add(cand_dau1_pT); cols.add(cand_dau1_eta);
+  cols.add(cand_dau1_phi); cols.add(trk_dau1_dEdxRes);
+  cols.add(NtrkPV); cols.add(passHM); cols.add(passMB);
+  cols.add(passDz1p0); cols.add(passGplus);
+  cols.add(MVA);
+  // weight
+  RooRealVar wgtVar("weight", "event weight", 0, 100);
+  if (reweightEvent) cols.add(wgtVar);
+  // workspace and dataset
+  RooWorkspace ws(wsStrs.at(0), wsStrs.at(1));
+  const char* wgtVarName = reweightEvent ? "weight" : 0;
+  RooDataSet ds(dsStrs.at(0), dsStrs.at(1), cols, wgtVarName);
+
   TFile outputFile( outfileName, "RECREATE" );
 
   if(DEBUG) { cout << "Output file name: " << outfileName << endl; }
@@ -205,7 +269,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     auto v = splitTString(var.at("eqn_vars"), ":");
     allCommonCuts.push_back(v);
   }
-
 
   MVAHelper helper(trainingVars, spectatorVars, commonCuts);
 
@@ -271,7 +334,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       } else {
         throw std::runtime_error("Need to pass in TH3D binning!");
       }
-
     }
   }
 
@@ -289,7 +351,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     } else {
       throw std::runtime_error("Need to pass in TH3D binning!");
     }
-
   }
 
   // histograms
@@ -338,6 +399,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   cout << "NTuple prepared" << endl;
 
   TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
 
   // hard code for LambdaC begin
   MatchCriterion  matchCriterion(0.03, 0.1);
@@ -360,36 +423,52 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     if (jentry < 0) break;
     p.GetEntry(ientry);
 
+    // check trigger filter;
+    if (!p.passHLT().at(triggerIndex)) continue;
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
+    // if (!isMC) {
+    //   const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
+    //   if (!passEventSel) continue;
+    // }
+    double ntrkWeight = 1.;
+    double NtrkInFloat = 0;
     if (!isMC) {
-      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
-      if (!passEventSel) continue;
-    }
-    if (!isMC) {
-      double ntrkWeight = 1.;
       const auto ntrk = p.Ntrkoffline();
       if (reweightEvent) {
         ntrkWeight = effTab.getWeight(ntrk);
       }
       hNtrkoffline.Fill(ntrk, ntrkWeight);
+      if (p.evtSel().at(4)) {
+        hNtrkofflineDz1p0.Fill(ntrk, ntrkWeight);
+      }
+      if (p.evtSel().at(5)) {
+        hNtrkofflineGplus.Fill(ntrk, ntrkWeight);
+      }
+
+      // temporary usage
+      // check it in the future if I have new trees
+      // now use vertex.trackSize() with largest number
+      if ( ntrk >= NtrkHigh || ntrk < NtrkLow) continue;
+      NtrkInFloat = ntrk;
     }
 
     // event weight
     double eventWeight = 1;
     // check Ntrkoffline range
+    // temporarily not useful
     if (!isMC) {
       const auto noCandidate = p.cand_mass().empty();
       if (noCandidate) continue;
       if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
       const auto Ntrk = p.cand_Ntrkoffline().at(0);
-      if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
+      // if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
       if (reweightEvent) eventWeight = effTab.getWeight(Ntrk);
       // cout << "Ntrk: " << Ntrk << ", efficiency: " << effTab.getEfficiency(Ntrk) << endl;
     }
 
+    eventWeight = ntrkWeight;
     if (reweightEvent) ntp.setEventWeight(eventWeight);
-
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
@@ -529,12 +608,50 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           hists.fillHists(ntp, eventWeight);
         if (selectMVA &&  !passMVA) continue;
         if (saveTree) ntp.fillNTuple();
+        if (useWS) {
+          NtrkPV.setVal( NtrkInFloat );
+          // LambdaC kinematic info
+          cand_mass.setVal( ntp.cand_mass );
+          cand_pT  .setVal( ntp.cand_pT   );
+          cand_phi .setVal( ntp.cand_phi  );
+          cand_eta .setVal( ntp.cand_eta  );
+          cand_y   .setVal( ntp.cand_y    );
+          // LambdaC decay info
+          cand_decayLength3D   .setVal( ntp.cand_decayLength3D );
+          cand_decayLengthSig3D.setVal( ntp.cand_decayLength3D/ ntp.cand_decayLengthError3D );
+          cand_cosAngle3D      .setVal( TMath::Cos(ntp.cand_angle3D) );
+          // Ks info
+          cand_dau0_mass.setVal( ntp.cand_dau_mass[0] );
+          cand_dau0_pT  .setVal( ntp.cand_dau_pT[0]   );
+          cand_dau0_eta .setVal( ntp.cand_dau_eta[0]  );
+          cand_dau0_phi .setVal( ntp.cand_dau_phi[0]  );
+          // proton info
+          cand_dau1_pT  .setVal( ntp.cand_dau_pT[1]   );
+          cand_dau1_eta .setVal( ntp.cand_dau_eta[1]  );
+          cand_dau1_phi .setVal( ntp.cand_dau_phi[1]  );
+          trk_dau1_dEdxRes.setVal( ntp.trk_dau_dEdxRes[1] );
+          // trigger bits
+          passHM.setVal( ntp.trigBit[2] );
+          passMB.setVal( ntp.trigBit[4] );
+          // filter bits
+          passDz1p0.setVal( ntp.filterBit[4] );
+          passGplus.setVal( ntp.filterBit[5] );
+          // MVA
+          MVA.setVal(ntp.cand_MVA[0]);
+          if (reweightEvent) {
+            wgtVar.setVal(eventWeight);
+            ds.add(cols, eventWeight);
+          } else
+            ds.add(cols);
+        }
       }
     }
   }
   // Save the output
   // outputFile.Write();
   hNtrkoffline.Write();
+  hNtrkofflineDz1p0.Write();
+  hNtrkofflineGplus.Write();
   if (saveTree) ntp.t->Write();
   for (const auto& vec : hMassPtMVA) {
     for (const auto& h : vec) h->Write();
@@ -543,6 +660,13 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   hists.writeHists();
 
   std::cout << "==> Wrote root file: " << outputFile.GetName() << std::endl;
+
+  outputFileWS.cd();
+  if (useWS) {
+    ws.import(ds);
+    ws.Write();
+    // ds.Write();
+  }
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;
 
   delete reader;

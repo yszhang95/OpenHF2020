@@ -93,6 +93,8 @@ public:
   std::vector<std::string>                    getBackgroundFileNames() const;
   std::vector<TString>                        getOptions() const;
   std::vector<TString>                        getKeptBranchNames() const;
+  std::vector<TString>                        getWorkspaceStrs() const;
+  std::vector<TString>                        getDataSetStrs() const;
   std::vector<std::vector<TString>>           getHistoBinning() const;
   std::string                                 getOutFileName() const;
   void                                        setOutFileName(const std::string&);
@@ -131,6 +133,8 @@ private:
   std::map<std::string, TString>              getVarExp(const std::string&) const;
   std::map<std::string, std::vector<std::string>> _configs;
   std::vector<TString> _keptBranchNames;
+  std::vector<TString> _workspaceStrs;
+  std::vector<TString> _dataSetStrs;
   std::string _outfileName;
   std::string _outdirName;
   std::string _signalFileList;
