@@ -40,6 +40,11 @@ cp -r ${TopDir}/dataset .
 
 xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/NtrkEffTable/eff.root .
 
+Options="saveTree:saveDau:selectDeDx:selectMVA"
+if [[ ${2} = *"Pbp"* ]]; then
+  Options="saveTree:saveDau:selectDeDx:selectMVA:flipEta"
+fi
+
 cat > run.xml <<- _EOF_
 <root>
   <training_variables>
@@ -71,7 +76,7 @@ cat > run.xml <<- _EOF_
     MLP? MLP2to3MBNp2N_noDR? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
   </methods>
   <options>
-    saveTree:saveDau:selectDeDx:selectMVA
+    ${Options}
   </options>
   <mvaCutMin>
     1.5E-4
@@ -114,5 +119,9 @@ ls -lsth
 InputSample="${2}"
 OutFileSuffix=${InputSample#*.list.}
 OutFileLabel=${InputSample%.list.*}
-xrdcp -f TMVA_pPb_LambdaCKsP2to3App.root "${5}/TMVA_pPb_LambdaCKsP2to3App_${OutFileLabel}_${OutFileSuffix}.root"
+if [[ ${2} = *"Pbp"* ]]; then
+  xrdcp -f TMVA_pPb_LambdaCKsP2to3App_etaFlipped.root "${5}/TMVA_Pbp_LambdaCKsP2to3App_${OutFileLabel}_${OutFileSuffix}.root"
+else
+  xrdcp -f TMVA_pPb_LambdaCKsP2to3App.root "${5}/TMVA_pPb_LambdaCKsP2to3App_${OutFileLabel}_${OutFileSuffix}.root"
+fi
 echo "Finished"
