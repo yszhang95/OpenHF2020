@@ -25,7 +25,8 @@ default : $(BIN)
 bin/TMVA%: bin/TMVA%.o bin/functions.o
 	@echo -n "Linking $@ ... "
 	$(CXX) $(CCFLAGS) $^ $(shell root-config --libs) -L$(OPENHF2020TOP)/Utilities/lib \
-		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO  -lMLP -lm  -g -o $@
+		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO \
+		-lRooFit -lRooFitCore -lMLP -lm  -g -o $@
 
 bin/%.o: src/%.cc
 	@echo -n "Building $@ ... "
