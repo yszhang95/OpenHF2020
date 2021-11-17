@@ -8,6 +8,7 @@ parser.add_argument('--dataset', dest='dataset', help='dataset, e.g. dataHM1, da
 parser.add_argument('--site', dest='site', help='destination: lxplus (default) or fnal', type=str, default="lxplus")
 parser.add_argument('--pTMin', dest='pTMin', help='min pt', type=float)
 parser.add_argument('--pTMax', dest='pTMax', help='max pt', type=float)
+parser.add_argument('--transferCert', dest='transferCert', help='transfer cert', type=int, default=0)
 args = parser.parse_args()
 dest = ""
 if args.site == "lxplus":
@@ -36,7 +37,7 @@ elif "MB" in args.dataset:
 myexe = args.userexe
 
 logdir = "log_%s_%s_%s" % (args.dataset, args.boost, myexe.replace(".sh", ""))
-proxy_path = "/afs/cern.ch/user/y/yousen/private/$(Proxy_filename)" if args.site == "lxplus" else "$(Proxy_filename)"
+proxy_path = "/afs/cern.ch/user/y/yousen/private/$(Proxy_filename)" if args.transferCert != 0 else "$(Proxy_filename)"
 cmd='''
 # this is config for submitting condor jobs
 Proxy_filename = %s
@@ -60,19 +61,22 @@ for l in mylists:
         continue
     if not args.dataset in l:
         continue
-    cmd += "#%d" % num
+    cmd += "#Process %d" % num
+    cmd += "#List %d" % num
     cmd += '''
 Arguments = $(Proxy_filename) %s %s
 ''' % (l, dest)
-    transfer_input_files = "transfer_input_files = dataset" if args.site == "fnal" else "transfer_input_files = dataset,$(Proxy_path)"
+    transfer_input_files = "transfer_input_files = dataset" if args.transferCert == 0 else "transfer_input_files = dataset,$(Proxy_path)"
     cmd += transfer_input_files + "\n"
     cmd +='queue\n'
     num = num+1
 
 #print (cmd)
 with open("sub_%s_%s_%s.jdl" % (args.dataset, args.boost, myexe.replace(".sh", "")), 'w') as f:
+    print("Created", f.name)
     f.write(cmd)
     f.close
     subprocess.run(['mkdir', logdir])
+    print("log dir is ", logdir)
     #subprocess.run(['condor_submit', f.name])
     #print (f.name)
