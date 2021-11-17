@@ -51,6 +51,9 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_output_files = ""
 #+JobFlavour = "workday"
+on_exit_remove          = (ExitBySignal == False) && (ExitCode == 0)
+max_retries             = 3
+requirements = Machine =!= LastRemoteHost
 ''' % (os.path.basename(args.inputCert), proxy_path, args.userexe, logdir, logdir ,logdir)
 
 num = 0
@@ -77,6 +80,6 @@ with open("sub_%s_%s_%s.jdl" % (args.dataset, args.boost, myexe.replace(".sh", "
     f.write(cmd)
     f.close
     subprocess.run(['mkdir', logdir])
-    print("log dir is ", logdir)
+    print("log dir is", logdir)
     #subprocess.run(['condor_submit', f.name])
     #print (f.name)

@@ -66,6 +66,7 @@ using std::vector;
 using std::ifstream;
 using std::getline;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::istringstream;
 using std::unique_ptr;
@@ -107,6 +108,7 @@ int main( int argc, char** argv )
     configs.setOutFileName("TMVA_" + tempOutFileName);
   }
   int code = TMVAClassificationApp(configs);
+  cerr << "\nThe code for TMVAClassificationApp is " << code << endl;
   return code;
 }
 
@@ -420,15 +422,27 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
     auto jentry =  p.LoadTree(ientry);
-    if (jentry == -3) {
+    if (jentry < 0 && jentry != -2) {
       outputFile.Write();
       outputFileWS.Write();
       delete reader;
       delete pp;
-      return -3;
+      return jentry;
     }
-    if (jentry < 0) break;
-    p.GetEntry(ientry);
+    if (jentry < 0) {
+      cout << "Code for the last entry is " << ientry << endl;
+      break;
+    }
+    auto bytes = p.GetEntry(ientry);
+    if (bytes == 0) {
+      std::cerr << "[ERROR] in TMVAClassificationApp: Cannot read "
+                << ientry << "th entry properly" << std::endl;
+      outputFile.Write();
+      outputFileWS.Write();
+      delete reader;
+      delete pp;
+      return -2;
+    }
 
     // check trigger filter;
     if (!p.passHLT().at(triggerIndex)) continue;
