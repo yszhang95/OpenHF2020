@@ -2,12 +2,12 @@
 Options=""
 if [[ "${1}" = "-f" ]]; then
   echo "Force"
-  Options=${1}
+  Options="-f"
 fi
 
 if [[ "${1}" = "-fdev" ]]; then
   echo "Force to create dev"
-  Options=${1}
+  Options="-f"
 fi
 
 TargetDir=""
