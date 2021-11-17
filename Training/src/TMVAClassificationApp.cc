@@ -107,6 +107,7 @@ int main( int argc, char** argv )
     configs.setOutFileName("TMVA_" + tempOutFileName);
   }
   int code = TMVAClassificationApp(configs);
+  cerr << "\nThe code for TMVAClassificationApp is " << code << endl;
   return code;
 }
 
@@ -427,11 +428,18 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       delete pp;
       return jentry;
     }
-    if (jentry < 0) break;
+    if (jentry < 0) {
+      cout << "Code for the last entry is " << ientry << endl;
+      break;
+    }
     auto bytes = p.GetEntry(ientry);
     if (bytes == 0) {
       std::cerr << "[ERROR] in TMVAClassificationApp: Cannot read "
                 << ientry << "th entry properly" << std::endl;
+      outputFile.Write();
+      outputFileWS.Write();
+      delete reader;
+      delete pp;
       return -2;
     }
 

@@ -80,6 +80,6 @@ with open("sub_%s_%s_%s.jdl" % (args.dataset, args.boost, myexe.replace(".sh", "
     f.write(cmd)
     f.close
     subprocess.run(['mkdir', logdir])
-    print("log dir is ", logdir)
+    print("log dir is", logdir)
     #subprocess.run(['condor_submit', f.name])
     #print (f.name)
