@@ -420,6 +420,13 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
     auto jentry =  p.LoadTree(ientry);
+    if (jentry == -3) {
+      outputFile.Write();
+      outputFileWS.Write();
+      delete reader;
+      delete pp;
+      return -3;
+    }
     if (jentry < 0) break;
     p.GetEntry(ientry);
 
