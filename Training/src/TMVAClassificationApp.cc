@@ -66,6 +66,7 @@ using std::vector;
 using std::ifstream;
 using std::getline;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::istringstream;
 using std::unique_ptr;
