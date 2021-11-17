@@ -143,7 +143,7 @@ _EOF_
 Exe="${OPENHF2020TOP}/Training/bin/TMVAClassificationApp"
 
 echo 'LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${OPENHF2020TOP}/Utilities/lib' "${Exe}" run.xml
-ROOT_INCLUDE_PATH=${ROOT_INCLUDE_PATH}:${OPENHF2020TOP}/Utilities LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${OPENHF2020TOP}/Utilities/lib ${Exe} run.xml
+ROOT_INCLUDE_PATH=${ROOT_INCLUDE_PATH}:${OPENHF2020TOP}/Utilities LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${OPENHF2020TOP}/Utilities/lib ${Exe} run.xml || exit $?
 
 ls -lsth
 InputSample="${2}"
