@@ -420,15 +420,20 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   for (Long64_t ientry=0; ientry<nentries; ientry++) {
     if (ientry % 20000 == 0) cout << "pass " << ientry << endl;
     auto jentry =  p.LoadTree(ientry);
-    if (jentry == -3) {
+    if (jentry < 0 && jentry != -2) {
       outputFile.Write();
       outputFileWS.Write();
       delete reader;
       delete pp;
-      return -3;
+      return jentry;
     }
     if (jentry < 0) break;
-    p.GetEntry(ientry);
+    auto bytes = p.GetEntry(ientry);
+    if (bytes == 0) {
+      std::cerr << "[ERROR] in TMVAClassificationApp: Cannot read "
+                << ientry << "th entry properly" << std::endl;
+      return -2;
+    }
 
     // check trigger filter;
     if (!p.passHLT().at(triggerIndex)) continue;

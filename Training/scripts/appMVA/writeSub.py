@@ -51,6 +51,9 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_output_files = ""
 #+JobFlavour = "workday"
+on_exit_remove          = (ExitBySignal == False) && (ExitCode == 0)
+max_retries             = 3
+requirements = Machine =!= LastRemoteHost
 ''' % (os.path.basename(args.inputCert), proxy_path, args.userexe, logdir, logdir ,logdir)
 
 num = 0

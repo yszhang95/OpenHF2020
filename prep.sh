@@ -4,6 +4,12 @@ if [[ "${1}" = "-f" ]]; then
   echo "Force"
   Options=${1}
 fi
+
+if [[ "${1}" = "-fdev" ]]; then
+  echo "Force to create dev"
+  Options=${1}
+fi
+
 TargetDir=""
 if [[ -z ${2} ]]; then
   TargetDir="root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storage/Package"
@@ -13,6 +19,9 @@ fi
 TopDir=${PWD}
 git clone https://github.com/yszhang95/OpenHF2020.git
 cd $TopDir/OpenHF2020
+if [[ "${1}" = "-fdev" ]]; then
+    git checkout test
+fi
 source setup.sh
 cd Utilities
 make
