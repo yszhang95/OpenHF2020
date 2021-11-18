@@ -62,7 +62,7 @@ sub analyze {
     while (<$in_fh>) {
         if ( $_ =~ "cluster ([0-9]*)" ) {
             $mycluster = $1;
-            print "The cluster is $mycluster\n\n";
+            print "  The cluster is $mycluster\n\n";
         }
     }
     $mylog =~ "sub(.*)\.log";
@@ -92,7 +92,7 @@ sub analyze {
             }
         }
     }
-    print "Jobs quitting abnormally are:\n";
+    print "  Jobs quitting abnormally are:\n";
     foreach (@mylogs_buggy) {
         print "    ", $mycluster, "_", $_, ".log\n";
     }
@@ -109,7 +109,7 @@ sub analyze {
             }
         }
     }
-    print "Jobs having errors are:\n";
+    print "  Jobs having errors are:\n";
     foreach (@myerrs_buggy) {
         print "    ", $mycluster, "_", $_, ".err\n";
     }
@@ -120,23 +120,80 @@ sub analyze {
     my (%hsh, @union_arr);
     @hsh{@mylogs_buggy, @myerrs_buggy} = ();
     @union_arr = keys %hsh;
-    print "The unions of these jobs are:\n";
+    print "  The unions of these jobs are:\n";
     foreach (@union_arr) {
         print "    ", $mycluster, "_", $_, "\n";
     }
     print "\nAnalyzed $mylog\n\n";
 
+    @union_arr = sort @union_arr;
     return @union_arr;
+}
+
+sub resubmit {
+    my $myproc = 0;
+    my ($mylog, $opt)= @_;
+
+    my @failures = analyze $mylog;
+    my $myjdl = $mylog =~ s/log/jdl/r;
+    my $myresubjdl = $myjdl =~ s/\.jdl/_resub.jdl/r;
+    my $old = $/;
+    local $/ = undef;
+
+    print "Generating $myresubjdl for resubmission ......\n";
+
+    open(my $input_fh, "<", $myjdl) or die "Cannot find $myjdl";
+    open(my $output_fh, ">", $myresubjdl)
+        or die "Cannot write to $myresubjdl";
+    while (my $mycommonlines = <$input_fh>) {
+        if ($mycommonlines =~ /(#.*?Job setup.*)\n#.*?Tasks/s) {
+            print $output_fh "$1\n";
+            last;
+        }
+    }
+    close $input_fh;
+    print $output_fh "# Tasks\n";
+    close $output_fh;
+
+    foreach (@failures) {
+        open($input_fh, "<", $myjdl) or die "Cannot find $myjdl";
+        open ($output_fh, '>>', $myresubjdl)
+        or die "Cannot append to $myresubjdl";
+        my $mymultilines = <$input_fh>;
+        # Process number has to be followed by \n
+        my $mymatched_str = "#Process.*?$_\n(.*?)\n(.*?)\n(.*?)\n";
+        # print $mymultilines;
+        if ($mymultilines =~
+            /$mymatched_str/s) {
+            print $output_fh "\n";
+            print $output_fh "#Process $myproc\n";
+            print $output_fh "$1\n";
+            print $output_fh "$2\n";
+            print $output_fh "$3\n";
+            print $output_fh "queue\n";
+            $myproc = $myproc + 1;
+        }
+        close $output_fh;
+    }
+    $/ = $old;
+    print "\nFinished generating $myresubjdl\n\n";
+
+    if ($opt eq "--submit") {
+        print "Trying to resubmit $myresubjdl ......\n";
+        submit($myresubjdl);
+        print "Resubmitted done\n\n";
+    }
 }
 
 my %functions = (
     submit => \&submit,
     analyze => \&analyze,
+    resubmit => \&resubmit,
     );
 my $function = shift;
 
 if (exists $functions{$function}) {
-    $functions{$function}->(shift);
+    $functions{$function}->(shift, shift || 0);
 } else {
     print "Please try commands:\n";
     print "\tsubmit\n";
