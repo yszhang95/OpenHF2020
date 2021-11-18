@@ -159,4 +159,5 @@ source ../setup.sh
        transfer_input_files = DEF
        queue
        #+end_example
+       Lines between =#Process= and =queue= will be copied to new =jdl=.
      If ~--submit~ is specified, resubmission will be processed.
