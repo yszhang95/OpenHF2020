@@ -67,6 +67,7 @@ sub analyze {
     }
     $mylog =~ "sub(.*)\.log";
     my $mylogdir = "log$1";
+    $mylogdir =~ s/_resub//g;
     # open the directory
     opendir(my $dh, $mylogdir);
     my @mylogs = grep( /^[^.].*\.log/
