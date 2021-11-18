@@ -9,7 +9,7 @@ sub filterNames {
     my @myfiles_filtered = ();
     foreach (@myfiles) {
         if ($_ =~ /([0-9]*)_([0-9]+)\.[a-z]{1,5}/) {
-            if ($1 == $mycluster) {
+            if ($1 eq $mycluster) {
                 push(@myfiles_filtered, $_);
             }
         }
@@ -60,7 +60,7 @@ sub analyze {
     open(my $in_fh, "<", $mylog);
     my $mycluster = "";
     while (<$in_fh>) {
-        if ( $_ =~ /cluster (.*)\./ ) {
+        if ( $_ =~ "cluster ([0-9]*)" ) {
             $mycluster = $1;
             print "The cluster is $mycluster\n\n";
         }
