@@ -161,15 +161,13 @@ sub resubmit {
         or die "Cannot append to $myresubjdl";
         my $mymultilines = <$input_fh>;
         # Process number has to be followed by \n
-        my $mymatched_str = "#Process.*?$_\n(.*?)\n(.*?)\n(.*?)\n";
+        my $mymatched_str = "#Process.*?$_\n(.*?)queue\n";
         # print $mymultilines;
         if ($mymultilines =~
             /$mymatched_str/s) {
             print $output_fh "\n";
             print $output_fh "#Process $myproc\n";
-            print $output_fh "$1\n";
-            print $output_fh "$2\n";
-            print $output_fh "$3\n";
+            print $output_fh "$1";
             print $output_fh "queue\n";
             $myproc = $myproc + 1;
         }
