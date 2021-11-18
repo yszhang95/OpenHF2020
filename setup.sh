@@ -26,3 +26,5 @@ if [[ $1 == "--enable-lib" ]]; then
   echo
 
 fi
+
+export PATH=$PATH:$OPENHF2020TOP/Utilities/bin
