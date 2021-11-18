@@ -98,6 +98,21 @@ sub analyze {
         print "    ", $mycluster, "_", $_, ".log\n";
     }
     print "\n";
+    my @mylogs_removed = ();
+    foreach (@mylogs_filtered) {
+        my $matched_log = findErrors("$mylogdir/$_", "remove");
+        if ($matched_log) {
+            if ( $_ =~ /(.*)_(.*)\..+/ ) {
+                push(@mylogs_removed, $2);
+            }
+        }
+    }
+    print "  Jobs removed are:\n";
+    foreach (@mylogs_removed) {
+        print "    ", $mycluster, "_", $_, ".log\n";
+    }
+    print "\n";
+    push(@mylogs_buggy, @mylogs_removed);
 
     # get the filtered errs
     my @myerrs_filtered = filterNames(\@myerrs, $mycluster);
@@ -121,13 +136,14 @@ sub analyze {
     my (%hsh, @union_arr);
     @hsh{@mylogs_buggy, @myerrs_buggy} = ();
     @union_arr = keys %hsh;
+    @union_arr = sort @union_arr;
+
     print "  The unions of these jobs are:\n";
     foreach (@union_arr) {
         print "    ", $mycluster, "_", $_, "\n";
     }
     print "\nAnalyzed $mylog\n\n";
 
-    @union_arr = sort @union_arr;
     return @union_arr;
 }
 
