@@ -64,7 +64,7 @@ for l in mylists:
         continue
     if not args.dataset in l:
         continue
-    cmd += "#Process %d" % num
+    cmd += "#Process %d\n" % num
     cmd += "#List %d" % num
     cmd += '''
 Arguments = $(Proxy_filename) %s %s
