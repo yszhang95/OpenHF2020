@@ -102,3 +102,62 @@ source ../setup.sh
   gSystem->Load(gSystem->ExpandPathName("${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so"));
 }
      #+END_SRC
+
+** Bins
+   The script ~manipJobs.pl~ is a helper script to manage ~condor~ jobs.
+   A few things need to be done at first. You need to have one ~condor~
+   configuration called ~sub_XXX.jdl~ and a directory called ~log_XXX~ to
+   host logs for ~sub_XXX.jdl~. The ~XXX~ need to be the same for file and
+   directory. The log files need to be named
+   =$(Cluster)_$(Process).log=, =$(Cluster)_$(Process).err=,
+   =$(Cluster)_$(Process).out=. And in ~jdl~ file, several markups are
+   necessary.
+   #+begin_example
+   # Job setup
+   # this is config for submitting condor jobs
+   Universe   = vanilla
+   Executable = run.sh
+   Log        = log_XXX/$(Cluster)_$(Process).log
+   Output     = log_XXX/$(Cluster)_$(Process).out
+   Error      = log_XXX/$(Cluster)_$(Process).err
+   should_transfer_files = YES
+   when_to_transfer_output = ON_EXIT
+   transfer_output_files = ""
+   on_exit_remove          = (ExitBySignal == False) && (ExitCode == 0)
+   max_retries             = 3
+   requirements = Machine =!= LastRemoteHost
+
+   # Tasks
+
+   #Process 0
+   #List 1
+   Arguments = ABC
+   transfer_input_files = DEF
+   queue
+   #+end_example
+   Please check the following for descriptions.
+   - Submit condor jobs ::
+     : manipJobs.pl submit sub_XXX.jdl
+     This command will create a ~sub_XXX.log~ file. It will save the
+     cluster ID.
+   - Analyze failed jobs from logs ::
+     : manipJobs.pl analyze sub_XXX.log
+     This script will give the processes ID of the jobs containing
+     failures.
+   - Resubmit failed jobs from logs ::
+     : manipJobs.pl resubmit sub_XXX.log [--submit]
+     This script will generate a =sub_XXX_resub.jdl= file. It needs to
+     read =sub_XXX.jdl= and extract the information for failed jobs. It
+     has to read several markups:
+     - =# Job setup=
+     - =# Tasks=
+     - Processes need to be in format of
+       #+begin_example
+       #Process N
+       #List M
+       Arguments = ABC
+       transfer_input_files = DEF
+       queue
+       #+end_example
+       Lines between =#Process= and =queue= will be copied to new =jdl=.
+     If ~--submit~ is specified, resubmission will be processed.

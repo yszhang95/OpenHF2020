@@ -39,6 +39,7 @@ myexe = args.userexe
 logdir = "log_%s_%s_%s" % (args.dataset, args.boost, myexe.replace(".sh", ""))
 proxy_path = "/afs/cern.ch/user/y/yousen/private/$(Proxy_filename)" if args.transferCert != 0 else "$(Proxy_filename)"
 cmd='''
+# Job setup
 # this is config for submitting condor jobs
 Proxy_filename = %s
 Proxy_path = %s
@@ -54,6 +55,8 @@ transfer_output_files = ""
 on_exit_remove          = (ExitBySignal == False) && (ExitCode == 0)
 max_retries             = 3
 requirements = Machine =!= LastRemoteHost
+
+# Tasks
 ''' % (os.path.basename(args.inputCert), proxy_path, args.userexe, logdir, logdir ,logdir)
 
 num = 0
@@ -64,14 +67,14 @@ for l in mylists:
         continue
     if not args.dataset in l:
         continue
-    cmd += "#Process %d" % num
+    cmd += "#Process %d\n" % num
     cmd += "#List %d" % num
     cmd += '''
 Arguments = $(Proxy_filename) %s %s
 ''' % (l, dest)
     transfer_input_files = "transfer_input_files = dataset" if args.transferCert == 0 else "transfer_input_files = dataset,$(Proxy_path)"
     cmd += transfer_input_files + "\n"
-    cmd +='queue\n'
+    cmd +='queue\n\n'
     num = num+1
 
 #print (cmd)
