@@ -128,6 +128,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool flipEta = configs.flipEta();
   const bool selectDeDx = configs.selectDeDx();
   const bool pruneNTuple = configs.pruneNTuple();
+  const bool wantAbort = configs.wantAbort();
+
+  if (wantAbort) { gErrorAbortLevel = kError; }
 
   DeDxSelection dedxSel{0.7, 1.5, 0.75, 1.25};
 
