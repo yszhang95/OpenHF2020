@@ -79,7 +79,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _NtrkLow(0), _NtrkHigh(UShort_t(-1)),
   _saveTree(0), _saveDau(0), _selectMVA(0),
   _useEventWiseWeight(0), _isMC(0), _saveMatchedOnly(1),
-  _flipEta(0), _selectDeDx(0),  _debug(debug)
+  _flipEta(0), _selectDeDx(0), _wantAbort(0),  _debug(debug)
 {
   if (_debug) { cout << "\nStart readConfigs" << endl; }
 
@@ -208,6 +208,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
     == options.end();
   _flipEta   = std::find(options.begin(), options.end(), "flipeta") != options.end();
   _selectDeDx = std::find(options.begin(), options.end(), "selectdedx") != options.end();
+  _wantAbort = std::find(options.begin(), options.end(), "wantabort") != options.end();
 
   if (_configs.count("signalFileList")
       && _configs.at("signalFileList").size())
@@ -828,6 +829,14 @@ bool tmvaConfigs::flipEta() const
 bool tmvaConfigs::selectDeDx() const
 {
   return _selectDeDx;
+}
+
+/**
+   Return if we want to abort when detecting kError
+ */
+bool tmvaConfigs::wantAbort() const
+{
+  return _wantAbort;
 }
 
 /**
