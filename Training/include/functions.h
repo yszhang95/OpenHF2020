@@ -122,6 +122,7 @@ public:
   bool                                        saveMatchedOnly() const;
   bool                                        flipEta() const;
   bool                                        selectDeDx() const;
+  bool                                        wantAbort() const;
 
 private:
   std::map<std::string, TString>              getMethod(const std::string&) const;
@@ -156,6 +157,7 @@ private:
   bool _saveMatchedOnly;
   bool _flipEta;
   bool _selectDeDx;
+  bool _wantAbort;
   bool _debug;
 };
 
