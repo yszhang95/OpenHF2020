@@ -19,6 +19,7 @@ $(LIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/ParticleTree.cxx \
 	$(Ana)/Common.cc \
 	$(Ana)/TreeHelpers.cc \
+	$(Ana)/MyNTuple.cc \
 	$(LIB)/MyTreeReaderDict.cxx
 	@echo "Generating shared library..."
 	$(CXX) -shared -fPIC -o $@ $(CXXFLAGS) $(LDFLAGS) $^
@@ -27,12 +28,13 @@ $(LIB)/libMyTreeReader.so: \
 
 
 $(LIB)/MyTreeReaderDict.cxx: \
+	$(Ana)/MyNTuple.h \
+	$(Ana)/Common.h \
+	$(Ana)/TreeHelpers.h \
 	$(TreeReaderDir)/ParticleTreeMC2.hxx \
 	$(TreeReaderDir)/ParticleTreeMC.hxx \
 	$(TreeReaderDir)/ParticleTreeData.hxx \
 	$(TreeReaderDir)/ParticleTree.hxx \
-	$(Ana)/Common.h \
-	$(Ana)/TreeHelpers.h \
 	Linkdef.h
 	@echo "Generating dictionary..."
 	rootcling -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^

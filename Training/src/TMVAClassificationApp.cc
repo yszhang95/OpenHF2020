@@ -58,6 +58,7 @@
 
 #include "Ana/Common.h"
 #include "Ana/TreeHelpers.h"
+#include "Ana/MyNTuple.h"
 
 using std::map;
 using std::tuple;
@@ -553,7 +554,6 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   //
     vector<float> mvaValues(methodNames.size(), -1);
     for (size_t ireco=0; ireco<recosize; ireco++) {
-
 
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle_id)) {
