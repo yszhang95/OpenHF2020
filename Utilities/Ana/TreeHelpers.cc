@@ -300,15 +300,17 @@ bool MyNTuple::setMVAValues(const std::vector<float>& vals)
 
 bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 {
-  const auto passHLT = p.passHLT();
-  //this->nTrigs = passHLT.size();
-  for (UInt_t i=0; i< this->nTrigs; ++i) {
-    this->trigBit[i] = passHLT.at(i);
-  }
-  const auto passFilter = p.evtSel();
-  //this->nFilters = passFilter.size();
-  for (UInt_t i=0; i<this->nFilters; ++i) {
-    this->filterBit[i] = passFilter.at(i);
+  if (!isMC) {
+    const auto passHLT = p.passHLT();
+    //this->nTrigs = passHLT.size();
+    for (UInt_t i=0; i< this->nTrigs; ++i) {
+      this->trigBit[i] = passHLT.at(i);
+    }
+    const auto passFilter = p.evtSel();
+    //this->nFilters = passFilter.size();
+    for (UInt_t i=0; i<this->nFilters; ++i) {
+      this->filterBit[i] = passFilter.at(i);
+    }
   }
 
   this->Ntrkoffline = isMC ? 0 : p.Ntrkoffline();

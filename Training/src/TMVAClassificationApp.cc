@@ -448,7 +448,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     }
 
     // check trigger filter;
-    if (!p.passHLT().at(triggerIndex)) continue;
+    if (!isMC && !p.passHLT().at(triggerIndex)) continue;
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
     // if (!isMC) {
