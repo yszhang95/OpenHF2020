@@ -52,6 +52,7 @@
 
 #include "Ana/Common.h"
 #include "Ana/TreeHelpers.h"
+#include "Ana/MyNTuple.h"
 
 using std::map;
 using std::tuple;
