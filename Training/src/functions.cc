@@ -14,8 +14,9 @@
 #include "TObjString.h"
 #include "TFileCollection.h"
 #include "THashList.h"
-
 #include "TXMLEngine.h"
+
+#include "Ana/MyNTuple.h"
 
 using std::map;
 using std::pair;

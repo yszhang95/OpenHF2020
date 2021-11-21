@@ -16,7 +16,7 @@ enum PdgId : int { Proton=2212, Ks=310, LambdaC=4122, Pion=211, Kaon=321};
 class Particle {
 public:
   using ParticlePtr = std::shared_ptr<Particle>;
-  Particle(int id): _id(id), _selfConj(false), _flip(0), _longLived(false), _treeIdx(USHRT_MAX) {};
+  Particle(int id): _id(id), _selfConj(false), _longLived(false), _flip(0), _treeIdx(USHRT_MAX) {};
   Particle(const Particle& p);
   //~Particle() { cout << "Deleted" << endl; }
 

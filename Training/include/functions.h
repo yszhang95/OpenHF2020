@@ -26,6 +26,7 @@
 #include "Ana/TreeHelpers.h"
 
 class varHists;
+class MyNTuple;
 
 static int DEBUG = 0;
 
