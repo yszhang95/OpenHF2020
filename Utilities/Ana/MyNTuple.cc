@@ -30,9 +30,13 @@ void MyNTuple::setNDau(const unsigned short ndau,
                      const unsigned short* dauNGDau)
 {
   nDau = ndau;
-  nGDau = ngdau;
+  nGDau = 0;
   for (unsigned short i=0; i<nDau; ++i) {
     dauHasNGDau[i] = dauNGDau[i];
+    nGDau += dauNGDau[i];
+  }
+  if (nGDau != ngdau) {
+    std::cerr << "Total number of granddaughters does not match" << std::endl;
   }
 }
 
@@ -192,6 +196,57 @@ void MyNTuple::initNTuple()
       t->Branch(Form("trk_gdau%d_pTErr", iGDau), &trk_gdau_pTErr[iGDau]);
       t->Branch(Form("trk_gdau%d_xyDCASignificance", iGDau), &trk_gdau_xyDCASignificance[iGDau]);
       t->Branch(Form("trk_gdau%d_zDCASignificance", iGDau), &trk_gdau_zDCASignificance[iGDau]);
+    } // end granddaughter level
+  }
+}
+
+void  MyNTuple::initGenBranches()
+{
+  if (!isMC) return;
+
+  // particle level
+  // t->Branch("gen_charge", &gen_charge);
+  t->Branch("gen_pdgId", &gen_pdgId);
+  t->Branch("gen_eta", &gen_eta);
+  t->Branch("gen_y", &gen_y);
+  t->Branch("gen_mass", &gen_mass);
+  t->Branch("gen_pT", &gen_pT);
+  t->Branch("gen_phi", &gen_phi);
+
+  if (!dropDau) {
+    t->Branch("gen_angle2D", &gen_angle2D);
+    t->Branch("gen_angle3D", &gen_angle3D);
+    t->Branch("gen_decayLength2D", &gen_decayLength2D);
+    t->Branch("gen_decayLength3D", &gen_decayLength3D);
+  }
+
+  if (!dropDau) {
+    // daughter level
+    for (unsigned short iDau=0; iDau<nDau; ++iDau) {
+      t->Branch(Form("gen_dau%d_pdgId", iDau), &gen_dau_pdgId[iDau]);
+      t->Branch(Form("gen_dau%d_eta", iDau), &gen_dau_eta[iDau]);
+      t->Branch(Form("gen_dau%d_mass", iDau), &gen_dau_mass[iDau]);
+      t->Branch(Form("gen_dau%d_pT", iDau), &gen_dau_pT[iDau]);
+      t->Branch(Form("gen_dau%d_phi", iDau), &gen_dau_phi[iDau]);
+      t->Branch(Form("gen_dau%d_y", iDau), &gen_dau_y[iDau]);
+
+      unsigned short gDauOffset = 0;
+      if (dauHasNGDau[iDau]) {
+        t->Branch(Form("gen_dau%d_angle2D", iDau), &gen_dau_angle2D[iDau]);
+        t->Branch(Form("gen_dau%d_angle3D", iDau), &gen_dau_angle3D[iDau]);
+        t->Branch(Form("gen_dau%d_decayLength2D", iDau), &gen_dau_decayLength2D[iDau]);
+        t->Branch(Form("gen_dau%d_decayLength3D", iDau), &gen_dau_decayLength3D[iDau]);
+      }
+      gDauOffset += dauHasNGDau[iDau];
+    } // end daughter level
+    // granddaughter level
+    for (unsigned short iGDau=0; iGDau<nGDau; ++iGDau) {
+      t->Branch(Form("gen_gdau%d_pdgId", iGDau), &gen_gdau_pdgId[iGDau]);
+      t->Branch(Form("gen_gdau%d_eta", iGDau), &gen_gdau_eta[iGDau]);
+      t->Branch(Form("gen_gdau%d_mass", iGDau), &gen_gdau_mass[iGDau]);
+      t->Branch(Form("gen_gdau%d_pT", iGDau), &gen_gdau_pT[iGDau]);
+      t->Branch(Form("gen_gdau%d_phi", iGDau), &gen_gdau_phi[iGDau]);
+      t->Branch(Form("gen_gdau%d_y", iGDau), &gen_gdau_y[iGDau]);
     } // end granddaughter level
   }
 }
@@ -364,6 +419,107 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
       const double dedxMean = dedxSel.getMean(this->cand_dau_pT[iDau] * std::cosh(this->cand_dau_eta[iDau]));
       this->trk_dau_dEdxRes[iDau] = (this->trk_dau_dEdx_dedxHarmonic2[iDau]-dedxMean)/dedxMean;
       this->trk_dau_dEdx_dedxPixelHarmonic2[iDau] = p.trk_dEdx_dedxPixelHarmonic2().at(trkIdx);
+    }
+  }
+
+  return true;
+}
+
+/**
+// the following part has an issue to retrieve gen info
+// because the treeidx may not be properly set
+// I only test for the case taht Ks and proton are stable.
+// Not sure what will happen if Ks is unstable, which
+// means Ks.isLongLived() is False
+*/
+
+bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
+{
+  if (!isMC) return false;
+  gen_charge = -99;
+  gen_pdgId = -99;
+  gen_angle3D = -99;
+  gen_angle2D = -99;
+  gen_decayLength3D = -99;
+  gen_decayLength2D = -99;
+  gen_mass = -99;
+  gen_pT = -99;
+  gen_eta = -99;
+  gen_phi = -99;
+  gen_y = -99;
+  genMomPdgId = -99;
+  for (size_t i=0; i<100; ++i) {
+    gen_dau_pdgId[i] = -99;
+    gen_dau_angle3D[i] = -99;
+    gen_dau_angle2D[i] = -99;
+    gen_dau_decayLength3D[i] = -99;
+    gen_dau_decayLength2D[i] = -99;
+    gen_dau_pT[i] = -99;
+    gen_dau_eta[i] = -99;
+    gen_dau_phi[i] = -99;
+    gen_dau_mass[i] = -99;
+    gen_dau_y[i] = -99;
+  }
+
+  for (size_t i=0; i<100; ++i) {
+    gen_gdau_pdgId[i] = -99;
+    gen_gdau_pT[i] = -99;
+    gen_gdau_eta[i] = -99;
+    gen_gdau_phi[i] = -99;
+    gen_gdau_mass[i] = -99;
+    gen_gdau_y[i] = -99;
+  }
+  if (!ptr) {
+     return true;
+  }
+
+  const auto it = ptr->treeIdx();
+  this->gen_pT     = p.gen_pT().at(it);
+  this->gen_eta    = p.gen_eta().at(it);
+  this->gen_phi    = p.gen_phi().at(it);
+  this->gen_mass   = p.gen_mass().at(it);
+  this->gen_y      = p.gen_y().at(it);
+  this->gen_pdgId  = p.gen_pdgId().at(it);
+  this->gen_charge = p.gen_charge().at(it);
+
+  this->gen_angle2D = p.gen_angle2D().at(it);
+  this->gen_angle3D = p.gen_angle3D().at(it);
+
+  this->gen_decayLength2D = p.gen_decayLength2D().at(it);
+  this->gen_decayLength3D = p.gen_decayLength3D().at(it);
+
+  int gDauOffset = 0;
+
+  const auto daus = ptr->daughters();
+
+  for (size_t iDau=0; iDau<daus.size(); ++iDau) {
+    const auto dau = daus.at(iDau);
+    const auto dIdx = dau->treeIdx();
+    const auto gDaus = dau->daughters();
+
+    this->gen_dau_pdgId[iDau] = p.gen_pdgId().at(dIdx);
+    this->gen_dau_pT[iDau]    = p.gen_pT().at(dIdx);
+    this->gen_dau_eta[iDau]   = p.gen_eta().at(dIdx);
+    this->gen_dau_phi[iDau]   = p.gen_phi().at(dIdx);
+    this->gen_dau_mass[iDau]  = p.gen_mass().at(dIdx);
+    this->gen_dau_y[iDau]     = p.gen_y().at(dIdx);
+
+    if (!gDaus.empty()) {
+      this->gen_dau_angle3D[iDau] = p.gen_angle3D().at(dIdx);
+      this->gen_dau_angle2D[iDau] = p.gen_angle2D().at(dIdx);
+
+      this->gen_dau_decayLength3D[iDau] = p.gen_decayLength3D().at(dIdx);
+      this->gen_dau_decayLength2D[iDau] = p.gen_decayLength2D().at(dIdx);
+    }
+    for (size_t iGDau=0; iGDau<gDaus.size(); ++iGDau) {
+      const auto& gDIdx = gDaus.at(iGDau)->treeIdx();
+      this->gen_gdau_pdgId[gDauOffset] = p.gen_pdgId().at(gDIdx);
+      this->gen_gdau_mass[gDauOffset]  = p.gen_mass().at(gDIdx);
+      this->gen_gdau_eta[gDauOffset]   = p.gen_eta().at(gDIdx);
+      this->gen_gdau_phi[gDauOffset]   = p.gen_phi().at(gDIdx);
+      this->gen_gdau_pT[gDauOffset]    = p.gen_pT().at(gDIdx);
+      this->gen_gdau_y[gDauOffset]     = p.gen_y().at(gDIdx);
+      gDauOffset++;
     }
   }
 

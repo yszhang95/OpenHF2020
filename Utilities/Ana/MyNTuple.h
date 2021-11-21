@@ -157,6 +157,38 @@ struct MyNTuple
   Float_t         trk_gdau_xyDCASignificance[100];
   Float_t         trk_gdau_zDCASignificance[100];
 
+  // matched gen info
+  Char_t          gen_charge;
+  Int_t           gen_pdgId;
+  Float_t         gen_angle3D;
+  Float_t         gen_angle2D;
+  Float_t         gen_decayLength3D;
+  Float_t         gen_decayLength2D;
+  Float_t         gen_mass;
+  Float_t         gen_pT;
+  Float_t         gen_eta;
+  Float_t         gen_phi;
+  Float_t         gen_y;
+  Float_t         genMomPdgId;
+  // gen dau
+  Int_t           gen_dau_pdgId[100];
+  Float_t         gen_dau_angle3D[100];
+  Float_t         gen_dau_angle2D[100];
+  Float_t         gen_dau_decayLength3D[100];
+  Float_t         gen_dau_decayLength2D[100];
+  Float_t         gen_dau_pT[100];
+  Float_t         gen_dau_eta[100];
+  Float_t         gen_dau_phi[100];
+  Float_t         gen_dau_mass[100];
+  Float_t         gen_dau_y[100];
+  // gen granddaughter
+  Int_t           gen_gdau_pdgId[100];
+  Float_t         gen_gdau_pT[100];
+  Float_t         gen_gdau_eta[100];
+  Float_t         gen_gdau_phi[100];
+  Float_t         gen_gdau_mass[100];
+  Float_t         gen_gdau_y[100];
+
   // correct for dEdx
   DeDxSelection dedxSel;
 
@@ -181,10 +213,12 @@ struct MyNTuple
   void  setEventWeight(const float);
   void  initMVABranches(const std::vector<TString>&);
   void  initNTuple();
+  void  initGenBranches();
   void  setNDau(const unsigned short, const unsigned short, unsigned short const*);
   Int_t fillNTuple();
   bool  setMVAValues(const std::vector<float>&);
   bool  retrieveTreeInfo(ParticleTree&, Long64_t);
+  bool  retrieveGenInfo(ParticleTreeMC&, Particle* ptr=nullptr);
   float value(const TString& s);
   void  pruneNTuple(const std::vector<TString>&);
 };
