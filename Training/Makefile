@@ -40,5 +40,5 @@ bin:
 	@echo
 
 .PHONY: clean
-clean: 
-	rm -r $(BIN)
+clean:
+	rm -r bin

@@ -58,6 +58,7 @@
 
 #include "Ana/Common.h"
 #include "Ana/TreeHelpers.h"
+#include "Ana/MyNTuple.h"
 
 using std::map;
 using std::tuple;
@@ -398,6 +399,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   if (reweightEvent) { ntp.initWeightBranch(); }
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
+  if (isMC) ntp.initGenBranches();
   // std::vector<TString> keptBranches{"cand_mass", "cand_pTDau0", "cand_etaDau0"};
   const auto keptBranches = configs.getKeptBranchNames();
   if (pruneNTuple) ntp.pruneNTuple(keptBranches);
@@ -448,7 +450,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     }
 
     // check trigger filter;
-    if (!p.passHLT().at(triggerIndex)) continue;
+    if (!isMC && !p.passHLT().at(triggerIndex)) continue;
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
     // if (!isMC) {
@@ -554,10 +556,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     vector<float> mvaValues(methodNames.size(), -1);
     for (size_t ireco=0; ireco<recosize; ireco++) {
 
-
       // begin LambdaC
       if (pdgId[ireco] == std::abs(particle_id)) {
-
         // hard code begin
         const auto dauIdx = p.cand_dauIdx().at(ireco);
         // 0 for Ks, 1 for proton
@@ -572,18 +572,43 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           matchGEN = matchGEN && ( matchPairs.find( dauIdx.at(0) ) != matchPairs.end() );
           matchGEN = matchGEN && ( matchPairs.find( dauIdx.at(1) ) != matchPairs.end() );
 
+          const auto genKsIdx = ntp.cand_dau_matchGEN[0] ? matchPairs.at(dauIdx.at(0)) : -1;
+          const auto genProtonIdx = ntp.cand_dau_matchGEN[1] ? matchPairs.at(dauIdx.at(1)) : -1;
           if (ntp.cand_dau_matchGEN[0]) {
-            ntp.cand_dau_isSwap[0] = std::abs(0.497611 - p.gen_mass().at(matchPairs.at(dauIdx.at(0)))) > 0.01;
+            ntp.cand_dau_isSwap[0] = std::abs(0.497611 - p.gen_mass().at(genKsIdx)) > 0.01;
             isSwap = isSwap || ntp.cand_dau_isSwap[0];
           }
           if (ntp.cand_dau_matchGEN[1]) {
-            ntp.cand_dau_isSwap[1] = std::abs(0.938272081 - p.gen_mass().at((matchPairs.at(dauIdx.at(1))))) > 0.01;
+            ntp.cand_dau_isSwap[1] = std::abs(0.938272081 - p.gen_mass().at(genProtonIdx)) > 0.01;
             isSwap = isSwap || ntp.cand_dau_isSwap[1];
           }
 
           ntp.cand_matchGEN = matchGEN;
           ntp.cand_isSwap = isSwap;
           if (saveMatchedOnly && !matchGEN) continue;
+          // the following part has an issue to retrieve gen info
+          // because the treeidx may not be properly set
+          // I only test for the case taht Ks and proton are stable.
+          // Not sure what will happen if Ks is unstable, which
+          // means Ks.isLongLived() is False
+          if (matchGEN && !isSwap) {
+            const auto genIdx = p.gen_momIdx().at(genKsIdx).front();
+            ParticleTreeMC* pMC = dynamic_cast<ParticleTreeMC*>(&p);
+            Particle particle_copy(particle);
+            bool sameChain = checkDecayChain(particle_copy, genIdx, p);
+            particle_copy.setTreeIdx(genIdx);
+            if (!sameChain) {
+              std::cerr <<
+                "The matched gen particle has different decay chain!!! "
+                "Cannot do retrieveGenInfo!!!" << endl;
+              ntp.retrieveGenInfo(*pMC);
+            }
+            ntp.retrieveGenInfo(*pMC, &particle_copy);
+          } else {
+            const auto genIdx = -1;
+            ParticleTreeMC* pMC = dynamic_cast<ParticleTreeMC*>(&p);
+            ntp.retrieveGenInfo(*pMC);
+          }
         }
         // hard code end
 
