@@ -158,6 +158,7 @@ struct MyNTuple
   Float_t         trk_gdau_zDCASignificance[100];
 
   // matched gen info
+  bool            gen_isPrompt;
   Char_t          gen_charge;
   Int_t           gen_pdgId;
   Float_t         gen_angle3D;
@@ -169,7 +170,7 @@ struct MyNTuple
   Float_t         gen_eta;
   Float_t         gen_phi;
   Float_t         gen_y;
-  Float_t         genMomPdgId;
+  Int_t           gen_momPdgId;
   // gen dau
   Int_t           gen_dau_pdgId[100];
   Float_t         gen_dau_angle3D[100];
