@@ -123,6 +123,7 @@ public:
   bool                                        saveMatchedOnly() const;
   bool                                        flipEta() const;
   bool                                        selectDeDx() const;
+  bool                                        trigReweight() const;
   bool                                        wantAbort() const;
 
 private:
@@ -158,6 +159,7 @@ private:
   bool _saveMatchedOnly;
   bool _flipEta;
   bool _selectDeDx;
+  bool _trigReweight;
   bool _wantAbort;
   bool _debug;
 };
