@@ -19,6 +19,7 @@ $(LIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/ParticleTree.cxx \
 	$(Ana)/Common.cc \
 	$(Ana)/TreeHelpers.cc \
+	$(Ana)/MyGenNTuple.cc \
 	$(Ana)/MyNTuple.cc \
 	$(LIB)/MyTreeReaderDict.cxx
 	@echo "Generating shared library..."
@@ -28,6 +29,7 @@ $(LIB)/libMyTreeReader.so: \
 
 
 $(LIB)/MyTreeReaderDict.cxx: \
+	$(Ana)/MyGenNTuple.h \
 	$(Ana)/MyNTuple.h \
 	$(Ana)/Common.h \
 	$(Ana)/TreeHelpers.h \
