@@ -13,5 +13,6 @@
 #pragma link C++ class EfficiencyTable<TGraph>+;
 #pragma link C++ class MyNTuple+;
 #pragma link C++ class MyGenNTuple+;
+#pragma link C++ class D0Event+;
 
 #endif

@@ -13,6 +13,7 @@ CXX=$(shell root-config --cxx)
 all: $(LIB) $(LIB)/libMyTreeReader.so
 
 $(LIB)/libMyTreeReader.so: \
+	$(TreeReaderDir)/D0Event.cxx \
 	$(TreeReaderDir)/ParticleTreeMC2.cxx \
 	$(TreeReaderDir)/ParticleTreeMC.cxx \
 	$(TreeReaderDir)/ParticleTreeData.cxx \
@@ -29,6 +30,7 @@ $(LIB)/libMyTreeReader.so: \
 
 
 $(LIB)/MyTreeReaderDict.cxx: \
+	$(TreeReaderDir)/D0Event.h \
 	$(Ana)/MyGenNTuple.h \
 	$(Ana)/MyNTuple.h \
 	$(Ana)/Common.h \
