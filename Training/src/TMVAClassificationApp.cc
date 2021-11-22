@@ -137,20 +137,20 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   DeDxSelection dedxSel{0.7, 1.5, 0.75, 1.25};
 
   TFile* effFile;
+  TGraph* g(nullptr);
   if (reweightEvent) {
     effFile = TFile::Open(configs.getEffFileName().c_str());
-  }
-  TGraph* g(nullptr);
-  if (effFile->IsOpen()) {
-    if (configs.getEffGraphType() == "TGraphAsymmErrors") {
-      const auto effname = configs.getEffGraphName();
-      g = (TGraphAsymmErrors*) effFile->Get(effname.c_str());
+    if (effFile->IsOpen()) {
+      if (configs.getEffGraphType() == "TGraphAsymmErrors") {
+        const auto effname = configs.getEffGraphName();
+        g = (TGraphAsymmErrors*) effFile->Get(effname.c_str());
+      }
+      else if (configs.getEffGraphType() == "TGraphErrors") {
+        const auto effname = configs.getEffGraphName();
+        g = (TGraphErrors*) effFile->Get(effname.c_str());
+      }
+      effFile->Close();
     }
-    else if (configs.getEffGraphType() == "TGraphErrors") {
-      const auto effname = configs.getEffGraphName();
-      g = (TGraphErrors*) effFile->Get(effname.c_str());
-    }
-    effFile->Close();
   }
 
   if (DEBUG) { cout << "Do reweighting: " << reweightEvent << endl;}
