@@ -44,9 +44,9 @@ xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storag
 
 pTLabel="4to6"
 
-Options="saveTree:selectMVA:saveDau:selectDeDx:wantAbort"
+Options="saveTree:selectMVA:saveDau:selectDeDx:trigReweight:wantAbort"
 if [[ $2 == *"Pbp"* ]]; then
-  Options="saveTree:selectMVA:saveDau:selectDeDx:wantAbort:flipEta"
+  Options="saveTree:selectMVA:saveDau:selectDeDx:trigReweight:wantAbort:flipEta"
 fi
 
 Trig=""
