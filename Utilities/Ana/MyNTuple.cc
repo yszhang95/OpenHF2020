@@ -18,7 +18,6 @@
 #include "Ana/TreeHelpers.h"
 #endif
 
-
 #ifdef MyNTuple_H
 #include "TTree.h"
 #include "TString.h"
@@ -204,6 +203,8 @@ void  MyNTuple::initGenBranches()
 {
   if (!isMC) return;
 
+  // isPrompt
+  t->Branch("gen_isPrompt", &gen_isPrompt);
   // particle level
   // t->Branch("gen_charge", &gen_charge);
   t->Branch("gen_pdgId", &gen_pdgId);
@@ -212,6 +213,7 @@ void  MyNTuple::initGenBranches()
   t->Branch("gen_mass", &gen_mass);
   t->Branch("gen_pT", &gen_pT);
   t->Branch("gen_phi", &gen_phi);
+  t->Branch("gen_momPdgId", &gen_momPdgId);
 
   if (!dropDau) {
     t->Branch("gen_angle2D", &gen_angle2D);
@@ -436,6 +438,7 @@ bool MyNTuple::retrieveTreeInfo(ParticleTree& p, Long64_t it)
 bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
 {
   if (!isMC) return false;
+  gen_isPrompt = true;
   gen_charge = -99;
   gen_pdgId = -99;
   gen_angle3D = -99;
@@ -447,7 +450,7 @@ bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
   gen_eta = -99;
   gen_phi = -99;
   gen_y = -99;
-  genMomPdgId = -99;
+  gen_momPdgId = -99;
   for (size_t i=0; i<100; ++i) {
     gen_dau_pdgId[i] = -99;
     gen_dau_angle3D[i] = -99;
@@ -474,6 +477,7 @@ bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
   }
 
   const auto it = ptr->treeIdx();
+  this->gen_momPdgId  = p.gen_pdgId().at(p.gen_momIdx().at(it).front());
   this->gen_pT     = p.gen_pT().at(it);
   this->gen_eta    = p.gen_eta().at(it);
   this->gen_phi    = p.gen_phi().at(it);
@@ -481,6 +485,36 @@ bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
   this->gen_y      = p.gen_y().at(it);
   this->gen_pdgId  = p.gen_pdgId().at(it);
   this->gen_charge = p.gen_charge().at(it);
+
+  int ipar = it;
+  auto pdgId = p.gen_pdgId();
+  for (auto momIdxs = p.gen_momIdx().at(it); !momIdxs.empty();
+       momIdxs = p.gen_momIdx().at(ipar)) {
+    if (momIdxs.size() > 1) {
+      std::cerr << "Multiple mother particles" << std::endl;
+    }
+    auto momIdx = momIdxs.front();
+    auto id = pdgId.at(momIdx);
+    std::string idstr = std::to_string(id);
+    if (idstr.at(0) == '5') {
+      gen_isPrompt = false;
+      break;
+    }
+    ipar = momIdx;
+  }
+  if (gen_isPrompt) {
+    auto id = pdgId.at(ipar);
+    if (abs(id) == 5) {
+      gen_isPrompt = false;
+    }
+    // if (abs(id) != 5) {
+    //   auto dauIdxs = p.gen_dauIdx().at(ipar);
+    //   for (const auto idx : dauIdxs) {
+    //     std::cout << pdgId.at(idx) << "  ";
+    //   }
+    //   std::cout << std::endl;
+    // }
+  }
 
   this->gen_angle2D = p.gen_angle2D().at(it);
   this->gen_angle3D = p.gen_angle3D().at(it);

@@ -26,6 +26,7 @@
 #include "TreeReader/ParticleTreeData.hxx"
 #include "Ana/Common.h"
 #include "Ana/TreeHelpers.h"
+#include "Ana/MyNTuple.h"
 
 using std::cerr;
 using std::cout;
