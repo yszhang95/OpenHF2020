@@ -26,8 +26,13 @@ sub findErrors {
     while (my $line = <$fh>) {
         if ($line =~ /$pat/i) {
             $matched = 1;
-            close $fh;
-            last;
+            if ($line =~ /OpenHF2020\.tar\.gz/) {
+                $matched = 0;
+            }
+            if ($matched) {
+                close $fh;
+                last;
+            }
         }
     }
     return $matched
@@ -86,12 +91,15 @@ sub analyze {
     my @mylogs_filtered = filterNames(\@mylogs, $mycluster);
     my @mylogs_buggy = ();
     foreach (@mylogs_filtered) {
-        my $matched_log = findErrors("$mylogdir/$_", "Abnormal");
-        if ($matched_log) {
+        my $passed_log = findErrors("$mylogdir/$_", " Normal.*");
+        my $matched_log = findErrors("$mylogdir/$_", "Abnormal.*");
+        if ($matched_log and !$passed_log) {
             if ( $_ =~ /(.*)_(.*)\..+/ ) {
                 push(@mylogs_buggy, $2);
             }
         }
+        $passed_log = 1;
+        $matched_log = 0;
     }
     print "  Jobs quitting abnormally are:\n";
     foreach (@mylogs_buggy) {
@@ -100,12 +108,15 @@ sub analyze {
     print "\n";
     my @mylogs_removed = ();
     foreach (@mylogs_filtered) {
+        my $passed_log = findErrors("$mylogdir/$_", " Normal.*");
         my $matched_log = findErrors("$mylogdir/$_", "remove");
-        if ($matched_log) {
+        if ($matched_log and !$passed_log) {
             if ( $_ =~ /(.*)_(.*)\..+/ ) {
                 push(@mylogs_removed, $2);
             }
         }
+        $passed_log = 1;
+        $matched_log = 0;
     }
     print "  Jobs removed are:\n";
     foreach (@mylogs_removed) {
@@ -118,7 +129,8 @@ sub analyze {
     my @myerrs_filtered = filterNames(\@myerrs, $mycluster);
     my @myerrs_buggy = ();
     foreach (@myerrs_filtered) {
-        my $matched_err = findErrors("$mylogdir/$_", "ERROR");
+      #my $matched_err = findErrors("$mylogdir/$_", "ERROR.*[^(OpenHF2020.tar.gz)]");
+        my $matched_err = findErrors("$mylogdir/$_", "ERROR((?!OpenHF2020.tar.gz).)*");
         if ($matched_err) {
             if ( $_ =~ /(.*)_(.*)\..+/ ) {
                 push(@myerrs_buggy, $2);
