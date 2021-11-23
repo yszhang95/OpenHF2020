@@ -196,7 +196,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool useWS = !wsStrs.empty();
   RooRealVar NtrkPV("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
   // LambdaC kinematic info
-  RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.15, 2.45, "GeV");
+  RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.1, 2.5, "GeV");
   RooRealVar cand_pT  ("cand_pT", "p_{T} of #Lambda_{c}^{+} candidate",  1.9, 100., "GeV");
   RooRealVar cand_eta("cand_eta", "#eta of #Lambda_{c}^{+} candidate", -2.4, 2.4, "");
   RooRealVar cand_y("cand_y", "rapidity of #Lambda_{c}^{+} candidate", -1.0, 1.0, "");
@@ -412,6 +412,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
   TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
   TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
 
   // hard code for LambdaC begin
   MatchCriterion  matchCriterion(0.03, 0.1);
@@ -469,11 +472,14 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
         ntrkWeight = effTab.getWeight(ntrk);
       }
       hNtrkoffline.Fill(ntrk, ntrkWeight);
+      hNtrkofflineUnweight.Fill(ntrk);
       if (p.evtSel().at(4)) {
         hNtrkofflineDz1p0.Fill(ntrk, ntrkWeight);
+        hNtrkofflineDz1p0Unweight.Fill(ntrk);
       }
       if (p.evtSel().at(5)) {
         hNtrkofflineGplus.Fill(ntrk, ntrkWeight);
+        hNtrkofflineGplusUnweight.Fill(ntrk);
       }
 
       // temporary usage
@@ -705,6 +711,9 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   hNtrkoffline.Write();
   hNtrkofflineDz1p0.Write();
   hNtrkofflineGplus.Write();
+  hNtrkofflineUnweight.Write();
+  hNtrkofflineDz1p0Unweight.Write();
+  hNtrkofflineGplusUnweight.Write();
   if (saveTree) ntp.t->Write();
   for (const auto& vec : hMassPtMVA) {
     for (const auto& h : vec) h->Write();
