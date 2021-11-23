@@ -11,6 +11,9 @@ parser.add_argument('--outfile', dest='outfile', help='output file, not director
 parser.add_argument('--reweight', dest='reweight', help='weighted dataset', action='store_const', const=True)
 args = parser.parse_args()
 
+if args.reweight:
+  print(args.reweight)
+
 import ROOT
 ROOT.gSystem.Load("libRooFitCore.so")
 ROOT.gSystem.Load("libRooFit.so")
@@ -18,9 +21,10 @@ ROOT.gROOT.LoadMacro("MergeWS.cc+")
 conf = ROOT.Conf()
 conf._inFileList = args.inputList
 conf._wsName =  args.wsName
-conf._wsTitle = args.wsName if len(args.wsTitle) else args.wsTitle
+conf._wsTitle = args.wsName if not len(args.wsTitle) else args.wsTitle
 conf._dsName = args.dsName
-conf._dsTitle = args.dsName if len(args.dsTitle) else args.dsTitle
+conf._dsTitle = args.dsName if not len(args.dsTitle) else args.dsTitle
 conf._ofile = args.outfile
-conf._reweight = args.reweight
+conf._outDir = args.outdir
+conf._reweight = True if args.reweight else False
 ROOT.MergeWS(conf)
