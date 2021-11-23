@@ -209,6 +209,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
     == options.end();
   _flipEta   = std::find(options.begin(), options.end(), "flipeta") != options.end();
   _selectDeDx = std::find(options.begin(), options.end(), "selectdedx") != options.end();
+  _trigReweight = std::find(options.begin(), options.end(), "trigreweight") != options.end();
   _wantAbort = std::find(options.begin(), options.end(), "wantabort") != options.end();
 
   if (_configs.count("signalFileList")
@@ -830,6 +831,13 @@ bool tmvaConfigs::flipEta() const
 bool tmvaConfigs::selectDeDx() const
 {
   return _selectDeDx;
+}
+
+/** Return if you want to reweight using trig efficiency
+ */
+bool tmvaConfigs::trigReweight() const
+{
+  return _trigReweight;
 }
 
 /**

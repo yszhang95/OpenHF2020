@@ -129,26 +129,30 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool flipEta = configs.flipEta();
   const bool selectDeDx = configs.selectDeDx();
   const bool pruneNTuple = configs.pruneNTuple();
+  const bool reweightEvent = configs.trigReweight();
   const bool wantAbort = configs.wantAbort();
 
   if (wantAbort) { gErrorAbortLevel = kError; }
 
   DeDxSelection dedxSel{0.7, 1.5, 0.75, 1.25};
 
-  TFile effFile(configs.getEffFileName().c_str());
+  TFile* effFile;
   TGraph* g(nullptr);
-  if (effFile.IsOpen()) {
-    if (configs.getEffGraphType() == "TGraphAsymmErrors") {
-      const auto effname = configs.getEffGraphName();
-      g = (TGraphAsymmErrors*) effFile.Get(effname.c_str());
-    }
-    else if (configs.getEffGraphType() == "TGraphErrors") {
-      const auto effname = configs.getEffGraphName();
-      g = (TGraphErrors*) effFile.Get(effname.c_str());
+  if (reweightEvent) {
+    effFile = TFile::Open(configs.getEffFileName().c_str());
+    if (effFile->IsOpen()) {
+      if (configs.getEffGraphType() == "TGraphAsymmErrors") {
+        const auto effname = configs.getEffGraphName();
+        g = (TGraphAsymmErrors*) effFile->Get(effname.c_str());
+      }
+      else if (configs.getEffGraphType() == "TGraphErrors") {
+        const auto effname = configs.getEffGraphName();
+        g = (TGraphErrors*) effFile->Get(effname.c_str());
+      }
+      effFile->Close();
     }
   }
 
-  const bool reweightEvent = g;
   if (DEBUG) { cout << "Do reweighting: " << reweightEvent << endl;}
 
   EfficiencyTable<TGraph> effTab(g);

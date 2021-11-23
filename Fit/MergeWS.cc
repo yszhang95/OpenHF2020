@@ -3,6 +3,7 @@
 #include <string>
 
 #include "TFile.h"
+#include "TH1D.h"
 #include "TString.h"
 #include "RooWorkspace.h"
 #include "RooDataSet.h"
@@ -35,8 +36,16 @@ void MergeWS(Conf conf) {
   auto ofile = conf._ofile;
   auto reweight = conf._reweight;
 
-  TFile outputFile((outDir+"/"+ofile).c_str(), "recreate");
-  cout << "\n[INFO] Preparing output " << outputFile.GetName() << "\n" << endl;
+  if (reweight) cout << "\n[INFO] reweighting will be used\n" << endl;
+
+  TFile* outputFile = TFile::Open((outDir+"/"+ofile).c_str(), "recreate");
+  cout << "\n[INFO] Preparing output " << outputFile->GetName() << "\n" << endl;
+
+  if (reweight) TH1::SetDefaultSumw2(kTRUE);
+  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
+
   RooAbsData::setDefaultStorageType(RooAbsData::Tree);
   RooRealVar NtrkPV("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
   // LambdaC kinematic info
@@ -80,15 +89,14 @@ void MergeWS(Conf conf) {
   // weight
   RooRealVar wgtVar("weight", "event weight", 0, 100);
   if (reweight) cols.add(wgtVar);
-  cols.add(wgtVar);
   // workspace and dataset
   RooWorkspace ws(("merged_" + wsName).c_str(), wsTitle.c_str());
   const char* wgtVarName = reweight ? "weight" : 0;
   RooDataSet ds(("merged_" + dsName).c_str(), dsTitle.c_str(),
                   cols, wgtVarName);
-  outputFile.Add(&ws);
-  outputFile.Add(&ds);
-  cout << "\n[INFO] Created output " << outputFile.GetName() << "\n" << endl;
+  outputFile->Add(&ws);
+  outputFile->Add(&ds);
+  cout << "\n[INFO] Created output " << outputFile->GetName() << "\n" << endl;
 
   cout << "\n[INFO] Looping over files" << endl;
   std::ifstream infiles(inFileList.c_str());
@@ -96,17 +104,32 @@ void MergeWS(Conf conf) {
     if (str.at(0) == '#') continue;
     cout << str << endl;
 
-    TFile infile(str.c_str(), "READ");
-    RooWorkspace* wstemp;
-    infile.GetObject("wsHMPt4to6", wstemp);
-    auto dstemp = dynamic_cast<RooDataSet*>(wstemp->data("dsHMPt4to6"));
-    ds.append(*dstemp);
+    TFile* infile = TFile::Open(str.c_str(), "READ");
+
+    if (str.find("ws.root") == std::string::npos) {
+      TH1D *hNtrk(0), *hNtrkDz1(0), *hNtrkGplus(0);
+      infile->GetObject("lambdacAna/hNtrkoffline", hNtrk);
+      infile->GetObject("lambdacAna/hNtrkofflineDz1p0", hNtrkDz1);
+      infile->GetObject("lambdacAna/hNtrkofflineGplus", hNtrkGplus);
+      hNtrkoffline.Add(hNtrk);
+      hNtrkofflineDz1p0.Add(hNtrkDz1);
+      hNtrkofflineGplus.Add(hNtrkGplus);
+    } else {
+      RooWorkspace* wstemp;
+      infile->GetObject(wsName.c_str(), wstemp);
+      auto dstemp = dynamic_cast<RooDataSet*>(wstemp->data(dsName.c_str()));
+      ds.append(*dstemp);
+    }
+    infile->Close();
   }
   cout << "[INFO] Finished looping over files\n" << endl;
-  cout << "[INFO] Writing data to " << outputFile.GetName() << endl;
+  cout << "[INFO] Writing data to " << outputFile->GetName() << endl;
   ws.import(ds);
-  // outputFile.Write();
-  outputFile.cd();
+  outputFile->cd();
+  hNtrkoffline.Write();
+  hNtrkofflineDz1p0.Write();
+  hNtrkofflineGplus.Write();
   ws.Write();
-  cout << "[INFO] Finished writing data to " << outputFile.GetName() << endl;
+  cout << "[INFO] Finished writing data to " << outputFile->GetName() << endl;
+  outputFile->Close();
 }

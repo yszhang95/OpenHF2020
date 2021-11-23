@@ -47,9 +47,9 @@ xrdcp root://eoscms.cern.ch///store/group/phys_heavyions/yousen/OpenHF2020Storag
 
 pTLabel="4to6"
 
-Options="saveTree:selectMVA:saveDau:selectDeDx:trigReweight:wantAbort"
+Options="saveTree:selectMVA:saveDau:selectDeDx:wantAbort"
 if [[ $2 == *"Pbp"* ]]; then
-  Options="saveTree:selectMVA:saveDau:selectDeDx:trigReweight:wantAbort:flipEta"
+  Options="saveTree:selectMVA:saveDau:selectDeDx:wantAbort:flipEta"
 fi
 
 Trig=""
@@ -85,23 +85,17 @@ cat > run.xml << _EOF_
     120, 2.15, 2.45, 10, 0., 10., 500, 0.0, 0.01
   </histoBinning>
   <trainXML>
-    MLP_vars3D_pT${pTLabel}_Np2N_noDR.xml
+    MLP_vars3D_pT${pTLabel}_MB_Np2N_noDR.xml
   </trainXML>
   <treeInfo>
     lambdacAna  ? 4122 ? -1
   </treeInfo>
   <methods>
-    MLP? MLP${pTLabel}Np2N_noDR? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
+    MLP? MLP${pTLabel}MBNp2N_noDR? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
   </methods>
   <mvaCutMin>
     0.0005
   </mvaCutMin>
-  <NtrkRange>
-    185:250
-  </NtrkRange>
-  <effTable>
-    eff.root:Ntrk185:TGraphAsymmErrors
-  </effTable>
   <options>
     ${Options}
   </options>
@@ -132,7 +126,7 @@ cat > run.xml << _EOF_
     cand_angle3D:cand_dauCosOpenAngle3D:cand_Ntrkoffline
     cand_decayLength3D:cand_decayLengthError3D:
     Ntrkoffline:trigBit_2:trigBit_4:filterBit_4:filterBit_5:
-    MLP${pTLabel}Np2N_noDR:eventWeight
+    MLP${pTLabel}MBNp2N_noDR
   </KeptBranchNames>
   <RooWorkspace>
     ws${Trig}Pt${pTLabel}:ws${Trig}Pt${pTLabel}
