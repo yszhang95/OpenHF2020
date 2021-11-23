@@ -196,7 +196,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   const bool useWS = !wsStrs.empty();
   RooRealVar NtrkPV("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
   // LambdaC kinematic info
-  RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.1, 2.5, "GeV");
+  RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.07, 2.5, "GeV");
   RooRealVar cand_pT  ("cand_pT", "p_{T} of #Lambda_{c}^{+} candidate",  1.9, 100., "GeV");
   RooRealVar cand_eta("cand_eta", "#eta of #Lambda_{c}^{+} candidate", -2.4, 2.4, "");
   RooRealVar cand_y("cand_y", "rapidity of #Lambda_{c}^{+} candidate", -1.0, 1.0, "");

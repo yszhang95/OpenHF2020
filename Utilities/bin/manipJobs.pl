@@ -29,6 +29,9 @@ sub findErrors {
             if ($line =~ /OpenHF2020\.tar\.gz/) {
                 $matched = 0;
             }
+            if ($line =~ /\$HOME\/\.root\.mimes/) {
+                $matched = 0;
+            }
             if ($matched) {
                 close $fh;
                 last;
