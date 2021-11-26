@@ -1,6 +1,6 @@
 #ifndef ParticleTree_cxx
 #define ParticleTree_cxx
-#include "ParticleTree.hxx"
+#include "Utilities/TreeReader/ParticleTree.hxx"
 #include <iostream>
 
 using std::cout;

@@ -30,7 +30,7 @@ bin/TMVA%: bin/TMVA%.o bin/functions.o
 
 bin/%.o: src/%.cc
 	@echo -n "Building $@ ... "
-	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -Iinclude -I$(OPENHF2020TOP)/Utilities  -g -c -o $@
+	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -I$(OPENHF2020TOP)  -g -c -o $@
 	@echo "Done"
 
 bin:
