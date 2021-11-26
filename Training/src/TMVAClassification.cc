@@ -22,7 +22,7 @@
 #include "TMVA/DataLoader.h"
 #endif
 
-#include "functions.h"
+#include "Training/include/functions.h"
 
 using std::map;
 using std::string;

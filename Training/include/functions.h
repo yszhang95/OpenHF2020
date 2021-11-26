@@ -23,7 +23,7 @@
 
 #include "TMVA/Types.h"
 
-#include "Ana/TreeHelpers.h"
+#include "Utilities/Ana/TreeHelpers.h"
 
 class varHists;
 class MyNTuple;
