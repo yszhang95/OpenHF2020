@@ -94,7 +94,7 @@ sub analyze {
     my @mylogs_filtered = filterNames(\@mylogs, $mycluster);
     my @mylogs_buggy = ();
     foreach (@mylogs_filtered) {
-        my $passed_log = findErrors("$mylogdir/$_", " Normal.*");
+        my $passed_log = findErrors("$mylogdir/$_", "return value 0");
         my $matched_log = findErrors("$mylogdir/$_", "Abnormal.*");
         if ($matched_log and !$passed_log) {
             if ( $_ =~ /(.*)_(.*)\..+/ ) {
@@ -111,7 +111,7 @@ sub analyze {
     print "\n";
     my @mylogs_removed = ();
     foreach (@mylogs_filtered) {
-        my $passed_log = findErrors("$mylogdir/$_", " Normal.*");
+        my $passed_log = findErrors("$mylogdir/$_", "return value 0");
         my $matched_log = findErrors("$mylogdir/$_", "remove");
         if ($matched_log and !$passed_log) {
             if ( $_ =~ /(.*)_(.*)\..+/ ) {
