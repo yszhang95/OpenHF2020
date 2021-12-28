@@ -52,13 +52,13 @@
 #include "TMVA/DataLoader.h"
 #endif
 
-#include "functions.h"
-#include "TreeReader/ParticleTreeMC.hxx"
-#include "TreeReader/ParticleTreeData.hxx"
+#include "Training/include/functions.h"
+#include "Utilities/TreeReader/ParticleTreeMC.hxx"
+#include "Utilities/TreeReader/ParticleTreeData.hxx"
 
-#include "Ana/Common.h"
-#include "Ana/TreeHelpers.h"
-#include "Ana/MyNTuple.h"
+#include "Utilities/Ana/Common.h"
+#include "Utilities/Ana/TreeHelpers.h"
+#include "Utilities/Ana/MyNTuple.h"
 
 using std::map;
 using std::tuple;

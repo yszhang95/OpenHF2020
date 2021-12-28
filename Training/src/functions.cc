@@ -1,4 +1,4 @@
-#include "functions.h"
+#include "Training/include/functions.h"
 
 #ifdef __MyFunctions__
 
@@ -16,7 +16,7 @@
 #include "THashList.h"
 #include "TXMLEngine.h"
 
-#include "Ana/MyNTuple.h"
+#include "Utilities/Ana/MyNTuple.h"
 
 using std::map;
 using std::pair;
