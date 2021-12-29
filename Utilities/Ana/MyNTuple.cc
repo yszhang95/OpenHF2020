@@ -71,7 +71,6 @@ void MyNTuple::initNTuple()
   if (!isMC) t->Branch("hltRecordLumi", &hltRecordLumi);
   if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
   if (!isMC) t->Branch("cand_Ntrkoffline", &cand_Ntrkoffline);
-  if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
   if (!isMC) {
     for (UInt_t i=0; i<nTrigs; ++i) {
       t->Branch(Form("trigBit_%u", i), &trigBit[i]);
