@@ -80,7 +80,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _NtrkLow(0), _NtrkHigh(UShort_t(-1)),
   _saveTree(0), _saveDau(0), _selectMVA(0),
   _useEventWiseWeight(0), _isMC(0), _saveMatchedOnly(1),
-  _flipEta(0), _selectDeDx(0), _wantAbort(0),  _debug(debug)
+  _flipEta(0), _selectDeDx(0), _wantAbort(0), _useWS(0), _debug(debug)
 {
   if (_debug) { cout << "\nStart readConfigs" << endl; }
 
@@ -211,6 +211,7 @@ tmvaConfigs::tmvaConfigs(string inputXML, bool debug):
   _selectDeDx = std::find(options.begin(), options.end(), "selectdedx") != options.end();
   _trigReweight = std::find(options.begin(), options.end(), "trigreweight") != options.end();
   _wantAbort = std::find(options.begin(), options.end(), "wantabort") != options.end();
+  _useWS = std::find(options.begin(), options.end(), "usews") != options.end();
 
   if (_configs.count("signalFileList")
       && _configs.at("signalFileList").size())
@@ -849,6 +850,14 @@ bool tmvaConfigs::wantAbort() const
 }
 
 /**
+   Return if we want to save workspace
+ */
+bool tmvaConfigs::useWS() const
+{
+  return _useWS;
+}
+
+/**
    A helper function to split "options" node in XML file
  */
 vector<TString> tmvaConfigs::getOptions() const
@@ -924,7 +933,7 @@ vector<vector<TString>> tmvaConfigs::getHistoBinning() const
       }
     }
   } else {
-    throw std::runtime_error("cannot find histoBinning");
+    // throw std::runtime_error("cannot find histoBinning");
   }
 
   return output;
