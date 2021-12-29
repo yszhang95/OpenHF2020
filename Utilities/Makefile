@@ -41,7 +41,7 @@ $(LIB)/MyTreeReaderDict.cxx: \
 	$(TreeReaderDir)/ParticleTree.hxx \
 	Linkdef.h
 	@echo "Generating dictionary..."
-	rootcling -I$(OPENHF2020TOP) -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
+	rootcling -I$(OPENHF2020TOP) --inlineInputHeader -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
 	@echo "Done..."
 	@echo
 
