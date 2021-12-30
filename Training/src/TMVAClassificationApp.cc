@@ -417,12 +417,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   if (pruneNTuple) ntp.pruneNTuple(keptBranches);
   cout << "NTuple prepared" << endl;
 
-  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
 
   // hard code for LambdaC begin
   MatchCriterion  matchCriterion(0.03, 0.1);
