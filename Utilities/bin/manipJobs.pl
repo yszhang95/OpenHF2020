@@ -32,6 +32,36 @@ sub findErrors {
             if ($line =~ /\$HOME\/\.root\.mimes/) {
                 $matched = 0;
             }
+            if ($line =~ /Cannot find tree with name/) {
+                $matched = 0;
+                close $fh;
+                last;
+            }
+            if ($matched) {
+		# print $line;
+                close $fh;
+                last;
+            }
+        }
+    }
+    return $matched
+}
+
+sub findNotExistingTreeErrors {
+    # not sure if I should use this name
+    my $myfile = $_[0];
+    my $pat = $_[1];
+    my $matched = 0;
+    open(my $fh, '<', $myfile);
+    while (my $line = <$fh>) {
+        if ($line =~ /$pat/i) {
+            $matched = 1;
+            if ($line =~ /OpenHF2020\.tar\.gz/) {
+                $matched = 0;
+            }
+            if ($line =~ /\$HOME\/\.root\.mimes/) {
+                $matched = 0;
+            }
             if ($matched) {
                 close $fh;
                 last;
@@ -131,16 +161,28 @@ sub analyze {
     # get the filtered errs
     my @myerrs_filtered = filterNames(\@myerrs, $mycluster);
     my @myerrs_buggy = ();
+    my @myerrs_buggy_inclusive = ();
     foreach (@myerrs_filtered) {
       #my $matched_err = findErrors("$mylogdir/$_", "ERROR.*[^(OpenHF2020.tar.gz)]");
-        my $matched_err = findErrors("$mylogdir/$_", "ERROR((?!OpenHF2020.tar.gz).)*");
+        my $matched_err = findErrors("$mylogdir/$_", "[Ee][Rr][Rr][Oo][Rr]((?!OpenHF2020.tar.gz).)*");
+        my $matched_err_inclusive = findNotExistingTreeErrors("$mylogdir/$_", "[Ee][Rr][Rr][Oo][Rr]((?!OpenHF2020.tar.gz).)*");
         if ($matched_err) {
             if ( $_ =~ /(.*)_(.*)\..+/ ) {
                 push(@myerrs_buggy, $2);
             }
         }
+        if ($matched_err_inclusive) {
+            if ( $_ =~ /(.*)_(.*)\..+/ ) {
+                push(@myerrs_buggy_inclusive, $2);
+            }
+        }
     }
     print "  Jobs having errors are:\n";
+    foreach (@myerrs_buggy_inclusive) {
+        print "    ", $mycluster, "_", $_, ".err\n";
+    }
+    print "\n";
+    print "  After excluding errors 'not existing tree', jobs having errors are:\n";
     foreach (@myerrs_buggy) {
         print "    ", $mycluster, "_", $_, ".err\n";
     }
@@ -149,7 +191,7 @@ sub analyze {
     # I copy the following from
     # https://www.perlmonks.org/?node_id=208210
     my (%hsh, @union_arr);
-    @hsh{@mylogs_buggy, @myerrs_buggy} = ();
+    @hsh{@mylogs_buggy, @myerrs_buggy_inclusive} = ();
     @union_arr = keys %hsh;
     @union_arr = sort @union_arr;
 
@@ -157,9 +199,51 @@ sub analyze {
     foreach (@union_arr) {
         print "    ", $mycluster, "_", $_, "\n";
     }
+    print "\n";
+
+    # I copy the following from
+    # https://www.oreilly.com/library/view/perl-cookbook/1565922433/ch04s09.html
+    my @union_errs = (); my @isect_errs = ();
+    my %union_errs = (); my %isect_errs = ();
+    my @union_logs = (); my @isect_logs = ();
+    my %union_logs = (); my %isect_logs = ();
+    my @diff_errs  = (); my @diff_logs  = ();
+
+    foreach my $ele (@myerrs_buggy, @myerrs_buggy_inclusive) { $union_errs{$ele}++ && $isect_errs{$ele}++ }
+    @union_errs = keys %union_errs;
+    @isect_errs = keys %isect_errs;
+    foreach (my $u = @union_errs) {
+	foreach (my $i = @isect_errs) {
+	    if ( $u != $i ) {
+		push(@diff_errs, $u);
+	    }
+	}
+    }
+
+
+    foreach my $ele (@diff_errs, @mylogs_buggy) { $union_logs{$ele}++ && $isect_logs{$ele}++ }
+    foreach (my $u = @union_logs) {
+	foreach (my $i = @isect_logs) {
+	    if ( $u ne $i ) {
+		print "diff succeed\n";
+		push(@diff_logs, $u);
+	    }
+	}
+    }
+
+    my (%hsh_excl, @union_arr_excl);
+    @hsh_excl{@diff_logs, @myerrs_buggy} = ();
+    @union_arr_excl = keys %hsh_excl;
+    @union_arr_excl = sort @union_arr_excl;
+
+    print "  After excluding the error 'not existing tree', the remaining of these jobs are:\n";
+    foreach (@union_arr_excl) {
+        print "    ", $mycluster, "_", $_, "\n";
+    }
     print "\nAnalyzed $mylog\n\n";
 
-    return @union_arr;
+    # return @union_arr;
+    return @union_arr_excl;
 }
 
 sub resubmit {
