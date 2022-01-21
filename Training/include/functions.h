@@ -125,6 +125,7 @@ public:
   bool                                        selectDeDx() const;
   bool                                        trigReweight() const;
   bool                                        wantAbort() const;
+  bool                                        useWS() const;
 
 private:
   std::map<std::string, TString>              getMethod(const std::string&) const;
@@ -161,6 +162,7 @@ private:
   bool _selectDeDx;
   bool _trigReweight;
   bool _wantAbort;
+  bool _useWS;
   bool _debug;
 };
 
