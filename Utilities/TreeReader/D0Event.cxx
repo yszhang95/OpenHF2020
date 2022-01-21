@@ -1,5 +1,5 @@
 #ifndef D0Event_h
-#include "TreeReader/D0Event.h"
+#include "Utilities/TreeReader/D0Event.h"
 #endif
 
 #ifndef D0Event_cxx
@@ -24,6 +24,20 @@ D0Event::~D0Event()
 {
   if (!fChain_D0) return;
   delete fChain_D0->GetCurrentFile();
+}
+
+Long64_t D0Event::LoadTree(Long64_t entry)
+{
+  // Set the environment to read one entry
+  if (!fChain_D0) return -5;
+  Long64_t centry = fChain_D0->LoadTree(entry);
+  if (centry < 0) return centry;
+  if (fChain_D0->GetTreeNumber() != fCurrent) {
+    fCurrent = fChain_D0->GetTreeNumber();
+    Notify();
+    std::clog << "Successfully loaded tree " << fCurrent << std::endl;
+  }
+  return centry;
 }
 
 Int_t D0Event::GetEntry(Long64_t entry)
@@ -72,6 +86,8 @@ void D0Event::Init(TTree *d0Collection, TTree *evt)
 
   fChain_evt = evt;
   fChain_evt->SetMakeClass(1);
+
+  fCurrent = -1;
 
   fChain_D0->AddFriend(fChain_evt, "event");
 

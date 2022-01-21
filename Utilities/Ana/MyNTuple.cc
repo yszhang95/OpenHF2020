@@ -1,21 +1,21 @@
 #ifndef MyNTuple_H
-#include "Ana/MyNTuple.h"
+#include "Utilities/Ana/MyNTuple.h"
 #endif
 
 #ifndef ParticleTreeMC_hxx
-#include "TreeReader/ParticleTreeMC.hxx"
+#include "Utilities/TreeReader/ParticleTreeMC.hxx"
 #endif
 
 #ifndef ParticleTreeData_hxx
-#include "TreeReader/ParticleTreeData.hxx"
+#include "Utilities/TreeReader/ParticleTreeData.hxx"
 #endif
 
 #ifndef HelpClass_H
-#include "Ana/Common.h"
+#include "Utilities/Ana/Common.h"
 #endif
 
 #ifndef TreeHelpers_H
-#include "Ana/TreeHelpers.h"
+#include "Utilities/Ana/TreeHelpers.h"
 #endif
 
 #ifdef MyNTuple_H
@@ -71,7 +71,6 @@ void MyNTuple::initNTuple()
   if (!isMC) t->Branch("hltRecordLumi", &hltRecordLumi);
   if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
   if (!isMC) t->Branch("cand_Ntrkoffline", &cand_Ntrkoffline);
-  if (!isMC) t->Branch("Ntrkoffline", &Ntrkoffline);
   if (!isMC) {
     for (UInt_t i=0; i<nTrigs; ++i) {
       t->Branch(Form("trigBit_%u", i), &trigBit[i]);

@@ -20,6 +20,7 @@ class D0Event {
 public:
   D0Event(TTree *d0Collection=0, TTree *evt=0);
   virtual ~D0Event();
+  virtual Long64_t LoadTree(Long64_t entry);
   virtual Long64_t GetEntriesFast() { return fChain_D0->GetEntriesFast(); }
   virtual Long64_t GetEntries();
   virtual Int_t    GetEntry(Long64_t entry);
@@ -79,6 +80,8 @@ public:
 protected :
    TTree          *fChain_D0;   //!pointer to the analyzed TTree or TChain of D0 candidates
    TTree          *fChain_evt;   //!pointer to the analyzed TTree or TChain of evts
+
+   Int_t          fCurrent;
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
