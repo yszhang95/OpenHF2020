@@ -1,10 +1,10 @@
 # Makefile
 LIB=lib
-TreeReaderDir=TreeReader
-Ana=Ana
+TreeReaderDir=$(OPENHF2020TOP)/Utilities/TreeReader
+Ana=$(OPENHF2020TOP)/Utilities/Ana
 
 CXXFLAGS=$(shell root-config --cflags)
-CXXFLAGS+=-I$(OPENHF2020TOP)/Utilities
+CXXFLAGS+=-I$(OPENHF2020TOP)
 LDFLAGS=$(shell root-config --ldflags)
 LDFLAGS+=$(shell root-config --libs)
 CXX=$(shell root-config --cxx)
@@ -41,7 +41,7 @@ $(LIB)/MyTreeReaderDict.cxx: \
 	$(TreeReaderDir)/ParticleTree.hxx \
 	Linkdef.h
 	@echo "Generating dictionary..."
-	rootcling -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
+	rootcling -I$(OPENHF2020TOP) --inlineInputHeader -f $@ -rmf $(LIB)/MyTreeReaderDict.rootmap -rml $(LIB)/libMyTreeReader.so $^
 	@echo "Done..."
 	@echo
 

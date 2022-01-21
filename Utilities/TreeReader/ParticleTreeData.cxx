@@ -1,7 +1,7 @@
 #ifndef ParticleTreeData_cxx
 #define ParticleTreeData_cxx
 #include <iostream>
-#include "ParticleTreeData.hxx"
+#include "Utilities/TreeReader/ParticleTreeData.hxx"
 
 using std::cout;
 using std::endl;

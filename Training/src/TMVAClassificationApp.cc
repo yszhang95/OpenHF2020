@@ -52,13 +52,13 @@
 #include "TMVA/DataLoader.h"
 #endif
 
-#include "functions.h"
-#include "TreeReader/ParticleTreeMC.hxx"
-#include "TreeReader/ParticleTreeData.hxx"
+#include "Training/include/functions.h"
+#include "Utilities/TreeReader/ParticleTreeMC.hxx"
+#include "Utilities/TreeReader/ParticleTreeData.hxx"
 
-#include "Ana/Common.h"
-#include "Ana/TreeHelpers.h"
-#include "Ana/MyNTuple.h"
+#include "Utilities/Ana/Common.h"
+#include "Utilities/Ana/TreeHelpers.h"
+#include "Utilities/Ana/MyNTuple.h"
 
 using std::map;
 using std::tuple;
@@ -189,11 +189,14 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     }
   }
 
-  TFile outputFileWS( outfileNameWS, "RECREATE" );
+  TFile* outputFileWSPtr;
+  const bool useWS = configs.useWS();
+  if (useWS) {
+    outputFileWSPtr = TFile::Open( outfileNameWS, "RECREATE" );
+  }
   RooAbsData::setDefaultStorageType(RooAbsData::Tree);
   const auto wsStrs = configs.getWorkspaceStrs();
   const auto dsStrs = configs.getDataSetStrs();
-  const bool useWS = !wsStrs.empty();
   RooRealVar NtrkPV("Ntrkoffline", "Ntrkoffline w.r.t. PV with highest N", 0, 400, "");
   // LambdaC kinematic info
   RooRealVar cand_mass("cand_mass", "mass of #Lambda_{c}^{+} candidate", 2.07, 2.5, "GeV");
@@ -326,10 +329,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   // Read data
   // Prepare output histogram
   const auto& binnings = configs.getHistoBinning();
+  const bool notFillHists = binnings.empty();
   vector<unique_ptr<TH3D>> hMassNtrkMVA;
   vector<unique_ptr<TH3D>> hMassPtMVA[2];
   for (size_t iy=0; iy<2; ++iy) {
     auto& vec = hMassPtMVA[iy];
+    if (notFillHists) break;
     vec.resize(methodNames_copy.size());
     for (size_t i=0; i<methodNames.size(); i++) {
       auto& ptr = vec[i];
@@ -347,9 +352,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     }
   }
 
-  hMassNtrkMVA.resize(methodNames_copy.size());
+  if (!notFillHists) {
+    hMassNtrkMVA.resize(methodNames_copy.size());
+  }
   for (size_t i=0; i!=methodNames.size(); i++) {
     auto& ptr = hMassNtrkMVA[i];
+    if (notFillHists) break;
     const auto& binning = binnings.at(i);
     if (binning.size() == 9) {
       ptr = std::make_unique<TH3D>
@@ -409,12 +417,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   if (pruneNTuple) ntp.pruneNTuple(keptBranches);
   cout << "NTuple prepared" << endl;
 
-  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 300, 0., 300.);
-  TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 300, 0., 300.);
+  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
 
   // hard code for LambdaC begin
   MatchCriterion  matchCriterion(0.03, 0.1);
@@ -436,7 +444,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     auto jentry =  p.LoadTree(ientry);
     if (jentry < 0 && jentry != -2) {
       outputFile.Write();
-      outputFileWS.Write();
+      if (useWS) outputFileWSPtr->Write();
+      if (useWS) outputFileWSPtr->Close();
       delete reader;
       delete pp;
       return jentry;
@@ -450,7 +459,8 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
       std::cerr << "[ERROR] in TMVAClassificationApp: Cannot read "
                 << ientry << "th entry properly" << std::endl;
       outputFile.Write();
-      outputFileWS.Write();
+      if (useWS) outputFileWSPtr->Write();
+      if (useWS) outputFileWSPtr->Close();
       delete reader;
       delete pp;
       return -2;
@@ -655,6 +665,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
           const auto& methodName = methodNames.at(i);
           mvaValues[i] = reader->EvaluateMVA(methodName);
           passMVA = passMVA || (selectMVA && mvaValues[i] > std::stod(configs.getMVACutMins().at(i)));
+	  if (notFillHists) continue;
           if (abs(ntp.cand_y)<1.) {
             hMassPtMVA[0][i]->Fill(ntp.cand_mass, ntp.cand_pT, mvaValues[i], eventWeight);
           } else if (abs(ntp.cand_y)<2.) {
@@ -723,11 +734,12 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
   std::cout << "==> Wrote root file: " << outputFile.GetName() << std::endl;
 
-  outputFileWS.cd();
   if (useWS) {
+    outputFileWSPtr->cd();
     ws.import(ds);
     ws.Write();
     // ds.Write();
+    outputFileWSPtr->Close();
   }
   std::cout << "==> TMVAClassificationApplication is done!" << std::endl;
 

@@ -15,7 +15,7 @@
 // Header file for the classes stored in the TTree if any.
 #include <vector>
 
-#include "ParticleTree.hxx"
+#include "Utilities/TreeReader/ParticleTree.hxx"
 
 class ParticleTreeMC : public ParticleTree {
 public :
