@@ -70,5 +70,7 @@ Training/test/dataset/
 *.compiles*
 *lists*
 MCStudies/MCSamples
-D0Productions/
+D0Productions/*
+!D0Productions/skimMC.C
+!D0Productions/skimReco.C
 !Utilities/bin/*
