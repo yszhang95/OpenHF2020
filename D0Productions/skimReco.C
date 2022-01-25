@@ -22,6 +22,7 @@
 #include "TH3D.h"
 #include "TMath.h"
 #include "TNtuple.h"
+#include "TStopwatch.h"
 #include "TString.h"
 #include "TSystem.h"
 
@@ -66,6 +67,9 @@ struct D0NTuple
 
 void skimReco(std::string inputList="test.list", std::string effFileName="")
 {
+  TStopwatch ts;
+  ts.Start();
+
   const int nPt = 6;
   const double pTBins[nPt+1] = {2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0};
 
@@ -246,4 +250,6 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
   // ofile->Close();
   // ofile->ls();
   delete ofile;
+  ts.Stop();
+  ts.Print();
 }

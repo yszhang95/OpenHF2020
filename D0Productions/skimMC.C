@@ -1,5 +1,7 @@
 void skimMC(std::string inputList)
 {
+  TStopwatch ts;
+  ts.Start();
   ROOT::EnableImplicitMT();
   std::ifstream infiletxt(inputList.c_str());
   std::string line;
@@ -66,4 +68,6 @@ void skimMC(std::string inputList)
   ROOT::RDF::RSnapshotOptions opts;
   opts.fMode = "update";
   for (auto p : out_tree_ptrs) p.second.Snapshot("D0_"+p.first, ofile.GetName(), ".{1,}", opts);
+  ts.Stop();
+  ts.Print();
 }
