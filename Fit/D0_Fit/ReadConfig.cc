@@ -1,9 +1,18 @@
 #include <stdexcept>
 
 #include "TPRegexp.h"
+#include "TObjArray.h"
+#include "TString.h"
+#include "TObjString.h"
 
 #include "ReadConfig.h"
 
+#include <iostream>
+#include <sstream>
+
+#ifdef __READ_CONFIG__
+
+using std::ifstream;
 using std::istringstream;
 using std::set;
 using std::string;
@@ -90,19 +99,19 @@ void ParConfigs::initialize(ifstream& file)
 //   return ret;
 // }
 
-const bool ParConfigs::hasInit(const std::string& n) const
+bool ParConfigs::hasInit(const std::string& n) const
 {
   return std::get<0>(_data.at(n));
 }
-const double ParConfigs::getInit(const std::string& n) const
+double ParConfigs::getInit(const std::string& n) const
 {
   return std::get<1>(_data.at(n));
 }
-const double ParConfigs::getMin(const std::string& n) const
+double ParConfigs::getMin(const std::string& n) const
 {
   return std::get<2>(_data.at(n));
 }
-const double ParConfigs::getMax(const std::string& n) const
+double ParConfigs::getMax(const std::string& n) const
 {
   return std::get<3>(_data.at(n));
 }
@@ -272,19 +281,26 @@ void FitParConfigs::ParConfigs::initialize(const vector<string>& block)
   }
 }
 
-const bool FitParConfigs::ParConfigs::hasInit(const std::string& n) const
+void
+FitParConfigs::ParConfigs::setInit(const std::string n, const double _init)
+{
+  if (std::get<0>(_data.at(n))) {
+    std::get<1>(_data.at(n)) = _init;
+  }
+}
+bool FitParConfigs::ParConfigs::hasInit(const std::string& n) const
 {
   return std::get<0>(_data.at(n));
 }
-const double FitParConfigs::ParConfigs::getInit(const std::string& n) const
+double FitParConfigs::ParConfigs::getInit(const std::string& n) const
 {
   return std::get<1>(_data.at(n));
 }
-const double FitParConfigs::ParConfigs::getMin(const std::string& n) const
+double FitParConfigs::ParConfigs::getMin(const std::string& n) const
 {
   return std::get<2>(_data.at(n));
 }
-const double FitParConfigs::ParConfigs::getMax(const std::string& n) const
+double FitParConfigs::ParConfigs::getMax(const std::string& n) const
 {
   return std::get<3>(_data.at(n));
 }
@@ -357,7 +373,7 @@ void FitParConfigs::OutputConfigs::initialize(const vector<string>& block)
     string theType = temp.at(1);
     string thePath = temp.at(2);
     auto it_types = _types.insert( {category, theType} );
-    auto it_paths = _paths.insert( {category, thePath} );
+    // auto it_paths = _paths.insert( {category, thePath} );
     if (!it_types.second || !it_types.second) {
       throw std::logic_error("There are duplicates in OutputConfigs.");
     }
@@ -371,3 +387,5 @@ void FitParConfigs::OutputConfigs::initialize(const vector<string>& block)
     throw std::logic_error("There are duplicate paths in OutputConfigs.");
   }
 }
+
+#endif

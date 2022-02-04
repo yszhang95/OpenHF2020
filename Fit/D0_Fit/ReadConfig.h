@@ -1,10 +1,14 @@
 #include <fstream>
 #include <map>
+#include <set>
 #include <string>
 #include <tuple>
 #include <vector>
 
 #include "TString.h"
+
+#ifndef __READ_CONFIG__
+#define __READ_CONFIG__
 
 /**
    Helper class, configuration in format of
@@ -16,16 +20,16 @@ public:
   explicit ParConfigs(const char*);
   ParConfigs(const TString&);
   ParConfigs(const std::string&);
-  const bool hasInit(const std::string&) const;
-  const double getInit(const std::string&) const;
-  const double getMin(const std::string&) const;
-  const double getMax(const std::string&) const;
+  bool hasInit(const std::string&) const;
+  double getInit(const std::string&) const;
+  double getMin(const std::string&) const;
+  double getMax(const std::string&) const;
   // const  operator[] (unsigned int i) const;
   void setInit(const std::string n, const double _init);
   void setMin(const std::string n, const double _min);
   void setMax(const std::string n, const double _max);
 private:
-  void initialize(ifstream&);
+  void initialize(std::ifstream&);
   std::map<std::string,
            std::tuple<bool, double, double, double > > _data;
 
@@ -66,14 +70,11 @@ public:
   public:
     friend class FitParConfigs;
     explicit ParConfigs() {}
-    ParConfigs(const ParConfigs&) = delete;
-    ParConfigs& operator=(const ParConfigs&) = delete;
-    ParConfigs(ParConfigs&&) = delete;
     bool empty() const { return _data.empty(); }
-    const bool hasInit(const std::string&) const;
-    const double getInit(const std::string&) const;
-    const double getMin(const std::string&) const;
-    const double getMax(const std::string&) const;
+    bool hasInit(const std::string&) const;
+    double getInit(const std::string&) const;
+    double getMin(const std::string&) const;
+    double getMax(const std::string&) const;
     void setInit(const std::string n, const double _init);
     void setMin(const std::string n, const double _min);
     void setMax(const std::string n, const double _max);
@@ -87,9 +88,6 @@ public:
   public:
     friend class FitParConfigs;
     explicit InputConfigs() {}
-    InputConfigs(const InputConfigs&) = delete;
-    InputConfigs& operator=(const InputConfigs&) = delete;
-    InputConfigs(InputConfigs&&) = delete;
     bool empty() const { return _paths.empty(); }
     std::vector<std::string> getPaths(const std::string&) const;
     std::string getType(const std::string&) const;
@@ -106,9 +104,6 @@ public:
   public:
     friend class FitParConfigs;
     explicit OutputConfigs() {}
-    OutputConfigs(const OutputConfigs&) = delete;
-    OutputConfigs& operator=(const OutputConfigs&) = delete;
-    OutputConfigs(OutputConfigs&&) = delete;
     bool empty() const { return _paths.empty(); }
     std::string getPath(const std::string& category)const
     { return _paths.at(category); }
@@ -123,6 +118,7 @@ public:
   explicit FitParConfigs(const char*);
   explicit FitParConfigs(const TString&);
   explicit FitParConfigs(const std::string&);
+  bool empty() const { return _data.empty(); };
   void dump();
   const FitParConfigs::ParConfigs& getParConfigs() const
   { return _parConfigs; }
@@ -132,9 +128,11 @@ public:
   { return _outputConfigs; }
 
 private:
-  void initialize(ifstream&);
+  void initialize(std::ifstream&);
   std::map<std::string, std::vector<std::string > > _data;
   ParConfigs _parConfigs;
   InputConfigs _inputConfigs;
   OutputConfigs _outputConfigs;
 };
+
+#endif
