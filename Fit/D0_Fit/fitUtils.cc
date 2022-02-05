@@ -63,6 +63,44 @@ void setCanvas(TCanvas& c)
   lowerPad->SetFillStyle(0);
 }
 
+void setKinematics(TVirtualPad* pad, map<string, string> strs,
+                   const double x, const double y)
+{
+  pad->cd();
+  TLatex tex;
+  if (strs.count("alignment")) {
+    // integer
+    auto _code = std::stoi(strs.at("alignment"));
+    tex.SetTextAlign(_code);
+  } else tex.SetTextAlign(21);
+  if (strs.count("font")) {
+    // integer
+    auto _code = std::stoi(strs.at("font"));
+    tex.SetTextFont(_code);
+  } else tex.SetTextFont(42);
+  if (strs.count("fontsize")) {
+    // float number
+    auto _code = std::stof(strs.at("fontsize"));
+    tex.SetTextAlign(_code);
+  }
+  const auto fontSize = tex.GetTextSize();
+  const auto moveUpFactor = 1.2 * fontSize;
+  int n = 0;
+  float ypos = y;
+  if (strs.count("pT")) {
+    ypos = y + (n++) * moveUpFactor;
+    tex.DrawLatexNDC(x, ypos, strs.at("pT").c_str());
+  }
+  if (strs.count("y")) {
+    ypos = y + (n++) * moveUpFactor;
+    tex.DrawLatexNDC(x, ypos, strs.at("y").c_str());
+  }
+  if (strs.count("mult")) {
+    ypos = y + (n++) * moveUpFactor;
+    tex.DrawLatexNDC(x, ypos, strs.at("mult").c_str());
+  }
+}
+
 void setCMS(TVirtualPad* pad)
 {
   pad->cd();
@@ -152,6 +190,7 @@ void fitSignal(RooRealVar& mass, RooAbsData& ds,
   auto pad = c.cd(1);
   setCMS(pad);
   setCollision(pad);
+  setKinematics(pad, strs);
 
   const auto fig_path = strs.at("fig_path")+"_signal.png";
   c.Print(fig_path.c_str());
@@ -209,6 +248,7 @@ void fitSwap(RooRealVar& mass, RooAbsData& ds,
   auto pad = c.cd(1);
   setCMS(pad);
   setCollision(pad);
+  setKinematics(pad, strs);
 
   const auto fig_path = strs.at("fig_path")+"_swap.png";
   c.Print(fig_path.c_str());
@@ -311,6 +351,7 @@ void fitSignalAndSwap(RooRealVar& mass, RooAbsData& ds,
   auto pad = c.cd(1);
   setCMS(pad);
   setCollision(pad);
+  setKinematics(pad, strs);
 
   const auto fig_path = strs.at("fig_path")+"_MCD0all.png";
   c.Print(fig_path.c_str());
@@ -374,6 +415,7 @@ void fitCBShapeKK(RooRealVar& mass, RooAbsData& ds,
   auto pad = c.cd(1);
   setCMS(pad);
   setCollision(pad);
+  setKinematics(pad, strs);
 
   const auto fig_path = strs.at("fig_path")+"_MCKK.png";
   c.Print(fig_path.c_str());
@@ -441,6 +483,7 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
   auto pad = c.cd(1);
   setCMS(pad);
   setCollision(pad);
+  setKinematics(pad, strs);
 
   const auto fig_path = strs.at("fig_path")+"_MCPiPi.png";
   c.Print(fig_path.c_str());
@@ -634,7 +677,7 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   ds.plotOn(mass_frame, Name("curve_dataset"), Title(""));
   sum.plotOn(mass_frame, Components(bkg), LineColor(kRed),
              Normalization(1.0, RooAbsReal::RelativeExpected),
-             LineStyle(kDashed),
+             LineStyle(kDashed), MarkerStyle(20),
              Range("full"), NormRange("full"),
              Name("curve_bkg")
              );
@@ -715,6 +758,12 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   auto pad = c.cd(1);
   setCMS(pad);
   setCollision(pad);
+  setKinematics(pad, strs);
+  TLatex tex;
+  tex.SetTextAlign(11);
+  tex.DrawLatexNDC(0.2, 0.2,
+                   Form("N_{sig}=%.1f+/-%.1f", nsig.getVal(),
+                        nsig.getErrorHi()));
 
   const auto fig_path = strs.at("fig_path")+"_data.png";
   const auto fig_path_pdf = strs.at("fig_path")+"_data.pdf";

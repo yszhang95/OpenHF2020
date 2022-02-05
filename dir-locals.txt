@@ -3,6 +3,7 @@
 
 ;;; an example
 ;;; include paths are set manually
+;;; set the c++ standard as you want
 
 ((c++-mode . ((flycheck-gcc-include-path . ("/path/to/OpenHF2020"
                                             "/path/to/c++/include"
@@ -14,4 +15,7 @@
                                               ))
               (company-clang--arguments . ("-I/path/to/OpenHF2020"
                                            "-I/path/to/root/include"))
+              (flycheck-gcc-language-standard. "c++17")
+              (flycheck-clang-language-standard. "c++17")
+
               )))

@@ -45,6 +45,10 @@ void setVLines(RooCurve* curve);
 
 void setCanvas(TCanvas& c);
 
+void setKinematics(TVirtualPad* pad,
+                   std::map<std::string, std::string> strs={},
+                   const double x=0.25, const double y=0.7);
+
 void setCMS(TVirtualPad* pad);
 
 void setCollision(TVirtualPad* pad);

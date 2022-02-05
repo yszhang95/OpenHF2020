@@ -21,7 +21,7 @@ void fit()
   RooRealVar y("y", "rapidity", -2.4, 2.4);
   RooRealVar matchGEN("matchGEN", "matchGEN", -1, 2);
   RooRealVar isSwap("isSwap", "isSwap", -1, 2);
-  RooRealVar dz1p0("dzp10", "dz1p0", -2.4, 2.4);
+  RooRealVar dz1p0("dz1p0", "dz1p0", -2.4, 2.4);
 
   mass.setRange("full", 1.725, 2.0);
   mass.setRange("signal", 1.725, 2.0);
@@ -108,7 +108,7 @@ void fitAlice()
   RooRealVar y("y", "rapidity", -2.4, 2.4);
   RooRealVar matchGEN("matchGEN", "matchGEN", -1, 2);
   RooRealVar isSwap("isSwap", "isSwap", -1, 2);
-  RooRealVar dz1p0("dzp10", "dz1p0", -2.4, 2.4);
+  RooRealVar dz1p0("dz1p0", "dz1p0", -2.4, 2.4);
 
   mass.setRange("full", 1.725, 2.0);
   mass.setRange("signal", 1.725, 2.0);
@@ -117,19 +117,22 @@ void fitAlice()
 
   // for loop
   std::map<std::string, std::string> strs;
-  const int nPt = 15;
+  const int nPt = 14;
   const float pts[nPt+1] =   {2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 9.0, 10.0};
   const float treeMin[nPt] = {2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 6.0, 6.0, 8.0, 8.0};
   const float treeMax[nPt] = {3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 8.0, 8.0, 8.0, 8.0, 10., 10.};
   for (int ipt=0; ipt<nPt; ++ipt) {
-    // redirect messages
+    // redirect messages, do not forget to get the stream back
     std::string path_name_log = Form("output/D0Fit_pT%.1fto%.1f.log",
                                      pts[ipt], pts[ipt+1]);
     std::string treePt = Form("D0_pT%.0fto%.0f", treeMin[ipt], treeMax[ipt]);
     std::string fig_path = Form("output/pT%.1fto%.1f", pts[ipt], pts[ipt+1]);
     strs["fig_path"] = fig_path;
+    strs["alignment"] = "22";
+    strs["pT"] = Form("%.1f<p_{T}<%.1f", pts[ipt], pts[ipt+1]);
+    strs["y"] = "|y|<0.5";
     std::string cuts = Form("pT > %.1f && pT < %.1f", pts[ipt], pts[ipt+1]);
-    cuts += " && dzp10 > 0.5";
+    cuts += " && dz1p0 > 0.5";
     cuts += " && abs(y)< 0.5";
     if (!gSystem->AccessPathName(path_name_log.c_str())) {
       gSystem->Unlink(path_name_log.c_str());
@@ -194,7 +197,12 @@ void fitAlice()
                       RooArgSet(mass, pT, y, dz1p0),
                       cuts.c_str());
     cout << cuts << endl;
+    // special for data
+    strs["mult"] = "MB";
     fitD0(mass, dsData, par, strs);
     std::cout << std::endl;
+
+    // get the stream back
+    gSystem->RedirectOutput(nullptr);
   }
 }
