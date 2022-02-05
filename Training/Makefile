@@ -12,7 +12,7 @@ CXX=$(shell root-config --cxx)
 CCFLAGS = -O2
 CCFLAGS += $(shell root-config --cflags)
 
-LDFLAGS=$(shell root-confi --libs)
+LDFLAGS=$(shell root-config --libs)
 
 
 LIBS = $(shell root-config --libdir)

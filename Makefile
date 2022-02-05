@@ -1,12 +1,33 @@
+OPENHF2020TOPDIR:=${OPENHF2020TOP}
+
+CXX=$(shell root-config --cxx)
+
+CXXFLAGS=$(shell root-config --cflags)
+CXXFLAGS+=-I.
+CXXFLAGS+=-I$(OPENHF2020TOPDIR)
+CXXFLAGS+=-O2
+
+CCFLAGS:=-O2
+CCFLAGS+=$(shell root-config --cflags)
+
+LDFLAGS:=$(shell root-config --ldflags)
+LDFLAGS+=$(shell root-config --libs)
+
+ROOTLIBS:=$(shell root-config --libdir)
+ROOTINCS:=$(shell root-config --incdir)
+
+
+
 .PHONY: all
 all::
 	@echo Start building...
 	@echo
 
 -include Utilities/Makefile.inc
+-include Training/Makefile.inc
 
-all:: $(LIB) $(LIB)/libMyTreeReader.so
+all:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyTreeReader.so $(MYMVABINS)
 
 .PHONY: clean
 clean:
-	rm -rf $(LIB)
+	rm -rf $(MYLIB) $(MYMVABINDIR)
