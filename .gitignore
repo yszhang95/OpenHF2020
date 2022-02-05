@@ -50,6 +50,9 @@ CMSSW_*_*_*
 # condor script
 *jdl
 
+# emacs local variable
+.dir-locals.el
+
 # My special files
 ParticleTree.hh
 ParticleTree.C

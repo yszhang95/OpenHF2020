@@ -22,6 +22,7 @@
 #include "TH3D.h"
 #include "TMath.h"
 #include "TNtuple.h"
+#include "TStopwatch.h"
 #include "TString.h"
 #include "TSystem.h"
 
@@ -54,6 +55,7 @@ int findPtBin(const int n, double const* pts, const double pt)
 struct D0NTuple
 {
   float  mva;
+  float  y;
   float  mass;
   float  pT;
   float  eta;
@@ -66,6 +68,9 @@ struct D0NTuple
 
 void skimReco(std::string inputList="test.list", std::string effFileName="")
 {
+  TStopwatch ts;
+  ts.Start();
+
   const int nPt = 6;
   const double pTBins[nPt+1] = {2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0};
 
@@ -134,7 +139,7 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
 
   TFile* ofile = TFile::Open(("d0output_" + inListBaseName + ".root").c_str(), "recreate");
   D0NTuple dtuple;
-  TNtuple t("D0NTuple", "D0NTuple", "mva:mass:pT:eta:phi:dzp10:gplus:weight:Ntrkoffline");
+  TNtuple t("D0NTuple", "D0NTuple", "mva:y:mass:pT:eta:phi:dz1p0:gplus:weight:Ntrkoffline");
 
   TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
   TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
@@ -158,7 +163,6 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
     auto bytes = devt.GetEntry(ientry);
     auto jentry = devt.LoadTree(ientry);
     if (jentry < 0) break;
-    //if (ientry > 200) break;
     //cout << devt.EvtSel(4) << "\t" << devt.nTrkOffline() << endl;
 
     const auto ntrk = devt.nTrkOffline();
@@ -190,9 +194,6 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
       }
     }
 
-    // if (devt.EvtSel(4))  {
-    // } else continue;
-
     const auto candSize = devt.CandSize();
     if (candSize) {
       for (int id0=0; id0<candSize; ++id0) {
@@ -201,22 +202,25 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
         //  << devt.Y(id0) << "\t"
         //  << devt.Eta(id0) << "\t"
         //  << devt.Mva(id0) << endl;
-        if (devt.Mva(id0) < 0.56) continue;
+
+        // make use of loose cuts
+        //if (devt.Mva(id0) < 0.56) continue;
+        if (devt.Mva(id0) < 0.5) continue;
         if (std::abs(devt.Y(id0)) > 1) continue;
-        auto ipt = findPtBin(nPt, pTBins, devt.Pt(id0));
-        if (ipt<0) continue;
 
         dtuple.mva = devt.Mva(id0);
         dtuple.mass = devt.Mass(id0);
+        dtuple.y  = devt.Y(id0);
         dtuple.pT = devt.Pt(id0);
         dtuple.eta = devt.Eta(id0);
         dtuple.phi = devt.Phi(id0);
         dtuple.dz1p0 = devt.EvtSel(4); // dz1p0
-        dtuple.gplus = devt.EvtSel(5); // dz1p0
+        dtuple.gplus = devt.EvtSel(5); // gplus
         dtuple.weight = weight;
         dtuple.Ntrkoffline = ntrk;
 
         t.Fill(dtuple.mva,
+               dtuple.y,
                dtuple.mass,
                dtuple.pT,
                dtuple.eta,
@@ -226,6 +230,9 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
                dtuple.weight,
                dtuple.Ntrkoffline
                );
+
+        auto ipt = findPtBin(nPt, pTBins, devt.Pt(id0));
+        if (ipt<0) continue;
 
         if (reweight) {
           hMass[ipt]->Fill(devt.Mass(id0), weight);
@@ -246,4 +253,6 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
   // ofile->Close();
   // ofile->ls();
   delete ofile;
+  ts.Stop();
+  ts.Print();
 }

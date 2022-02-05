@@ -8,37 +8,29 @@
 # Code   : Example usage for TMVA analyses                           #
 ######################################################################
 
-CXX=$(shell root-config --cxx)
-CCFLAGS = -O2
-CCFLAGS += $(shell root-config --cflags)
+MYMVASRCDIR := $(OPENHF2020TOPDIR)/Training/src
+MYMVABINDIR := $(OPENHF2020TOPDIR)/Training/bin
+MYMVABINS := \
+	$(MYMVABINDIR)/TMVACrossValidation \
+	$(MYMVABINDIR)/TMVACrossValidationApp \
+	$(MYMVABINDIR)/TMVAClassification \
+	$(MYMVABINDIR)/TMVAClassificationApp \
+	$(MYMVABINDIR)/TMVAClassificationAppNtuple
 
-LDFLAGS=$(shell root-config --libs)
 
-
-LIBS = $(shell root-config --libdir)
-INCS = $(shell root-config --incdir)
-
-BIN = bin bin/TMVACrossValidation bin/TMVACrossValidationApp bin/TMVAClassification bin/TMVAClassificationApp bin/TMVAClassificationAppNtuple
-
-default : $(BIN)
-
-bin/TMVA%: bin/TMVA%.o bin/functions.o
+$(MYMVABINDIR)/TMVA%: $(MYMVABINDIR)/TMVA%.o $(MYMVABINDIR)/functions.o
 	@echo -n "Linking $@ ... "
-	$(CXX) $(CCFLAGS) $^ $(shell root-config --libs) -L$(OPENHF2020TOP)/Utilities/lib \
+	$(CXX) $(CCFLAGS) $^ $(LDFLAGS) -L$(MYLIB) \
 		-lMyTreeReader -lGenVector -lMLP -lMinuit -lTreePlayer -lTMVA -lTMVAGui -lXMLIO \
 		-lRooFit -lRooFitCore -lMLP -lm  -g -o $@
 
-bin/%.o: src/%.cc
+$(MYMVABINDIR)/%.o: $(MYMVASRCDIR)/%.cc
 	@echo -n "Building $@ ... "
-	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(INCS)) -I$(OPENHF2020TOP)  -g -c -o $@
+	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(ROOTINCS)) -I$(OPENHF2020TOPDIR) -g -c -o $@
 	@echo "Done"
 
-bin:
+$(MYMVABINDIR):
 	@echo "Creating directory bin"
-	@mkdir bin
+	@mkdir $(MYMVABINDIR)
 	@echo "Done"
 	@echo
-
-.PHONY: clean
-clean:
-	rm -r bin
