@@ -1,0 +1,17 @@
+;;; Directory Local Variables
+;;; For more information see (info "(emacs) Directory Variables")
+
+;;; an example
+;;; include paths are set manually
+
+((c++-mode . ((flycheck-gcc-include-path . ("/path/to/OpenHF2020"
+                                            "/path/to/c++/include"
+                                            "/path/to/root/include"
+                                            ))
+              (flycheck-clang-include-path . ("/path/to/OpenHF2020"
+                                              "/path/to/c++/include"
+                                              "/path/to/root/include"
+                                              ))
+              (company-clang--arguments . ("-I/path/to/OpenHF2020"
+                                           "-I/path/to/root/include"))
+              )))
