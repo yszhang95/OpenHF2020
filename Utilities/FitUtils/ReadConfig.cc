@@ -1,14 +1,13 @@
 #include <stdexcept>
+#include <iostream>
+#include <sstream>
 
 #include "TPRegexp.h"
 #include "TObjArray.h"
 #include "TString.h"
 #include "TObjString.h"
 
-#include "ReadConfig.h"
-
-#include <iostream>
-#include <sstream>
+#include "Utilities/FitUtils/ReadConfig.h"
 
 #ifdef __READ_CONFIG__
 
@@ -19,118 +18,6 @@ using std::string;
 using std::vector;
 using std::cout;
 using std::endl;
-
-ParConfigs::ParConfigs(const char* name)
-{
-  ifstream file(name);
-  initialize(file);
-}
-
-ParConfigs::ParConfigs(const TString& name)
-{
-  ifstream file(name.Data());
-  initialize(file);
-}
-
-ParConfigs::ParConfigs(const std::string& name)
-{
-  ifstream file(name);
-  initialize(file);
-}
-
-void ParConfigs::initialize(ifstream& file)
-{
-  std::string line;
-  std::vector<std::string> _names;
-  std::vector<bool>   _hasInit;
-  std::vector<double> _init;
-  std::vector<double> _min;
-  std::vector<double> _max;
-
-  while (std::getline(file, line)) {
-    std::vector<TString> words;
-    std::string w;
-    istringstream words_stream(line);
-    while (std::getline(words_stream, w, ',')) {
-      TString word(w);
-      word = word.Strip(TString::kBoth, ' ');
-      word = word.Strip(TString::kBoth, '\t');
-      if (word.BeginsWith("#")) continue;
-      else words.push_back(word);
-    }
-    if (words.size() == 4) {
-      const std::string name = words.at(0).Data();
-      const double initVal = words.at(1).Atof();
-      const double minVal  = words.at(2).Atof();
-      const double maxVal  = words.at(3).Atof();
-      const bool   hasInit = true;
-      _names  .push_back(name);
-      _init   .push_back(initVal);
-      _min    .push_back(minVal );
-      _max    .push_back(maxVal );
-      _hasInit.push_back(hasInit);
-    } else if (words.size() == 3) {
-      const std::string name = words.at(0).Data();
-      const double initVal = 0;
-      const double minVal  = words.at(1).Atof();
-      const double maxVal  = words.at(2).Atof();
-      const bool   hasInit = false;
-      _names  .push_back(name);
-      _init   .push_back(initVal);
-      _min    .push_back(minVal );
-      _max    .push_back(maxVal );
-      _hasInit.push_back(hasInit);
-    }
-  }
-  using sz = std::vector<double>::size_type;
-  for (sz it=0; it!=_names.size(); ++it) {
-    _data[_names.at(it)] = std::make_tuple(_hasInit.at(it),
-                                           _init.at(it),
-                                           _min.at(it),
-                                           _max.at(it) );
-  }
-}
-
-// const std::tuple<bool, double, double, double>
-// ParConfigs::operator[](unsigned int i) const
-// {
-//   auto ret = std::make_tuple
-//     ( _hasInit.at(i), _init.at(i), _min.at(i), _max.at(i) );
-//   return ret;
-// }
-
-bool ParConfigs::hasInit(const std::string& n) const
-{
-  return std::get<0>(_data.at(n));
-}
-double ParConfigs::getInit(const std::string& n) const
-{
-  return std::get<1>(_data.at(n));
-}
-double ParConfigs::getMin(const std::string& n) const
-{
-  return std::get<2>(_data.at(n));
-}
-double ParConfigs::getMax(const std::string& n) const
-{
-  return std::get<3>(_data.at(n));
-}
-
-void ParConfigs::setInit(const std::string n, const double _init)
-{
-  if (std::get<0>(_data.at(n))) {
-    std::get<1>(_data.at(n)) = _init;
-  }
-}
-void ParConfigs::setMin(const std::string n, const double _min)
-{
-  std::get<2>(_data.at(n)) = _min;
-}
-void ParConfigs::setMax(const std::string n, const double _max)
-{
-  std::get<3>(_data.at(n)) = _max;
-}
-
 
 FitParConfigs::FitParConfigs(const char* name)
 {

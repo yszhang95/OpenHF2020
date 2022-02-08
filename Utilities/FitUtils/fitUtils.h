@@ -3,10 +3,10 @@
 #include "RooWorkspace.h"
 #include "RooDataSet.h"
 #include "RooDataHist.h"
-#include "ReadConfig.h"
 #include "RooCurve.h"
 #include "TCanvas.h"
 
+#include "Utilities/FitUtils/ReadConfig.h"
 
 #ifndef __FIT_UTILS__
 #define __FIT_UTILS__
@@ -79,5 +79,9 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
 void fitD0(RooRealVar& mass, RooAbsData& ds,
            FitParConfigs::ParConfigs& par,
            std::map<std::string, std::string> strs);
+
+void fitLamC(RooRealVar& mass, RooAbsData& ds,
+             FitParConfigs::ParConfigs& par,
+             std::map<std::string, std::string> strs);
 
 #endif

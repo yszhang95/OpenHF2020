@@ -1,4 +1,4 @@
-#include "fitUtils.h"
+#include "Utilities/FitUtils/fitUtils.h"
 
 #include "TStyle.h"
 #include "TLatex.h"
@@ -172,7 +172,7 @@ void fitSignal(RooRealVar& mass, RooAbsData& ds,
   */
   auto mass_frame = mass.frame();
   mass_frame->SetTitle("");
-  mass_frame->GetXaxis()->SetTitle("M_{K#pi} (GeV)");
+  mass_frame->GetXaxis()->SetTitle(strs.at("xtitle").c_str());
 
   TCanvas c("c", "", 600, 900);
   setCanvas(c);
@@ -397,7 +397,7 @@ void fitCBShapeKK(RooRealVar& mass, RooAbsData& ds,
   */
   auto mass_frame = mass.frame(Range("full"));
   mass_frame->SetTitle("");
-  mass_frame->GetXaxis()->SetTitle("M_{K#pi} (GeV)");
+  mass_frame->GetXaxis()->SetTitle("M_{KK} (GeV)");
 
   TCanvas c("c", "", 600, 900);
   setCanvas(c);
@@ -465,7 +465,7 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
   */
   auto mass_frame = mass.frame(Range("full"));
   mass_frame->SetTitle("");
-  mass_frame->GetXaxis()->SetTitle("M_{K#pi} (GeV)");
+  mass_frame->GetXaxis()->SetTitle("M_{#pi#pi} (GeV)");
 
   TCanvas c("c", "", 600, 900);
   setCanvas(c);
@@ -641,7 +641,11 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   meanSwap.setConstant(kTRUE);
   sigmaSwapMC.setConstant(kTRUE);
   // true D0 / (true + swap D0)
+  // need to study its effects
   doubGausFrac.setConstant(kTRUE);
+  const double doubGausFracInit = doubGausFrac.getVal();
+  const double doubGausFracErrorHiInit = doubGausFrac.getErrorHi();
+  const double doubGausFracErrorLoInit = doubGausFrac.getErrorLo();
   // CB for KK
   m0KK.setConstant(kTRUE);
   sigmaKKMC.setConstant(kTRUE);
@@ -656,10 +660,13 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
 
   RooAbsData* dsAbsPtr = &ds;
   if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
-    auto dh = dsPtr->binnedClone("binned_clone");
-    sum.fitTo(*dh, Range("full"));
-    delete dh;
+    auto h = dsPtr->createHistogram("binned", mass,
+                                    Range("full"), Binning(80));
+    auto dh = RooDataHist("dh", "", mass, h);
+    sum.fitTo(dh, Range("full"));
+    delete h;
   }
+
   sum.fitTo(ds, Range("full"));
 
   /**
@@ -716,7 +723,7 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   // mass_frame->Draw();
 
   /// get `RooCurve`s
-  auto curve_data = mass_frame->getCurve("curve_dataset");
+  auto curve_data = mass_frame->getHist("curve_dataset");
   auto curve_bkg = mass_frame->getCurve("curve_bkg");
   auto curve_doubGaus = mass_frame->getCurve("curve_doubGaus");
   auto curve_swapGaus = mass_frame->getCurve("curve_swapGaus");
@@ -760,6 +767,7 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   setCollision(pad);
   setKinematics(pad, strs);
   TLatex tex;
+  tex.SetTextFont(42);
   tex.SetTextAlign(11);
   tex.DrawLatexNDC(0.2, 0.2,
                    Form("N_{sig}=%.1f+/-%.1f", nsig.getVal(),
@@ -781,7 +789,209 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   par.setInit("nKK", nKK.getVal());
   par.setInit("nPiPi", nPiPi.getVal());
   par.setInit("nbkg", nbkg.getVal());
+  par.setInit("doubGausFrac", doubGausFrac.getVal());
 
+  std::cout << "\n";
+  std::cout << "Final nsig is " << nsig.getVal()
+            << " + " << nsig.getAsymErrorHi()
+            << " - " << nsig.getAsymErrorLo()
+            << "\n";
+  std::cout << "double gaus frac in MC is " << doubGausFracInit
+            << " + " << doubGausFracErrorHiInit
+            << " - " << doubGausFracErrorLoInit
+            << "\n";
+  std::cout << "double gaus frac in data is " << doubGausFrac.getVal()
+            << " + " << doubGausFrac.getAsymErrorHi()
+            << " - " << doubGausFrac.getAsymErrorLo()
+            << std::endl;
+}
+
+
+void fitLamC(RooRealVar& mass, RooAbsData& ds,
+             FitParConfigs::ParConfigs& par,
+             std::map<std::string, std::string> strs)
+{
+  /**
+     Model setup
+  */
+  // common scale factor
+  RooRealVar scale("scale", "width ratio for data/MC",
+                   par.getInit("scale"),
+                   par.getMin("scale"), par.getMax("scale"));
+
+  // construct double gaussian
+  // parameters
+  RooRealVar mean("mean", "mean (GeV)", par.getInit("mean"),
+                  par.getMin("mean"), par.getMax("mean"));
+  // sigma1 in par was obtained from MC
+  RooRealVar sigma1MC("sigma1MC", "sigma of 1st gaussian in MC",
+                    par.getInit("sigma1"), par.getMin("sigma1"),
+                    par.getMax("sigma1"));
+  RooFormulaVar sigma1("sigma1", "sigma of 1st gaussian", "@0*@1",
+                       RooArgList(sigma1MC, scale));
+  RooRealVar sigma1N("sigma1N", "sigma ratio, 2nd/1st gaussian",
+                     par.getInit("sigma1N"), par.getMin("sigma1N"),
+                     par.getMax("sigma1N"));
+  RooFormulaVar sigma2("sigma2", "@0*@1", RooArgSet(sigma1, sigma1N));
+  RooRealVar frac1("frac1", "fraction of 1st gaussian",
+                   par.getInit("frac1"), par.getMin("frac1"),
+                   par.getMax("frac1"));
+
+  RooGaussian gaus1("gaus1", "1st gaussian for signal",
+                    mass, mean, sigma1);
+  RooGaussian gaus2("gaus2", "2nd gaussian for signal",
+                    mass, mean, sigma2);
+  RooAddPdf doubGaus("doubGaus", "double gaussian of the signal",
+                     RooArgList(gaus1, gaus2), frac1);
+
+  // 3rd order Chebyshev polynomial for background
+  RooRealVar a1("a1", "a1 for Chebyshev(1)", par.getInit("a1"),
+                par.getMin("a1"), par.getMax("a1"));
+  RooRealVar a2("a2", "a2 for Chebyshev(2)", par.getInit("a2"),
+                par.getMin("a2"), par.getMax("a2"));
+  RooRealVar a3("a3", "a3 for Chebyshev(3)", par.getInit("a3"),
+                par.getMin("a3"), par.getMax("a3"));
+  RooChebychev bkg("bkg", "3rd Chebyshev poly.", mass,
+                   RooArgList(a1, a2, a3));
+
+  // yields for different components
+  RooRealVar nsig("nsig", "yields for true component",
+                  par.getInit("nsig"),
+                  par.getMin("nsig"), par.getMax("nsig"));
+  RooRealVar nbkg("nbkg", "yields for background component",
+                  par.getInit("nbkg"),
+                  par.getMin("nbkg"), par.getMax("nbkg"));
+
+  // add components together
+  RooAddPdf sum("sum", "sig+swap+KK+PiPi+bkg",
+                RooArgList(bkg, doubGaus),
+                RooArgList(nbkg, nsig));
+
+  /**
+     Fit
+   */
+  // remember to fix the all sigma in MC. they are labeled by MC
+  // true D0
+  sigma1MC.setConstant(kTRUE);
+  sigma1N.setConstant(kTRUE);
+  frac1.setConstant(kTRUE);
+
+  RooAbsData* dsAbsPtr = &ds;
+  if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
+    auto h = dsPtr->createHistogram("binned", mass,
+                                    Range("full"), Binning(100));
+    auto dh = RooDataHist("dh", "", mass, h);
+    sum.fitTo(dh, Range("full"));
+    delete h;
+  }
+  sum.fitTo(ds, Range("full"));
+
+
+  /**
+     Draw
+   */
+  // gStyle->SetCanvasPreferGL(1);
+  auto mass_frame = mass.frame(Range("full"));
+  mass_frame->SetTitle("");
+  mass_frame->GetXaxis()->SetTitle("M_{K_{S}^{0}p} (GeV)");
+
+  TCanvas c("c", "", 600, 900);
+  setCanvas(c);
+
+  // c.cd(1);
+  // dataset plotOn does not support Range option
+  std::pair<double, double> binEdges = mass.getRange("full");
+  // Name option is for the RooHist or RooCurve objects
+  // I do not know how to handle Normalization(scaleType)
+  auto dsplot = ds.plotOn(mass_frame, Name("curve_mydataset"),
+                          Binning(100, binEdges.first, binEdges.second),
+                          MarkerStyle(20));
+  sum.plotOn(mass_frame, Components(bkg), LineColor(kRed),
+             Normalization(1.0, RooAbsReal::RelativeExpected),
+             LineStyle(kDashed), MarkerStyle(20),
+             Range("full"), NormRange("full"),
+             Name("curve_bkg")
+             );
+  sum.plotOn(mass_frame, Components(doubGaus), DrawOption("F"),
+             FillColor(TColor::GetColorTransparent(kOrange-3, 0.3)),
+             LineWidth(0),
+             Normalization(1.0, RooAbsReal::RelativeExpected),
+             Range("full"), NormRange("full"),
+             Name("curve_doubGaus")
+             );
+  sum.plotOn(mass_frame,
+             Normalization(1.0, RooAbsReal::RelativeExpected),
+             Range("full"), NormRange("full"),
+             Name("curve_sum")
+             );
+  // mass_frame->SetMaximum(mass_frame->GetMaximum() * 1.1);
+
+  /// get `RooCurve`s
+
+  // curve_data is RooHist, instead of RooCurve
+  auto curve_data = mass_frame->getHist("curve_mydataset");
+  // pdf plots are RooCurve
+  auto curve_bkg = mass_frame->getCurve("curve_bkg");
+  auto curve_doubGaus = mass_frame->getCurve("curve_doubGaus");
+
+  // set VLines
+  setVLines(curve_doubGaus);
+
+  // build legend
+  TLegend leg(0.62, 0.5, 0.9, 0.91);
+  leg.SetFillStyle(0);
+  leg.SetBorderSize(0);
+  // this line works
+  // leg.AddEntry(dsplot->getHist("curve_mydataset"), "Data", "p");
+  // this line works as well
+  leg.AddEntry(curve_data, "Data", "p");
+  // I do not know why the beline below does not work.
+  // leg.AddEntry("curve_mydata", "Data", "p");
+  // this line does not work because ds is a RooPlot
+  // leg.AddEntry(dsplot, "Data", "p");
+  leg.AddEntry(curve_doubGaus, "Signal", "f");
+  leg.AddEntry(curve_bkg, "Background", "l");
+
+  c.cd(2);
+  auto pull = mass_frame->pullHist();
+  pull->SetTitle(";M_{K_{S}^{0}p};pull");
+  auto mass_frame_pull = mass.frame(Title(pull->GetTitle()),
+                                    Range("full"));
+  mass_frame_pull->addPlotable(pull, "P");
+  mass_frame_pull->Draw();
+
+  c.cd(1);
+  mass_frame->Draw();
+  leg.Draw();
+
+  // set CMS labels
+  auto pad = c.cd(1);
+  setCMS(pad);
+  setCollision(pad);
+  setKinematics(pad, strs);
+  TLatex tex;
+  tex.SetTextFont(42);
+  tex.SetTextAlign(11);
+  tex.DrawLatexNDC(0.2, 0.2,
+                   Form("N_{sig}=%.1f+/-%.1f", nsig.getVal(),
+                        nsig.getErrorHi()));
+
+  const auto fig_path = strs.at("fig_path")+"_data.png";
+  const auto fig_path_pdf = strs.at("fig_path")+"_data.pdf";
+  c.Print(fig_path.c_str());
+  c.Print(fig_path_pdf.c_str());
+
+  /**
+     Update the parameter set
+   */
+  par.setInit("a1", a1.getVal());
+  par.setInit("a2", a2.getVal());
+  par.setInit("a3", a3.getVal());
+  par.setInit("scale", scale.getVal());
+  par.setInit("nsig", nsig.getVal());
+  par.setInit("nbkg", nbkg.getVal());
+
+  std::cout << "\n";
   std::cout << "Final nsig is " << nsig.getVal()
             << " + " << nsig.getAsymErrorHi()
             << " - " << nsig.getAsymErrorLo()

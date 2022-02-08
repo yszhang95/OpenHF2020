@@ -11,29 +11,10 @@
 #define __READ_CONFIG__
 
 /**
-   Helper class, configuration in format of
+   Helper class (ParConfigs), configuration in format of
    mean, 1.865, 1.7, 2.1
    sigma, 0.01, 0.001, 0.1
  */
-class ParConfigs {
-public:
-  explicit ParConfigs(const char*);
-  ParConfigs(const TString&);
-  ParConfigs(const std::string&);
-  bool hasInit(const std::string&) const;
-  double getInit(const std::string&) const;
-  double getMin(const std::string&) const;
-  double getMax(const std::string&) const;
-  // const  operator[] (unsigned int i) const;
-  void setInit(const std::string n, const double _init);
-  void setMin(const std::string n, const double _min);
-  void setMax(const std::string n, const double _max);
-private:
-  void initialize(std::ifstream&);
-  std::map<std::string,
-           std::tuple<bool, double, double, double > > _data;
-
-};
 
 /**
    Helper class:

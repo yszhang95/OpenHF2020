@@ -1,8 +1,8 @@
 UtilitiesDir=$(OPENHF2020TOPDIR)/Utilities
 TreeReaderDir=$(UtilitiesDir)/TreeReader
+FitUtilsDir=$(UtilitiesDir)/FitUtils
 Ana=$(UtilitiesDir)/Ana
 MYLIB=$(UtilitiesDir)/lib
-
 
 $(MYLIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/D0Event.cxx \
@@ -33,6 +33,27 @@ $(MYLIB)/MyTreeReaderDict.cxx: \
 	$(UtilitiesDir)/Linkdef.h
 	@echo "Generating dictionary..."
 	rootcling --inlineInputHeader -f $@ -rmf $(MYLIB)/MyTreeReaderDict.rootmap -rml $(MYLIB)/libMyTreeReader.so $^
+	@echo "Done..."
+	@echo
+
+$(MYLIB)/libMyFitUtils.so: \
+	$(MYLIB)/fitUtils.o \
+	$(MYLIB)/ReadConfig.o \
+	$(MYLIB)/MyFitUtilsDict.cxx
+	@echo "Generating shared library for fit utilities.."
+	$(CXX) -shared -fPIC -o $@ $(CXXFLAGS) -lRooFitCore -lRooFit $(LDGLIBFLAGS) $^
+	rm $(MYLIB)/fitUtils.o $(MYLIB)/ReadConfig.o
+	@echo "Done..."
+	@echo
+
+$(MYLIB)/%.o : $(FitUtilsDir)/%.cc
+	$(CXX) -o $@ -fPIC -c $(CXXFLAGS) $<
+
+$(MYLIB)/MyFitUtilsDict.cxx: \
+	$(FitUtilsDir)/fitUtils.h $(FitUtilsDir)/ReadConfig.h \
+	$(FitUtilsDir)/Linkdef.h
+	@echo "Generating dictionary for fit utilities..."
+	rootcling --inlineInputHeader -f $@ -rmf $(MYLIB)/MyFitUtilsDict.rootmap -rml $(MYLIB)/libMyFitUtils.so $^
 	@echo "Done..."
 	@echo
 
