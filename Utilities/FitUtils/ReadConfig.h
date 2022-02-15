@@ -64,6 +64,7 @@ public:
     std::map<std::string,
              std::tuple<bool, double, double, double > > _data;
   };
+
   class InputConfigs
   {
   public:
@@ -80,6 +81,7 @@ public:
     std::map<std::string, std::set<std::string>> _names;
 
   };
+
   class OutputConfigs
   {
   public:
@@ -96,6 +98,46 @@ public:
     std::map<std::string, std::string> _types;
   };
 
+  /**
+     [BEG CutConfigs]
+     MLP6to8MBNp2N
+     pT, 0.0, 2.0
+     [END CutConfigs]
+
+     I only support two types of configurations:
+     1. MVA name, min, max, MVA
+     2. variable names, min, max, int/float
+
+     If the min or max is not available, place INF.  INF is defined by
+     std::numeric_limits<float>::infinity().  I make use of
+     std::stof. This can be used to compare with general float numbers.
+   */
+  class CutConfigs
+  {
+  public:
+    friend class FitParConfigs;
+    explicit CutConfigs() {}
+    bool empty() const
+    {
+      return _data_float_min.empty() && _data_int_min.empty()
+        && _data_float_max.empty() && _data_float_max.empty();
+    }
+    std::string getMvaName() const { return _mvaName; }
+    int getIntMin(std::string) const;
+    int getIntMax(std::string) const;
+    float getFloatMin(std::string) const;
+    float getFloatMax(std::string) const;
+    bool getBool(std::string) const;
+  private:
+    void initialize(const std::vector<std::string>&);
+    std::string _mvaName;
+    std::map<std::string, int> _data_int_min;
+    std::map<std::string, int> _data_int_max;
+    std::map<std::string, float> _data_float_min;
+    std::map<std::string, float> _data_float_max;
+    std::map<std::string, bool> _data_bool;
+  };
+
   explicit FitParConfigs(const char*);
   explicit FitParConfigs(const TString&);
   explicit FitParConfigs(const std::string&);
@@ -107,6 +149,8 @@ public:
   { return _inputConfigs; }
   const FitParConfigs::OutputConfigs& getOutputConfigs() const
   { return _outputConfigs; }
+  const FitParConfigs::CutConfigs& getCutConfigs() const
+  { return _cutConfigs; }
 
 private:
   void initialize(std::ifstream&);
@@ -114,6 +158,7 @@ private:
   ParConfigs _parConfigs;
   InputConfigs _inputConfigs;
   OutputConfigs _outputConfigs;
+  CutConfigs _cutConfigs;
 };
 
 #endif

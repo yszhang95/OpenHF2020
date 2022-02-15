@@ -100,6 +100,7 @@ void FitParConfigs::initialize(ifstream& infile)
   _parConfigs.initialize(_data.at("ParConfigs"));
   _inputConfigs.initialize(_data.at("InputConfigs"));
   _outputConfigs.initialize(_data.at("OutputConfigs"));
+  _cutConfigs.initialize(_data.at("CutConfigs"));
 }
 
 void FitParConfigs::dump()
@@ -273,6 +274,113 @@ void FitParConfigs::OutputConfigs::initialize(const vector<string>& block)
   if (it != paths.end()) {
     throw std::logic_error("There are duplicate paths in OutputConfigs.");
   }
+}
+
+void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
+{
+  for (auto line : block) {
+    istringstream words(line);
+    string word;
+    vector<string> temp;
+    while (std::getline(words, word, ',')) {
+      TString word_nospace = word;
+      word_nospace = word_nospace.Strip(TString::kBoth);
+      word = word_nospace.Data();
+      temp.push_back(word);
+    }
+    // push path to the end of _path
+    string dataName = temp.at(0);
+    string dataMin = temp.at(1);
+    string dataMax = temp.at(2);
+    // urgly but easy to write
+    // temporarily use dataMin as boolean storage
+    string dataType = temp.size()==4 ? temp.at(3) : temp.at(2);
+
+    std::transform(dataType.begin(), dataType.end(), dataType.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    // if it is a boolean
+    if (temp.size() == 3) {
+      std::transform(dataName.begin(), dataName.end(), dataName.begin(),
+                     [](unsigned char c) { return std::tolower(c); });
+      std::transform(dataMin.begin(), dataMin.end(), dataMin.begin(),
+                     [](unsigned char c) { return std::tolower(c); });
+      if (dataType == "bool") {
+        if (dataMin == "0" || dataMin == "false" || dataMin == "null")
+          _data_bool[dataName] = false;
+        else
+          _data_bool[dataName] = true;
+      }
+      else {
+        throw std::logic_error("[FATAL] Only boolean variable can in three slots.");
+      }
+    }
+
+    // dataType == MVA is a special case
+    if (dataType == "mva") {
+      _mvaName = dataName;
+      dataName = "mva";
+      dataType = "float";
+    }
+
+    std::transform(dataName.begin(), dataName.end(), dataName.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    // I should replace [] with insert to check duplicates in the future
+    if (dataType == "float") {
+      const float dataMinVal = std::stof(dataMin);
+      const float dataMaxVal = std::stof(dataMax);
+      _data_float_min[dataName] = dataMinVal;
+      _data_float_max[dataName] = dataMaxVal;
+    }
+    if (dataType == "int") {
+      std::transform(dataMin.begin(), dataMin.end(), dataMin.begin(),
+                     [](unsigned char c) { return std::tolower(c); });
+      std::transform(dataMax.begin(), dataMax.end(), dataMax.begin(),
+                     [](unsigned char c) { return std::tolower(c); });
+      auto pos_for_min = dataMin.find("inf");
+      auto pos_for_max = dataMax.find("inf");
+      if (pos_for_min == std::string::npos) {
+        const int dataMinVal = std::stoi(dataMin);
+        _data_int_min[dataName] = dataMinVal;
+      }
+      if (pos_for_max == std::string::npos) {
+        const int dataMaxVal = std::stoi(dataMax);
+        _data_int_max[dataName] = dataMaxVal;
+      }
+    }
+  }
+}
+
+int FitParConfigs::CutConfigs::getIntMin(std::string s) const
+{ 
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_int_min.at(s);
+}
+int FitParConfigs::CutConfigs::getIntMax(std::string s) const
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_int_max.at(s);
+}
+float FitParConfigs::CutConfigs::getFloatMin(std::string s) const
+{ 
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_float_min.at(s);
+}
+float FitParConfigs::CutConfigs::getFloatMax(std::string s) const
+{ 
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_float_max.at(s);
+}
+bool FitParConfigs::CutConfigs::getBool(std::string s) const
+{ 
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_bool.at(s);
 }
 
 #endif
