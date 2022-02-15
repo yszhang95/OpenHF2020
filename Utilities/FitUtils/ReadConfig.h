@@ -90,7 +90,7 @@ public:
     bool empty() const { return _paths.empty(); }
     std::string getPath(const std::string& category)const
     { return _paths.at(category); }
-    std::string getName(const std::string& category) const
+    std::string getType(const std::string& category) const
     { return _types.at(category); }
   private:
     void initialize(const std::vector<std::string>&);
@@ -160,5 +160,52 @@ private:
   OutputConfigs _outputConfigs;
   CutConfigs _cutConfigs;
 };
+
+
+// the following copied from
+// https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
+// It is licensed under CC0 1.0.
+template<typename ... Args>
+std::string string_format( const std::string& format, Args ... args )
+{
+    int size_s = std::snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
+    if( size_s <= 0 ){ throw std::runtime_error( "Error during formatting." ); }
+    auto size = static_cast<size_t>( size_s );
+    auto buf = std::make_unique<char[]>( size );
+    std::snprintf( buf.get(), size, format.c_str(), args ... );
+    return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
+}
+
+struct VarCuts
+{
+  // member variables
+  std::string _mvaName;
+  Float_t _mvaCut;
+  Float_t _pTMin;
+  Float_t _pTMax;
+  Float_t _yAbsMax;
+  UShort_t _NtrkofflineMin;
+  UShort_t _NtrkofflineMax;
+  bool _usedz1p0;
+  bool _usegplus;
+  bool _useMB;
+  bool _useHM;
+
+  // constructor
+  VarCuts() :  _mvaCut(-1), _pTMin(0), _pTMax(100), _yAbsMax(2.4),
+    _NtrkofflineMin(0), _NtrkofflineMax(UShort_t(-1)),
+    _usedz1p0(0), _usegplus(0), _useMB(0), _useHM(0)
+  {}
+
+  VarCuts(const FitParConfigs::CutConfigs cutConfigs);
+
+  // member functions
+  // string labels
+  std::string getEventFilter() const;
+  std::string getNtrkoffline() const;
+  std::string getKinematics() const;
+  std::string getMva() const;
+};
+
 
 #endif

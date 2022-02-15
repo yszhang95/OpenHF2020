@@ -6,7 +6,7 @@ Data, tree, /storage1/users/yz144/LambdaC_KsProton/SkimTrees/pT8to10/merged_pPb.
 
 [BEG OutputConfigs]
 log, txt, output.log
-photo, png, output
+fig_path, png, figs/fig_LamCAlice_pT8to10
 [END OutputConfigs]
 
 [BEG CutConfigs]

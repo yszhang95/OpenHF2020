@@ -261,18 +261,10 @@ void FitParConfigs::OutputConfigs::initialize(const vector<string>& block)
     string theType = temp.at(1);
     string thePath = temp.at(2);
     auto it_types = _types.insert( {category, theType} );
-    // auto it_paths = _paths.insert( {category, thePath} );
-    if (!it_types.second || !it_types.second) {
+    auto it_paths = _paths.insert( {category, thePath} );
+    if (!it_types.second || !it_paths.second) {
       throw std::logic_error("There are duplicates in OutputConfigs.");
     }
-    paths.push_back(thePath);
-  }
-
-  // check duplicates in paths
-  std::sort(paths.begin(), paths.end());
-  auto it = std::unique(paths.begin(), paths.end());
-  if (it != paths.end()) {
-    throw std::logic_error("There are duplicate paths in OutputConfigs.");
   }
 }
 
@@ -353,7 +345,7 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
 }
 
 int FitParConfigs::CutConfigs::getIntMin(std::string s) const
-{ 
+{
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return _data_int_min.at(s);
@@ -365,22 +357,164 @@ int FitParConfigs::CutConfigs::getIntMax(std::string s) const
   return _data_int_max.at(s);
 }
 float FitParConfigs::CutConfigs::getFloatMin(std::string s) const
-{ 
+{
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return _data_float_min.at(s);
 }
 float FitParConfigs::CutConfigs::getFloatMax(std::string s) const
-{ 
+{
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return _data_float_max.at(s);
 }
 bool FitParConfigs::CutConfigs::getBool(std::string s) const
-{ 
+{
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return _data_bool.at(s);
+}
+
+VarCuts::VarCuts(const FitParConfigs::CutConfigs cutConfigs):
+    _usedz1p0(0), _usegplus(0), _useMB(0), _useHM(0)
+{
+  _mvaName = cutConfigs.getMvaName();
+  _mvaCut = cutConfigs.getFloatMin("mva");
+  _pTMin = cutConfigs.getFloatMin("pT");
+  _pTMax = cutConfigs.getFloatMax("pT");
+  _yAbsMax = cutConfigs.getFloatMax("yAbs");
+  try {
+    int temp = cutConfigs.getIntMin("Ntrkoffline");
+    if (temp<0) _NtrkofflineMin = 0;
+    else _NtrkofflineMin = temp;
+    if (temp<0) {
+      std::cout << "[ERROR] The min of Ntrkoffline seems to be negative. "
+        "Set it to be 0 instead\n";
+    }
+  } catch (std::out_of_range&) {
+    _NtrkofflineMin = 0;
+    std::cout << "[ERROR] The min of Ntrkoffline seems to be undefined. "
+      "Set it to be 0 instead\n";
+  }
+  try {
+    int temp = cutConfigs.getIntMax("Ntrkoffline");
+    if (temp > UShort_t(-1)) _NtrkofflineMax = UShort_t(-1);
+    else _NtrkofflineMax = temp;
+    if (temp > UShort_t(-1))
+      std::cout << "[ERROR] The max of Ntrkoffline is larger"
+        " than maximum of unsigned short. "
+        "Set it to be " << UShort_t(-1) << " instead\n";
+  } catch (std::out_of_range&) {
+    _NtrkofflineMax = UShort_t(-1);
+    std::cout << "[ERROR] The max of Ntrkoffline seems to be undefined. "
+      "Set it to be " << UShort_t(-1) << " instead\n";
+  }
+
+  try {
+    _usedz1p0 = cutConfigs.getBool("usedz1p0");
+  }
+  catch (std::out_of_range& e) {
+    std::cout << "[ERROR] Not found setup for useDz1p0. "
+      "Set it to be false\n";
+  }
+  try {
+    _usegplus = cutConfigs.getBool("usegplus");
+  }
+  catch (std::out_of_range& e) {
+    std::cout << "[ERROR] Not found setup for useGplus. "
+      "Set it to be false\n";
+  }
+  try {
+    _useHM = cutConfigs.getBool("usehm");
+  }
+  catch (std::out_of_range& e) {
+    std::cout << "[ERROR] Not found setup for useHM. "
+      "Set it to be false\n";
+  }
+  try {
+    _useMB = cutConfigs.getBool("usemb");
+  }
+  catch (std::out_of_range& e) {
+    std::cout << "[ERROR] Not found setup for useMB. "
+      "Set it to be false\n";
+  }
+
+  // check boundaries
+  if (_pTMin > _pTMax || std::abs(_pTMax-_pTMin)<1e-5) {
+    throw std::logic_error("[FATAL] pTMin is larger than or equal to pTMax\n");
+  }
+  if (_yAbsMax<0) {
+    throw std::logic_error("[FATAL] Maximum of |y| cannot be negative\n");
+  }
+  if (_NtrkofflineMin > _NtrkofflineMax) {
+    throw std::logic_error("[FATAL] NrkofflineMin is larger than NtrkofflineMax\n");
+  }
+}
+
+string VarCuts::getEventFilter() const
+{
+  string eventFilter;
+  if (_usedz1p0) eventFilter += "dz1p0";
+  if (_usegplus) {
+    if (eventFilter.empty()) eventFilter += "gplus";
+    else eventFilter += "_gplus";
+  }
+  if (_useMB) {
+    if (eventFilter.empty()) eventFilter += "MB";
+    else eventFilter += "_MB";
+  }
+  if (_useHM) {
+    if (eventFilter.empty()) eventFilter += "HM";
+    else eventFilter += "_HM";
+  }
+  return eventFilter;
+}
+
+string VarCuts::getNtrkoffline() const
+{
+  string ntrkofflineStr;
+  if ( _NtrkofflineMin == 0 && _NtrkofflineMax == UShort_t(-1) ) {
+    return "NtrkAll";
+  }
+  if (ntrkofflineStr.empty()) {
+    ntrkofflineStr += "Ntrk" + std::to_string(_NtrkofflineMin) + "to";
+    if (_NtrkofflineMax == UShort_t(-1)) {
+      ntrkofflineStr += "Inf";
+    }
+    else {
+      ntrkofflineStr += std::to_string(_NtrkofflineMax);
+    }
+  }
+  return ntrkofflineStr;
+}
+
+string VarCuts::getKinematics() const
+{
+  auto kinematics = string_format("pT%gto%g_yAbs%g",
+                                  _pTMin, _pTMax, _yAbsMax);
+  std::replace( kinematics.begin(), kinematics.end(), '.', 'p');
+  // alternative way to std::replace
+  // for (auto pos = kinematics.find("."); pos!=string::npos; ) {
+  //   kinematics.replace(pos, 1, "p");
+  //   pos = kinematics.find(".");
+  // }
+  return kinematics;
+}
+
+string VarCuts::getMva() const
+{
+  auto mvaCutStr = string_format("mva%g", _mvaCut);
+  std::replace( mvaCutStr.begin(), mvaCutStr.end(), '.', 'p');
+  // alternative way to std::replace
+  // auto pos = mvaCutStr.find(".");
+  // mvaCutStr.replace(pos, 1, "p");
+  auto posNeg = mvaCutStr.find("-");
+  if (posNeg != string::npos)
+    mvaCutStr.replace(posNeg, 1, "Neg");
+  auto posInf = mvaCutStr.find("inf");
+  if (posInf != string::npos)
+    mvaCutStr.replace(posInf, 3, "Inf");
+  return mvaCutStr;
 }
 
 #endif

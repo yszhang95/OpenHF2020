@@ -20,20 +20,6 @@ R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
 #include <string>
 #include <stdexcept>
 
-// the following copied from
-// https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
-// It is licensed under CC0 1.0.
-template<typename ... Args>
-std::string string_format( const std::string& format, Args ... args )
-{
-    int size_s = std::snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
-    if( size_s <= 0 ){ throw std::runtime_error( "Error during formatting." ); }
-    auto size = static_cast<size_t>( size_s );
-    auto buf = std::make_unique<char[]>( size );
-    std::snprintf( buf.get(), size, format.c_str(), args ... );
-    return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
-}
-
 /**
    I need to think how to generate workspace
    1. I need one work space
@@ -64,18 +50,6 @@ std::string string_format( const std::string& format, Args ... args )
  */
 
 using std::string;
-struct Conf
-{
-  std::string _inFileList;
-  std::string _wsName;
-  std::string _wsTitle;
-  std::string _dsName;
-  std::string _dsTitle;
-  std::string _outDir;
-  std::string _ofile;
-  bool _reweight;
-};
-
 
 struct NTupleVars
 {
@@ -88,201 +62,6 @@ struct NTupleVars
   Int_t _filterBit_4;
   Int_t _filterBit_5;
   UShort_t _Ntrkoffline;
-
-
-};
-
-struct varCuts
-{
-  // member variables
-  std::string _mvaName;
-  Float_t _mvaCut;
-  Float_t _pTMin;
-  Float_t _pTMax;
-  Float_t _yAbsMax;
-  UShort_t _NtrkofflineMin;
-  UShort_t _NtrkofflineMax;
-  bool _usedz1p0;
-  bool _usegplus;
-  bool _useMB;
-  bool _useHM;
-
-  // constructor
-  varCuts() :  _mvaCut(-1), _pTMin(0), _pTMax(100), _yAbsMax(2.4),
-    _NtrkofflineMin(0), _NtrkofflineMax(UShort_t(-1)),
-    _usedz1p0(0), _usegplus(0), _useMB(0), _useHM(0)
-  {}
-
-  varCuts(const FitParConfigs::CutConfigs cutConfigs):
-    _usedz1p0(0), _usegplus(0), _useMB(0), _useHM(0)
-  {
-    _mvaName = cutConfigs.getMvaName();
-    _mvaCut = cutConfigs.getFloatMin("mva");
-    _pTMin = cutConfigs.getFloatMin("pT");
-    _pTMax = cutConfigs.getFloatMax("pT");
-    _yAbsMax = cutConfigs.getFloatMax("yAbs");
-    try {
-      int temp = cutConfigs.getIntMin("Ntrkoffline");
-      if (temp<0) _NtrkofflineMin = 0;
-      else _NtrkofflineMin = temp;
-      if (temp<0) {
-        std::cout << "[ERROR] The min of Ntrkoffline seems to be negative. "
-          "Set it to be 0 instead\n";
-      }
-    } catch (std::out_of_range&) {
-      _NtrkofflineMin = 0;
-      std::cout << "[ERROR] The min of Ntrkoffline seems to be undefined. "
-        "Set it to be 0 instead\n";
-    }
-    try {
-      int temp = cutConfigs.getIntMax("Ntrkoffline");
-      if (temp > UShort_t(-1)) _NtrkofflineMax = UShort_t(-1);
-      else _NtrkofflineMax = temp;
-      if (temp > UShort_t(-1))
-        std::cout << "[ERROR] The max of Ntrkoffline is larger"
-          " than maximum of unsigned short. "
-          "Set it to be " << UShort_t(-1) << " instead\n";
-    } catch (std::out_of_range&) {
-      _NtrkofflineMax = UShort_t(-1);
-      std::cout << "[ERROR] The max of Ntrkoffline seems to be undefined. "
-        "Set it to be " << UShort_t(-1) << " instead\n";
-    }
-
-    try {
-      _usedz1p0 = cutConfigs.getBool("usedz1p0");
-    }
-    catch (std::out_of_range& e) {
-      std::cout << "[ERROR] Not found setup for useDz1p0. "
-        "Set it to be false\n";
-    }
-    try {
-      _usegplus = cutConfigs.getBool("usegplus");
-    }
-    catch (std::out_of_range& e) {
-      std::cout << "[ERROR] Not found setup for useGplus. "
-        "Set it to be false\n";
-    }
-    try {
-      _useHM = cutConfigs.getBool("usehm");
-    }
-    catch (std::out_of_range& e) {
-      std::cout << "[ERROR] Not found setup for useHM. "
-        "Set it to be false\n";
-    }
-    try {
-      _useMB = cutConfigs.getBool("usemb");
-    }
-    catch (std::out_of_range& e) {
-      std::cout << "[ERROR] Not found setup for useMB. "
-        "Set it to be false\n";
-    }
-
-    // check boundaries
-    if (_pTMin > _pTMax || std::abs(_pTMax-_pTMin)<1e-5) {
-      throw std::logic_error("[FATAL] pTMin is larger than or equal to pTMax\n");
-    }
-    if (_yAbsMax<0) {
-      throw std::logic_error("[FATAL] Maximum of |y| cannot be negative\n");
-    }
-    if (_NtrkofflineMin > _NtrkofflineMax) {
-      throw std::logic_error("[FATAL] NrkofflineMin is larger than NtrkofflineMax\n");
-    }
-  }
-
-  // member functions
-  // pileup filter dz1p0
-  bool pass_dz1p0(const NTupleVars& ntupleVars) const
-  { return ntupleVars._filterBit_4 > 0.5; }
-  // pileup filter gplus
-  bool pass_gplus(const NTupleVars& ntupleVars) const
-  { return ntupleVars._filterBit_5 > 0.5; }
-  // trigger bits, MB
-  bool pass_MB(const NTupleVars& ntupleVars) const
-  { return ntupleVars._trigBit_4 > 0.5; }
-  bool pass_HM(const NTupleVars& ntupleVars) const
-  { return ntupleVars._trigBit_2 > 0.5; }
-  // multiplicity cuts
-  bool pass_ntrkoffline(const NTupleVars& ntupleVars ) const
-  {
-    return ntupleVars._Ntrkoffline >= _NtrkofflineMin
-      && ntupleVars._Ntrkoffline < _NtrkofflineMax;
-  }
-  // rapidity cuts
-  bool pass_y (const NTupleVars& ntupleVars) const
-  { return std::abs(ntupleVars._cand_y) < _yAbsMax; }
-  // pT cuts
-  bool pass_pT(const NTupleVars& ntupleVars) const
-  { return ntupleVars._cand_pT > _pTMin && ntupleVars._cand_pT < _pTMax; }
-  // MVA cuts;
-  bool pass_mva(const NTupleVars& ntupleVars) const
-  { return ntupleVars._cand_mva > _mvaCut; }
-
-  // string labels
-  string getEventFilter() const
-  {
-    string eventFilter;
-    if (_usedz1p0) eventFilter += "dz1p0";
-    if (_usegplus) {
-      if (eventFilter.empty()) eventFilter += "gplus";
-      else eventFilter += "_gplus";
-    }
-    if (_useMB) {
-      if (eventFilter.empty()) eventFilter += "MB";
-      else eventFilter += "_MB";
-    }
-    if (_useHM) {
-      if (eventFilter.empty()) eventFilter += "HM";
-      else eventFilter += "_HM";
-    }
-    return eventFilter;
-  }
-
-  string getNtrkoffline() const
-  {
-    string ntrkofflineStr;
-    if ( _NtrkofflineMin == 0 && _NtrkofflineMax == UShort_t(-1) ) {
-      return "NtrkAll";
-    }
-    if (ntrkofflineStr.empty()) {
-      ntrkofflineStr += "Ntrk" + std::to_string(_NtrkofflineMin) + "to";
-      if (_NtrkofflineMax == UShort_t(-1)) {
-        ntrkofflineStr += "Inf";
-      }
-      else {
-        ntrkofflineStr += std::to_string(_NtrkofflineMax);
-      }
-    }
-    return ntrkofflineStr;
-  }
-
-  string getKinematics() const
-  {
-    auto kinematics = string_format("pT%gto%g_yAbs%g",
-                                    _pTMin, _pTMax, _yAbsMax);
-    std::replace( kinematics.begin(), kinematics.end(), '.', 'p');
-    // alternative way to std::replace
-    // for (auto pos = kinematics.find("."); pos!=string::npos; ) {
-    //   kinematics.replace(pos, 1, "p");
-    //   pos = kinematics.find(".");
-    // }
-    return kinematics;
-  }
-
-  string getMva() const
-  {
-    auto mvaCutStr = string_format("mva%g", _mvaCut);
-    std::replace( mvaCutStr.begin(), mvaCutStr.end(), '.', 'p');
-    // alternative way to std::replace
-    // auto pos = mvaCutStr.find(".");
-    // mvaCutStr.replace(pos, 1, "p");
-    auto posNeg = mvaCutStr.find("-");
-    if (posNeg != string::npos)
-      mvaCutStr.replace(posNeg, 1, "Neg");
-    auto posInf = mvaCutStr.find("inf");
-    if (posInf != string::npos)
-      mvaCutStr.replace(posInf, 3, "Inf");
-    return mvaCutStr;
-  }
 };
 
 void produceWorkspace(std::string configName)
@@ -294,15 +73,17 @@ void produceWorkspace(std::string configName)
   auto inputConfigs = configs.getInputConfigs();
   auto outputConfigs = configs.getOutputConfigs();
   const auto cutConfigs = configs.getCutConfigs();
-  const varCuts mycuts(cutConfigs);
+  const VarCuts mycuts(cutConfigs);
 
   const std::string mvaName = mycuts._mvaName;
   const std::string mvaStr = mycuts.getMva();
   const std::string kinStr = mycuts.getKinematics();
   const std::string eventStr = mycuts.getEventFilter();
+  const std::string ntrkStr = mycuts.getNtrkoffline();
 
-  const std::string wsName = "ws_" + kinStr + "_" + mvaStr + "_" + eventStr;
-  const std::string dsName = "ds_" + kinStr + "_" + mvaStr + "_" + eventStr;
+  const std::string label = kinStr + "_" + mvaStr + "_" + eventStr + "_" + ntrkStr;
+  const std::string wsName = "ws_" + label;
+  const std::string dsName = "ds_" + label;
   const std::string ofileName = "ofile_" + wsName + ".root";
 
   TChain chain(inputConfigs.getName("Data").c_str(), "LambdaCKsP");

@@ -12,4 +12,6 @@
 #pragma link C++ function fitCBShapePiPi;
 #pragma link C++ function fitD0;
 
+#pragma link C++ class VarCuts+;
+
 #endif
