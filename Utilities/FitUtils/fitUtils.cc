@@ -184,7 +184,12 @@ void fitSignal(RooRealVar& mass, RooAbsData& ds,
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
-  pull->Draw();
+  pull->SetTitle("");
+  pull->GetXaxis()->SetTitle(mass_frame->GetXaxis()->GetTitle());
+  pull->GetYaxis()->SetTitle("pull");
+  auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
+  mass_frame_pull->addPlotable(pull, "P");
+  mass_frame_pull->Draw();
 
   // set CMS labels
   auto pad = c.cd(1);
@@ -242,7 +247,13 @@ void fitSwap(RooRealVar& mass, RooAbsData& ds,
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
-  pull->Draw();
+  pull->SetTitle("");
+  pull->GetXaxis()->SetTitle(mass_frame->GetXaxis()->GetTitle());
+  pull->GetYaxis()->SetTitle("pull");
+  auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
+  mass_frame_pull->addPlotable(pull, "P");
+  mass_frame_pull->Draw();
+
 
   // set CMS labels
   auto pad = c.cd(1);
@@ -345,7 +356,13 @@ void fitSignalAndSwap(RooRealVar& mass, RooAbsData& ds,
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
-  pull->Draw();
+  pull->SetTitle("");
+  pull->GetXaxis()->SetTitle(mass_frame->GetXaxis()->GetTitle());
+  pull->GetYaxis()->SetTitle("pull");
+  auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
+  mass_frame_pull->addPlotable(pull, "P");
+  mass_frame_pull->Draw();
+
 
   // set CMS labels
   auto pad = c.cd(1);
@@ -409,7 +426,13 @@ void fitCBShapeKK(RooRealVar& mass, RooAbsData& ds,
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
-  pull->Draw();
+  pull->SetTitle("");
+  pull->GetXaxis()->SetTitle(mass_frame->GetXaxis()->GetTitle());
+  pull->GetYaxis()->SetTitle("pull");
+  auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
+  mass_frame_pull->addPlotable(pull, "P");
+  mass_frame_pull->Draw();
+
 
   // set CMS labels
   auto pad = c.cd(1);
@@ -477,7 +500,13 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
-  pull->Draw();
+  pull->SetTitle("");
+  pull->GetXaxis()->SetTitle(mass_frame->GetXaxis()->GetTitle());
+  pull->GetYaxis()->SetTitle("pull");
+  auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
+  mass_frame_pull->addPlotable(pull, "P");
+  mass_frame_pull->Draw();
+
 
   // set CMS labels
   auto pad = c.cd(1);
@@ -752,10 +781,13 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
-  pull->SetTitle(";M_{K#pi};pull");
+  pull->SetTitle("");
+  pull->GetXaxis()->SetTitle(mass_frame->GetXaxis()->GetTitle());
+  pull->GetYaxis()->SetTitle("pull");
   auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
   mass_frame_pull->addPlotable(pull, "P");
   mass_frame_pull->Draw();
+
 
   c.cd(1);
   mass_frame->Draw();
