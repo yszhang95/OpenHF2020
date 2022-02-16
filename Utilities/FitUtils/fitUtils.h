@@ -82,6 +82,7 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
 
 void fitLamC(RooRealVar& mass, RooAbsData& ds,
              FitParConfigs::ParConfigs& par,
-             std::map<std::string, std::string> strs);
+             std::map<std::string, std::string> strs,
+             const bool useHistOnly=true);
 
 #endif

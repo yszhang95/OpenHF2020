@@ -841,7 +841,8 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
 
 void fitLamC(RooRealVar& mass, RooAbsData& ds,
              FitParConfigs::ParConfigs& par,
-             std::map<std::string, std::string> strs)
+             std::map<std::string, std::string> strs,
+             const bool useHistOnly)
 {
   /**
      Model setup
@@ -915,9 +916,11 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds,
     auto dh = RooDataHist("dh", "", mass, h);
     sum.fitTo(dh, Range("full"));
     delete h;
+  } else {
+    sum.fitTo(ds, Range("full"));
   }
-  sum.fitTo(ds, Range("full"));
-
+  if (!useHistOnly)
+    sum.fitTo(ds, Range("full"));
 
   /**
      Draw
