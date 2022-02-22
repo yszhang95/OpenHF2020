@@ -17,73 +17,17 @@ R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
 #include "TFileCollection.h"
 #include "THashList.h"
 #include "TClassTable.h"
+#include "TStopwatch.h"
 
 using namespace RooFit;
 
 using std::cout;
 using std::endl;
 
-void fitTest()
-{
-  gROOT->SetBatch(kTRUE);
-
-  FitParConfigs configs("test.txt");
-  auto inputConfigs = configs.getInputConfigs();
-  auto outputConfigs = configs.getOutputConfigs();
-  auto par = configs.getParConfigs();
-
-  std::string fileMC = inputConfigs.getPaths("MC").at(0);
-  std::string treeMC = inputConfigs.getName("MC");
-  // I have to set the range of RooRealVar to the same as the plot range,
-  // otherwise I cannot have proper plot using
-  // Normalization(1.0, RooAbsReal::RealtiveExpected).
-  // And it seems the extracted yields is also improper.
-  // RooRealVar cand_mass("cand_mass", "cand_mass", 2.09, 2.55);
-  RooRealVar cand_mass("cand_mass", "cand_mass", 2.1, 2.47);
-  RooRealVar cand_pT("cand_pT", "cand_pT", 0, 100);
-  RooRealVar cand_y("cand_y", "rapidity", -2.4, 2.4);
-  RooRealVar cand_matchGEN("matchGEN", "matchGEN", -1, 2);
-  RooRealVar dz1p0("filterBit_4", "dz1p0", -1, 2);
-  RooRealVar gplus("filterBit_5", "gplus", -1, 2);
-  RooRealVar mva("MLP8to10MBNp2N_noDR", "MVA", 0, 1);
-
-  cand_mass.setRange("full", 2.1, 2.47);
-  cand_mass.setRange("signal", 2.16, 2.32);
-
-  TChain chain(inputConfigs.getName("Data").c_str(), "LambdaCKsP");
-  const auto files = inputConfigs.getPaths("Data");
-  for (const auto & file : files) {
-    const auto it = file.find(".list");
-    if (it != std::string::npos) {
-      TFileCollection tf("tf", "", file.c_str());
-      chain.AddFileInfoList(tf.GetList());
-    } else {
-      chain.Add(file.c_str());
-    }
-  }
-
-  RooDataSet dsLamCMC("dsLamCMC", "",
-                      RooArgList(cand_mass, cand_pT, cand_y, mva),
-                    ImportFromFile(fileMC.c_str(), treeMC.c_str()),
-                    Cut("abs(cand_y)<0.5 && MLP8to10MBNp2N_noDR > 0.016"));
-
-  RooDataSet dsLamC("dsLamC", "", &chain, RooArgSet(cand_mass, cand_pT, cand_y,
-                                                    dz1p0, gplus, mva));
-  auto dsLamCSkim = dsLamC.reduce("abs(cand_y)<0.5 &&"
-                                   "filterBit_4 > 0.5 && MLP8to10MBNp2N_noDR > 0.016");
-  dsLamCSkim->convertToVectorStore();
-
-  std::map<std::string, std::string> strs;
-  strs["fig_path"] = "test";
-  strs["xtitle"] = "M_{K_{S}^{0}p}";
-  fitSignal(cand_mass, dsLamCMC, par, strs);
-  fitLamC(cand_mass, *dsLamCSkim, par, strs);
-  delete dsLamCSkim;
-}
-
-
 void fit(std::string configName)
 {
+  TStopwatch ts;
+  ts.Start();
   gROOT->SetBatch(kTRUE);
 
   FitParConfigs configs(configName.c_str());
@@ -118,7 +62,7 @@ void fit(std::string configName)
   RooRealVar mva(mvaName.c_str(), "MVA", 0, 1);
 
   cand_mass.setRange("full", 2.1, 2.47);
-  cand_mass.setRange("signal", 2.16, 2.32);
+  cand_mass.setRange("signal", 2.165, 2.375);
 
   std::string mccuts = Form("cand_pT>%f && cand_pT<%f "
                             "&& abs(cand_y)<%f && %s > %f",
@@ -127,6 +71,10 @@ void fit(std::string configName)
                       RooArgList(cand_mass, cand_pT, cand_y, mva),
                       ImportFromFile(fileMC.c_str(), treeMC.c_str()),
                       Cut(mccuts.c_str()));
+
+  auto ofileName = fileName;
+  ofileName.replace(fileName.size()-5, 5, "_postfit.root");
+  TFile ofile(ofileName.c_str(), "recreate");
 
   auto f = TFile::Open(fileName.c_str());
   RooWorkspace* myws;
@@ -140,12 +88,24 @@ void fit(std::string configName)
   strs["xtitle"] = "M_{K_{S}^{0}p}";
   strs["pT"] = ::string_format("%.1f<p_{T}<%.1f", mycuts._pTMin, mycuts._pTMax);
   strs["y"] = ::string_format("|y|<%g", mycuts._yAbsMax);
+  strs["log_path"] = outputConfigs.getPath("log_path");
 
   // remember that the AccessPathName returns false it the path exits!
-  const auto out_dir = gSystem->DirName(strs.at("fig_path").c_str());
-  if (gSystem->AccessPathName(out_dir)) {
-    gSystem->mkdir(out_dir, kTRUE);
+  const auto fig_out_dir = gSystem->DirName(strs.at("fig_path").c_str());
+  if (gSystem->AccessPathName(fig_out_dir)) {
+    gSystem->mkdir(fig_out_dir, kTRUE);
   }
+  const auto log_out_dir = gSystem->DirName(strs.at("log_path").c_str());
+  if (gSystem->AccessPathName(log_out_dir)) {
+    gSystem->mkdir(log_out_dir, kTRUE);
+  }
+
+  // redirect, do not forget to get it back
+  const auto path_name_log = strs.at("log_path");
+  if (!gSystem->AccessPathName(path_name_log.c_str())) {
+    gSystem->Unlink(path_name_log.c_str());
+  }
+  gSystem->RedirectOutput(path_name_log.c_str(), "a", nullptr);
 
   // fit to MC
   fitSignal(cand_mass, dsLamCMC, par, strs);
@@ -166,13 +126,31 @@ void fit(std::string configName)
                                    mycuts._NtrkofflineMax);
     }
   }
-  fitLamC(cand_mass, *dsLamCSkim, par, strs);
-  // std::cout << "MC entries " << dsLamCMC.sumEntries() << std::endl;
+  fitLamC(cand_mass, *dsLamCSkim, *myws, par, strs, false);
+  // fitLamC(cand_mass, *dsLamCSkim, *myws, par, strs, true);
+  std::cout << "MC entries " << dsLamCMC.sumEntries() << std::endl;
+
+  // get the stream back
+  ts.Print();
+  gSystem->RedirectOutput(nullptr);
+
+  ofile.cd();
+  myws->Write();
 
   f->Close();
+  ts.Stop();
+  ts.Print();
 }
 
 void fitAlice()
 {
-  fit("testws_pT8to10.txt");
+  // fit("testws_pT8to10.txt");
+  //const float pT[] = {2, 3, 4, 5, 6, 8, 10};
+  const float pT[] = {2, 3};
+  const size_t nPt = sizeof(pT)/sizeof(float) - 1;
+  for (size_t ipt=0; ipt<nPt; ++ipt) {
+    auto configName = string_format("configForAlice/pT%gto%g.conf",
+                                    pT[ipt], pT[ipt+1]);
+    fit(configName);
+  }
 }

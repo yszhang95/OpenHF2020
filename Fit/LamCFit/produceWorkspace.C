@@ -219,5 +219,14 @@ void produceWorkspace(std::string configName)
 
 void produceWorkspaceAlice()
 {
-  produceWorkspace("testws_pT8to10.txt");
+  // produceWorkspace("testws_pT8to10.txt");
+  //const float pT[] = {4, 5, 6, 8, 10};
+  // const float pT[] = {2, 3};
+  const float pT[] = {3., 4.};
+  const size_t nPt = sizeof(pT)/sizeof(float) - 1;
+  for (size_t ipt=0; ipt<nPt; ++ipt) {
+    auto configName = string_format("configForAlice/pT%gto%g.conf",
+                                    pT[ipt], pT[ipt+1]);
+    produceWorkspace(configName);
+  }
 }

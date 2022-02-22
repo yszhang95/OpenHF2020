@@ -839,7 +839,7 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
 }
 
 
-void fitLamC(RooRealVar& mass, RooAbsData& ds,
+void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
              FitParConfigs::ParConfigs& par,
              std::map<std::string, std::string> strs,
              const bool useHistOnly)
@@ -919,8 +919,11 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds,
   } else {
     sum.fitTo(ds, Range("full"));
   }
-  if (!useHistOnly)
-    sum.fitTo(ds, Range("full"));
+  if (!useHistOnly) {
+    // sum.fitTo(ds, Range("full"));
+    sum.fitTo(ds, Range("full"), NumCPU(4));
+  }
+
 
   /**
      Draw
@@ -1031,6 +1034,13 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds,
             << " + " << nsig.getAsymErrorHi()
             << " - " << nsig.getAsymErrorLo()
             << std::endl;
+  /**
+   * Update the workspace
+   */
+  // I do not do this for D0 because
+  // 1. D0 is fast
+  // 2. D0 is too complex
+  ws.import(sum);
 }
 
 #endif
