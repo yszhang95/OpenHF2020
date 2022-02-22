@@ -1,12 +1,27 @@
-#include "fitUtils.cc"
-#include "ReadConfig.cc"
+#if defined(__CLING__)
+R__ADD_INCLUDE_PATH($OPENHF2020TOP)
+R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
+#endif
+
+#include "Utilities/FitUtils/ReadConfig.h"
+#include "Utilities/FitUtils/fitUtils.h"
+
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+#include "TROOT.h"
 #include "TSystem.h"
 #include "TChain.h"
 #include "TFileCollection.h"
 #include "THashList.h"
 
+using namespace RooFit;
+
+using std::cout;
+using std::endl;
+
 void fit()
 {
+  gROOT->SetBatch(kTRUE);
   FitParConfigs configs("test.txt");
   auto inputConfigs = configs.getInputConfigs();
   auto outputConfigs = configs.getOutputConfigs();
@@ -30,6 +45,7 @@ void fit()
 
   // std::map<std::string, std::string> strs;
   // strs.insert( {"logfile", outputConfigs.getPath("log")} );
+  // strs["xtitle"] = "M_{K#pi}";
 
   // // redirect messages
   // gSystem->RedirectOutput(strs.at("logfile").c_str(), "w", nullptr);
@@ -108,7 +124,8 @@ void fitAlice()
   RooRealVar y("y", "rapidity", -2.4, 2.4);
   RooRealVar matchGEN("matchGEN", "matchGEN", -1, 2);
   RooRealVar isSwap("isSwap", "isSwap", -1, 2);
-  RooRealVar dz1p0("dz1p0", "dz1p0", -2.4, 2.4);
+  RooRealVar dz1p0("dz1p0", "dz1p0", -1, 2);
+  RooRealVar mva("mva", "mva", -1, 1);
 
   mass.setRange("full", 1.725, 2.0);
   mass.setRange("signal", 1.725, 2.0);
@@ -131,9 +148,12 @@ void fitAlice()
     strs["alignment"] = "22";
     strs["pT"] = Form("%.1f<p_{T}<%.1f", pts[ipt], pts[ipt+1]);
     strs["y"] = "|y|<0.5";
+    // I take cuts as weights because
+    // if pass cuts, weight = 1, otherwise weight = 0
     std::string cuts = Form("pT > %.1f && pT < %.1f", pts[ipt], pts[ipt+1]);
     cuts += " && dz1p0 > 0.5";
     cuts += " && abs(y)< 0.5";
+    cuts += " && mva > 0.56";
     if (!gSystem->AccessPathName(path_name_log.c_str())) {
       gSystem->Unlink(path_name_log.c_str());
     }
@@ -144,40 +164,44 @@ void fitAlice()
     }
     gSystem->RedirectOutput(path_name_log.c_str(), "a", nullptr);
 
+    strs["xtitle"] = "M_{K#pi}";
     std::cout << ">>>>>>>> Fit true D\n" << std::endl;
     RooDataSet dsMCSignal("dsMCSignal", "true D0 samples",
-                          RooArgSet(mass, pT, y, matchGEN, isSwap),
+                          RooArgSet(mass, pT, y, matchGEN, isSwap, mva),
                           ImportFromFile(fileMC.c_str(), treePt.c_str()),
-                          Cut("isSwap<0.5"));
+                          Cut("isSwap<0.5 && mva>0.56"));
     fitSignal(mass, dsMCSignal, par, strs);
     std::cout << std::endl;
 
     std::cout << ">>>>>>>> Fit swap\n" << std::endl;
     RooDataSet dsMCSwap("dsMCSwap", "swap D0 samples",
-                        RooArgSet(mass, pT, y, matchGEN, isSwap),
+                        RooArgSet(mass, pT, y, matchGEN, isSwap, mva),
                         ImportFromFile(fileMC.c_str(), treePt.c_str()),
-                        Cut("isSwap>0.5"));
+                        Cut("isSwap>0.5 && mva>0.56"));
     fitSwap(mass, dsMCSwap, par, strs);
     std::cout << std::endl;
 
     std::cout << ">>>>>>>> Fit true and swap D\n" << std::endl;
     RooDataSet dsMCAll("dsMCAll", "true+swap D0 samples",
-                       RooArgSet(mass, pT, y, matchGEN, isSwap),
-                       ImportFromFile(fileMC.c_str(), treePt.c_str()));
+                       RooArgSet(mass, pT, y, matchGEN, isSwap, mva),
+                       ImportFromFile(fileMC.c_str(), treePt.c_str()),
+                       Cut("mva>0.56"));
     fitSignalAndSwap(mass, dsMCAll, par, strs);
     std::cout << std::endl;
 
     std::cout << ">>>>>>>> Fit D0->KK\n" << std::endl;
     RooDataSet dsMCKK("dsMCKK", "MC D0->K+K0 samples",
-                      RooArgSet(mass, pT, y, matchGEN, isSwap),
-                      ImportFromFile(fileD0toKK.c_str(), treePt.c_str()));
+                      RooArgSet(mass, pT, y, matchGEN, isSwap, mva),
+                      ImportFromFile(fileD0toKK.c_str(), treePt.c_str()),
+                      Cut("mva>0.56"));
     fitCBShapeKK(mass, dsMCKK, par, strs);
     std::cout << std::endl;
 
     std::cout << ">>>>>>>> Fit D0->PiPi\n" << std::endl;
     RooDataSet dsMCPiPi("dsMCPiPi", "MC D0->K+K0 samples",
-                        RooArgSet(mass, pT, y, matchGEN, isSwap),
-                        ImportFromFile(fileD0toPiPi.c_str(), treePt.c_str()));
+                        RooArgSet(mass, pT, y, matchGEN, isSwap, mva),
+                        ImportFromFile(fileD0toPiPi.c_str(), treePt.c_str()),
+                        Cut("mva>0.56"));
     fitCBShapePiPi(mass, dsMCPiPi, par, strs);
     std::cout << std::endl;
 
@@ -193,8 +217,9 @@ void fitAlice()
         chain.Add(file.c_str());
       }
     }
+    // cuts as weight
     RooDataSet dsData("dsData", treePt.c_str(), &chain,
-                      RooArgSet(mass, pT, y, dz1p0),
+                      RooArgSet(mass, pT, y, dz1p0, mva),
                       cuts.c_str());
     cout << cuts << endl;
     // special for data

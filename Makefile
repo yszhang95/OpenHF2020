@@ -13,6 +13,9 @@ CCFLAGS+=$(shell root-config --cflags)
 LDFLAGS:=$(shell root-config --ldflags)
 LDFLAGS+=$(shell root-config --libs)
 
+LDGLIBFLAGS:=$(shell root-config --ldflags)
+LDGLIBFLAGS+=$(shell root-config --glibs)
+
 ROOTLIBS:=$(shell root-config --libdir)
 ROOTINCS:=$(shell root-config --incdir)
 
@@ -26,7 +29,7 @@ all::
 -include Utilities/Makefile.inc
 -include Training/Makefile.inc
 
-all:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyTreeReader.so $(MYMVABINS)
+all:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyTreeReader.so $(MYLIB)/libMyFitUtils.so $(MYMVABINS)
 
 .PHONY: clean
 clean:
