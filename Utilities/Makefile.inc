@@ -4,6 +4,10 @@ FitUtilsDir=$(UtilitiesDir)/FitUtils
 Ana=$(UtilitiesDir)/Ana
 MYLIB=$(UtilitiesDir)/lib
 
+CXXFLAGS += -I$(shell HepMC3-config --includedir)
+CXXFLAGS += $(shell HepMC3-config --libs)
+LDFLAGS += $(shell HepMC3-config --ldflags)
+
 $(MYLIB)/libMyTreeReader.so: \
 	$(TreeReaderDir)/D0Event.cxx \
 	$(TreeReaderDir)/ParticleTreeMC2.cxx \

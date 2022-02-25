@@ -8,6 +8,8 @@
 #include "Math/GenVector/VectorUtil.h"
 #include "Math/Vector4Dfwd.h"
 
+#include "HepMC3/GenParticle.h"
+
 #ifndef HelpClass_H
 #define HelpClass_H
 
@@ -16,11 +18,12 @@ enum PdgId : int { Proton=2212, Ks=310, LambdaC=4122, Pion=211, Kaon=321};
 class Particle {
 public:
   using ParticlePtr = std::shared_ptr<Particle>;
+  static ParticlePtr newParticle(const std::string&);
   Particle(int id): _id(id), _selfConj(false), _longLived(false), _flip(0), _treeIdx(USHRT_MAX) {};
   Particle(const Particle& p);
   //~Particle() { cout << "Deleted" << endl; }
 
-  bool isStable()  const    { return _daus.size(); }
+  bool isStable()  const    { return _daus.empty(); }
   bool selfConj()  const    { return _selfConj;    }
   void selfConj(bool conj)  { _selfConj = conj;    }
   bool longLived() const    { return _longLived;   }
@@ -42,6 +45,9 @@ protected:
   int _flip;
   unsigned short _treeIdx;
   std::vector<ParticlePtr> _daus;
+private:
+  static ParticlePtr convertGenParticle(const HepMC3::GenParticle&);
+  static void addDaughters(const HepMC3::GenParticle&, ParticlePtr&);
 };
 
 struct KineCut {
@@ -92,8 +98,8 @@ public:
 private:
   float _turn1;
   float _turn2;
-  float _upper;
   float _lower;
+  float _upper;
   std::vector<float> _pars;
 };
 
