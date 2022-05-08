@@ -1,6 +1,7 @@
 # Search path for dynamic libraries
-Unix.*.Root.DynamicPath:    .:$(OPENHF2020TOP)/Utilities/lib
+#Unix.*.Root.DynamicPath:    .:$(OPENHF2020TOP)/Utilities/lib
+Unix.*.Root.DynamicPath:    .:$(ROOTSYS)/lib:$(OPENHF2020TOP)/Utilities/lib
 
 # Build options
 ACLiC.BuildDir:        .compiles
-ACLiC.IncludePaths:     -I$(OPENHF2020TOP)/Utilities
+ACLiC.IncludePaths:     -I$(OPENHF2020TOP)

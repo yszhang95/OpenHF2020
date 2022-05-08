@@ -255,7 +255,7 @@ void optimizer(PARS mypars)
   // significance from yields_data/yieldsErr_data
   std::vector<double> sigFit;
 
-  // significance calculated using S/sqrt(S+B), S and S+B are from data fit, integral over -/+ 2.6 wdith
+  // significance calculated using S/sqrt(S+B), S and S+B are from data fit, integral over -/+ 2.6 width
   std::vector<double> dataSig;
   // S+B integral within -/+ 2.6 * width (see below), from data fit
   std::vector<double> fitInt;
@@ -380,7 +380,7 @@ void optimizer(PARS mypars)
     // cout << widths.at(i) << endl;
     double sPlusB = h->Integral(massLw, massUp);
     */
-    const auto  BOnly = histInt.at(i) - yields;
+    const auto BOnly = histInt.at(i) - yields;
     cout << "mvaCut: " << mvaCut << "\t";
     cout << "BOnly " << BOnly << "\t";
     cout << "yields " << yields << "\t";

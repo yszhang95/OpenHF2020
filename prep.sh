@@ -23,11 +23,7 @@ if [[ "${1}" = "-fdev" ]]; then
     git checkout test
 fi
 source setup.sh
-cd Utilities
 make
-cd ../Training
-make
-cd ..
 cat > .rootrc <<- _EOF_
 Unix.*.Root.DynamicPath:    .:${OPENHF2020TOP}/Utilities/lib:${OPENHF2020TOP}/Training/Macros/
 Unix.*.Root.MacroPath:    .:${OPENHF2020TOP}/Training/Macros/

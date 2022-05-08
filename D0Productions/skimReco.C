@@ -1,3 +1,8 @@
+#if defined(__CLING__) and !defined(__ROOTCLING__)
+R__ADD_INCLUDE_PATH($OPENHF2020TOP)
+R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
+#endif
+
 #include <iostream>
 #include <vector>
 #include <list>
@@ -134,7 +139,8 @@ void skimReco(std::string inputList="test.list", std::string effFileName="")
     }
   }
   if (!inListBaseName.empty()) {
-    inListBaseName.pop_back();
+    if (*inListBaseName.rbegin() == '_')
+      inListBaseName.pop_back();
   }
 
   TFile* ofile = TFile::Open(("d0output_" + inListBaseName + ".root").c_str(), "recreate");
