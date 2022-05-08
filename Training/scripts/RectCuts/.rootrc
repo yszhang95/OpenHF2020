@@ -1,0 +1,3 @@
+Unix.*.Root.MacroPath:    .:/afs/cern.ch/work/y/yousen/public/OpenHF2020/Training/scripts/RectCuts/OpenHF2020/Training/Macros/
+ACLiC.BuildDir:        .compiles
+ACLiC.IncludePaths:     -I/afs/cern.ch/work/y/yousen/public/OpenHF2020/Training/scripts/RectCuts/OpenHF2020/Utilities
