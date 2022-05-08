@@ -39,15 +39,31 @@ void MyNTuple::setNDau(const unsigned short ndau,
   }
 }
 
-void MyNTuple::initWeightBranch()
+void MyNTuple::initWeightBranch(const bool saveError)
 {
   eventWeight = 1.;
+  eventWeightUp = 1.;
+  eventWeightLo = 1.;
   t->Branch("eventWeight", &eventWeight);
+  if (saveError) {
+    t->Branch("eventWeightUp", &eventWeightUp);
+    t->Branch("eventWeightLo", &eventWeightLo);
+  }
 }
 
-void MyNTuple::setEventWeight(const float weight)
+void MyNTuple::setEventWeight(const float weight, EfficiencyTable<TGraph>::Value eff)
 {
-  eventWeight = weight;
+  switch (eff) {
+  case EfficiencyTable<TGraph>::Value::effCent :
+    eventWeight = weight; break;
+  case EfficiencyTable<TGraph>::Value::effLow :
+    eventWeightUp = weight; break;
+  case EfficiencyTable<TGraph>::Value::effUp :
+    eventWeightLo = weight; break;
+  default:
+    std::cout << "Not a matched type of event weight\n";
+    return;
+  }
 }
 
 void MyNTuple::initMVABranches(const vector<TString>& methods)

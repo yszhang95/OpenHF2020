@@ -408,7 +408,7 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   ntp.flipEta = flipEta;
   unsigned short dauNGDau[] = {2, 0};
   ntp.setNDau(2, 2, dauNGDau);
-  if (reweightEvent) { ntp.initWeightBranch(); }
+  if (reweightEvent) { ntp.initWeightBranch(true); }
   ntp.initMVABranches(methodNames_copy);
   ntp.initNTuple();
   if (isMC) ntp.initGenBranches();
@@ -420,6 +420,15 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
   TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
   TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+
+  TH1D hNtrkofflineUp("hNtrkofflineUp", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineUpDz1p0("hNtrkofflineUpDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineUpGplus("hNtrkofflineUpGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+
+  TH1D hNtrkofflineLo("hNtrkofflineLo", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineLoDz1p0("hNtrkofflineLoDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineLoGplus("hNtrkofflineLoGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+
   TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
   TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
   TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
@@ -475,20 +484,30 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
     //   if (!passEventSel) continue;
     // }
     double ntrkWeight = 1.;
+    double ntrkWeightUp = 1.;
+    double ntrkWeightLo = 1.;
     double NtrkInFloat = 0;
     if (!isMC) {
       const auto ntrk = p.Ntrkoffline();
       if (reweightEvent && ntrk < 400) {
         ntrkWeight = effTab.getWeight(ntrk);
+        ntrkWeightUp = effTab.getWeight(ntrk, EfficiencyTable<TGraph>::Value::effLow);
+        ntrkWeightLo = effTab.getWeight(ntrk, EfficiencyTable<TGraph>::Value::effUp);
       }
       hNtrkoffline.Fill(ntrk, ntrkWeight);
+      hNtrkofflineUp.Fill(ntrk, ntrkWeightUp);
+      hNtrkofflineLo.Fill(ntrk, ntrkWeightLo);
       hNtrkofflineUnweight.Fill(ntrk);
       if (p.evtSel().at(4)) {
         hNtrkofflineDz1p0.Fill(ntrk, ntrkWeight);
+        hNtrkofflineUpDz1p0.Fill(ntrk, ntrkWeightUp);
+        hNtrkofflineLoDz1p0.Fill(ntrk, ntrkWeightLo);
         hNtrkofflineDz1p0Unweight.Fill(ntrk);
       }
       if (p.evtSel().at(5)) {
         hNtrkofflineGplus.Fill(ntrk, ntrkWeight);
+        hNtrkofflineUpGplus.Fill(ntrk, ntrkWeightUp);
+        hNtrkofflineLoGplus.Fill(ntrk, ntrkWeightLo);
         hNtrkofflineGplusUnweight.Fill(ntrk);
       }
 
@@ -501,20 +520,30 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
 
     // event weight
     double eventWeight = 1;
+    double eventWeightUp = 1;
+    double eventWeightLo = 1;
     // check Ntrkoffline range
     // temporarily not useful
-    if (!isMC) {
-      const auto noCandidate = p.cand_mass().empty();
-      if (noCandidate) continue;
-      if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
-      const auto Ntrk = p.cand_Ntrkoffline().at(0);
+    // if (!isMC) {
+      // const auto noCandidate = p.cand_mass().empty();
+      // if (noCandidate) continue;
+      // if (DEBUG && noCandidate) cout << "No candidate in this event" << endl;
+      // const auto Ntrk = p.cand_Ntrkoffline().at(0);
       // if ( Ntrk >= NtrkHigh || Ntrk < NtrkLow) continue;
-      if (reweightEvent) eventWeight = effTab.getWeight(Ntrk);
+      // if (reweightEvent) eventWeight = effTab.getWeight(Ntrk);
+      // if (reweightEvent) eventWeightUp = effTab.getWeight(Ntrk, EfficiencyTable<TGraph>::Value::effLow);
+      // if (reweightEvent) eventWeightLo = effTab.getWeight(Ntrk, EfficiencyTable<TGraph>::Value::effUp);
       // cout << "Ntrk: " << Ntrk << ", efficiency: " << effTab.getEfficiency(Ntrk) << endl;
-    }
+    // }
 
     eventWeight = ntrkWeight;
-    if (reweightEvent) ntp.setEventWeight(eventWeight);
+    eventWeightUp = ntrkWeightUp;
+    eventWeightLo = ntrkWeightLo;
+    if (reweightEvent) {
+      ntp.setEventWeight(eventWeight);
+      ntp.setEventWeight(eventWeightUp, EfficiencyTable<TGraph>::Value::effLow);
+      ntp.setEventWeight(eventWeightLo, EfficiencyTable<TGraph>::Value::effUp);
+    }
 
     const auto recosize = p.cand_mass().size();
     const auto& pdgId = p.cand_pdgId();
@@ -725,6 +754,15 @@ int TMVAClassificationApp(const tmvaConfigs& configs)
   hNtrkofflineUnweight.Write();
   hNtrkofflineDz1p0Unweight.Write();
   hNtrkofflineGplusUnweight.Write();
+  if (reweightEvent) {
+    hNtrkofflineLo.Write();
+    hNtrkofflineLoDz1p0.Write();
+    hNtrkofflineLoGplus.Write();
+
+    hNtrkofflineUp.Write();
+    hNtrkofflineUpDz1p0.Write();
+    hNtrkofflineUpGplus.Write();
+  }
   if (saveTree) ntp.t->Write();
   for (const auto& vec : hMassPtMVA) {
     for (const auto& h : vec) h->Write();
