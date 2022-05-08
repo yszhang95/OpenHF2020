@@ -1,0 +1,64 @@
+<root>
+  <training_variables>
+    dedxRes := trk_dau1_dEdxRes ? [0] ? trk_dau1_dEdxRes
+    cos(cand_angle3D)? cos([0])? cand_angle3D
+    cand_dau1_p:=cand_pTDau1 * cosh(cand_etaDau1) ? [0] * cosh([1])? cand_pTDau1:cand_etaDau1
+    cand_etaDau1 ? [0] ? cand_etaDau1
+  </training_variables>
+  <spectator_variables>
+    cand_pT? [0] ? cand_pT
+    cand_mass? [0] ? cand_mass
+  </spectator_variables>
+  <outfileName>
+    # change 4to6
+    MCLambdaCKsP4to6HMApp
+  </outfileName>
+  <outputDir>
+    ./
+  </outputDir>
+  <histoBinning>
+# change
+    120, 2.15, 2.45, 10, 0., 10., 500, 0.0, 0.01
+  </histoBinning>
+  <trainXML>
+# change 4to6
+    MLP_vars3D_pT4to6_Np2N_noDR.xml
+  </trainXML>
+  <treeInfo>
+    lambdacAna_mc  ? 4122 ? -1
+  </treeInfo>
+  <methods>
+# change 4to6
+    MLP? MLP4to6Np2N_noDR? !H:!V:NeuronType=tanh:VarTransform=N,G:NCycles=200:HiddenLayers=N+2,N:TestRate=5:UseRegulator=True:ConvergenceTests=5:ConvergenceImprove=1E-3
+  </methods>
+  <mvaCutMin>
+# change
+    0.000
+  </mvaCutMin>
+  <options>
+# change for Pbp
+    saveTree:selectMVA:saveDau:selectDeDx:isMC
+  </options>
+  <common_cuts>
+# change
+    cand_pT &gt; 4. ? [0] &gt; 4 ? cand_pT
+    cand_pT &lt; 6. ? [0] &lt; 6 ? cand_pT
+    abs(cand_y) &lt; 1. ? abs([0]) &lt; 1. ? cand_y
+    cand_dau0_decayLength3D/cand_dau0_decayLengthError3D &gt; 5. ? [0]/[1] &gt; 5 ? cand_dau0_decayLength3D:cand_dau0_decayLengthError3D
+    cand_dau0_dca &lt; 0.5 ? [0] &lt; 0.5 ? cand_dau0_dca
+    cos(cand_dau0_angle3D) &gt; 0.999 ? cos([0]) &gt; 0.999 ? cand_dau0_angle3D
+  </common_cuts>
+  <inputFiles>
+    # change for pT>6
+    #NonPrompt_pT1p9_pPb.list
+    LamC_pT0p9_pPb.list
+  </inputFiles>
+  <RooWorkspace>
+# change
+    wsMCHMPt4to6:wsMCHMPt4to6
+  </RooWorkspace>
+  <RooDataSet>
+# change
+    dsMCHMPt4to6:dsMCHMPt4to6
+  </RooDataSet>
+</root>
