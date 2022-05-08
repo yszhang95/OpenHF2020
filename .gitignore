@@ -87,6 +87,7 @@ GenParticleAnalysis/NewRequests/
 Training/test/2021*
 Training/scripts/RectCuts/*list*
 **/Test/
+**/Test2/
 **/*.list.*
 Training/scripts/appMVA/legacyBefore20211115/
 MCStudies/MCRequests/pythons/
@@ -101,3 +102,5 @@ Training/scripts/appMVA/cms.txt
 Training/scripts/appMVAToNTuple/
 Training/scripts/appMLP3to4/
 Training/scripts/appMVA/legacy/
+ProduceNTuples/**/*.list
+pT3to4/run_pT3to4.sh
