@@ -2,11 +2,34 @@
 #include "Utilities/Ana/Common.h"
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <TGraphAsymmErrors.h>
+
+#include "HepMC3/ReaderAscii.h"
+#include "HepMC3/GenEvent.h"
+#include "HepMC3/GenParticle.h"
+
 #endif
 #ifdef HelpClass_H
+
+Particle::ParticlePtr Particle::newParticle(const std::string& diagram)
+{
+  std::istringstream diagramStream(diagram);
+
+  HepMC3::ReaderAscii inputRecord(diagramStream);
+  HepMC3::GenEvent evt;
+  inputRecord.read_event(evt);
+  if (inputRecord.failed()) {
+    throw std::logic_error("Cannot phrase HepMC3 input\n");
+  }
+  const auto& p = *evt.particles().front();
+  auto ptr = convertGenParticle(p);
+  addDaughters(p, ptr);
+  return ptr;
+}
+
 Particle::Particle(const Particle& p):
   _id(p._id), _selfConj(p._selfConj), _longLived(p._longLived),
   _flip(0), _treeIdx(USHRT_MAX)
@@ -45,6 +68,55 @@ void Particle::flipFlavor()
     for(auto& d : _daus) d->flipFlavor();
   }
   _flip++;
+}
+
+/**
+   You have add the daughters by yourself.
+   Followings are set:
+   - pdg ID
+   - self conjugation
+   - long lived particles
+ */
+Particle::ParticlePtr
+Particle::convertGenParticle(const HepMC3::GenParticle& genParticle)
+{
+  // creation
+  ParticlePtr p = std::make_shared<Particle>(genParticle.pdg_id());
+  // self conjugation
+  const auto selfConj = genParticle.attribute_as_string("selfConj");
+  if (!selfConj.empty()) {
+    int yes = std::stoi(selfConj);
+    if (yes != 1) {
+      throw std::logic_error("Error in setup related to selfConj. "
+                             "It must be 1 or 0\n");
+    }
+    p->selfConj(yes);
+  }
+  // long lived particle
+  const auto longLived = genParticle.attribute_as_string("longLived");
+  if (!longLived.empty()) {
+    int yes = std::stoi(longLived);
+    if (yes != 1) {
+      throw std::logic_error("Error in setup related to longLived. "
+                             "It must be 1 or 0\n");
+    }
+    p->longLived(yes);
+  }
+  return p;
+}
+
+void Particle::addDaughters(const HepMC3::GenParticle& genParticle,
+                            ParticlePtr& p)
+{
+  const auto children = genParticle.children();
+  const auto nChildren = children.size();
+  for (size_t i=0; i<nChildren; ++i) {
+    const auto& child = *children.at(i);
+    auto dauPtr = convertGenParticle(child);
+    p->addDaughter(*dauPtr);
+    dauPtr = p->daughter(i);
+    addDaughters(child, dauPtr);
+  }
 }
 
 bool passKinematic (const float pT, const float eta, const float y,
