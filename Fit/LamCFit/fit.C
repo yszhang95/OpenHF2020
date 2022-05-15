@@ -144,13 +144,48 @@ void fit(std::string configName)
 
 void fitAlice()
 {
-  // fit("testws_pT8to10.txt");
-  //const float pT[] = {2, 3, 4, 5, 6, 8, 10};
   const float pT[] = {2, 3};
   const size_t nPt = sizeof(pT)/sizeof(float) - 1;
   for (size_t ipt=0; ipt<nPt; ++ipt) {
     auto configName = string_format("configForAlice/pT%gto%g.conf",
                                     pT[ipt], pT[ipt+1]);
     fit(configName);
+  }
+}
+
+void fitCMS()
+{
+  // const float pT[] = {2, 3, 4, 5, 6, 8, 10};
+  //const float pT[] = {8, 10};
+  const float pT[] = {3, 4};
+  const size_t nPt = sizeof(pT)/sizeof(float) - 1;
+  //const int Ntrk[] = {0, 35, 60, 90, 120, 185};
+  const int Ntrk[] = {185, 250};
+  //const int Ntrk[] = {90, 120};
+  const size_t nMult = sizeof(Ntrk)/sizeof(int) - 1;
+  for (size_t ipt=0; ipt<nPt; ++ipt) {
+    for (size_t imult=0; imult<nMult; ++imult) {
+      auto configName = string_format("configs/pT%gto%g_Ntrk%dto%d.conf",
+                                    pT[ipt], pT[ipt+1], Ntrk[imult], Ntrk[imult+1]);
+      fit(configName);
+    }
+  }
+}
+
+void fitDP()
+{
+  const float pT[] = {3, 4};
+  const size_t nPt = sizeof(pT)/sizeof(float) - 1;
+  //const int NtrkMin[] = {0, 185};
+  //const int NtrkMax[] = {35, 250};
+  const int NtrkMin[] = {185};
+  const int NtrkMax[] = {250};
+  const size_t nMult = sizeof(NtrkMin)/sizeof(int);
+  for (size_t ipt=0; ipt<nPt; ++ipt) {
+    for (size_t imult=0; imult<nMult; ++imult) {
+      auto configName = string_format("configs/pT%gto%g_Ntrk%dto%d.conf",
+                                    pT[ipt], pT[ipt+1], NtrkMin[imult], NtrkMax[imult]);
+      fit(configName);
+    }
   }
 }

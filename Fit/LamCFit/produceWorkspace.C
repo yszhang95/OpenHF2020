@@ -3,6 +3,7 @@ R__ADD_INCLUDE_PATH($OPENHF2020TOP)
 R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
 #endif
 #include "Utilities/FitUtils/ReadConfig.h"
+#include "Utilities/Ana/Common.h"
 
 #include "RooArgSet.h"
 #include "RooDataSet.h"
@@ -66,7 +67,7 @@ struct NTupleVars
 
 void produceWorkspace(std::string configName)
 {
-  const double massLo = 2.09;
+  const double massLo = 2.05;
   const double massHi = 2.55;
 
   FitParConfigs configs(configName.c_str());
@@ -85,6 +86,21 @@ void produceWorkspace(std::string configName)
   const std::string wsName = "ws_" + label;
   const std::string dsName = "ds_" + label;
   const std::string ofileName = "ofile_" + wsName + ".root";
+
+  bool useWeight = false;
+  TGraph* g(0);
+  EfficiencyTable<TGraph> effTab(g);
+  try {
+    const auto effFileName = inputConfigs.getPaths("MultEff").front();
+    TFile fEff(effFileName.c_str());
+    const auto effTabName = inputConfigs.getName("MultEff");
+    TGraph* g = (TGraph*) fEff.Get(effTabName.c_str());
+    effTab.setTable(g);
+    g = nullptr;
+    useWeight = true;
+  } catch (std::out_of_range& e) {
+    std::cout << "Efficiency Table is not found. Do not use weight then.\n";
+  }
 
   TChain chain(inputConfigs.getName("Data").c_str(), "LambdaCKsP");
   const auto files = inputConfigs.getPaths("Data");
@@ -140,10 +156,13 @@ void produceWorkspace(std::string configName)
   RooRealVar trigHM("trigHM", "High multiplicity trigger", -0.5, 1.5);
   RooRealVar trigMB("trigMB", "Minimum bias trigger", -0.5, 1.5);
 
+  RooRealVar wgtVar("weight", "weight from HM trigger", -0.1, 1.5);
+
   // not owned by default
   // either argSets.setRealValue("cand_mass", 2.29)
   // or cand_mass.setVal(2.29)
-  const auto argSets = RooArgSet(cand_mass, cand_mva, cand_pT, cand_y);
+  auto argSets = RooArgSet(cand_mass, cand_mva, cand_pT, cand_y);
+  if (useWeight) argSets.add(wgtVar);
 
   // I do not know to write using xroot is safe or not
   // I disable xrootd by creating an object instead of using pointer.
@@ -151,7 +170,8 @@ void produceWorkspace(std::string configName)
   RooWorkspace myws(wsName.c_str(), "");
   RooAbsData::setDefaultStorageType(RooAbsData::Tree);
   // I do not care weight yet
-  RooDataSet mydata(dsName.c_str(), "", argSets, 0);
+  const char* wgtVarName = useWeight ? "weight" : 0;
+  RooDataSet mydata(dsName.c_str(), "", argSets, wgtVarName);
 
   Long64_t nentries = t->GetEntries();
   for (Long64_t ientry=0; ientry!=nentries; ++ientry) {
@@ -204,7 +224,16 @@ void produceWorkspace(std::string configName)
     // or I only need to do
     // mydata.add(argSets, 1.1)
     // ?
-    mydata.add(argSets);
+
+    if (useWeight) {
+      const double eventWeight =
+        effTab.getWeight(ntupleVars._Ntrkoffline,
+                         EfficiencyTable<TGraph>::Value::effCent);
+      wgtVar.setVal(eventWeight);
+      mydata.add(argSets, eventWeight);
+    } else {
+      mydata.add(argSets);
+    }
   }
   // or you can myws.writeToFile("output.root", kTRUE)
   // the second arguments is for `recreate`
@@ -228,5 +257,24 @@ void produceWorkspaceAlice()
     auto configName = string_format("configForAlice/pT%gto%g.conf",
                                     pT[ipt], pT[ipt+1]);
     produceWorkspace(configName);
+  }
+}
+
+void produceWorkspaceCMS()
+{
+  // const float pT[] = {2., 3., 4., 5., 6., 8., 10};
+  // const float pT[] = {8., 10};
+  const float pT[] = {3., 4};
+  const size_t nPt = sizeof(pT)/sizeof(float) - 1;
+  // const int Ntrk[] = {0, 35, 60, 90, 120, 185};
+  const int Ntrk[] = {185, 250};
+  const size_t nMult = sizeof(Ntrk)/sizeof(int) - 1;
+  for (size_t ipt=0; ipt<nPt; ++ipt) {
+    for (size_t imult=0; imult<nMult; ++imult) {
+      auto configName = string_format("configs/pT%gto%g_Ntrk%dto%d.conf",
+                                    pT[ipt], pT[ipt+1], Ntrk[imult], Ntrk[imult+1]);
+      std::cout << configName << "\n";
+      produceWorkspace(configName);
+    }
   }
 }
