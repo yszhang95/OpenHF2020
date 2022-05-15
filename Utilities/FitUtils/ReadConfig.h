@@ -52,10 +52,16 @@ public:
     friend class FitParConfigs;
     explicit ParConfigs() {}
     bool empty() const { return _data.empty(); }
+    bool hasVariable(const std::string&) const;
     bool hasInit(const std::string&) const;
     double getInit(const std::string&) const;
     double getMin(const std::string&) const;
     double getMax(const std::string&) const;
+
+    double getInit(const std::string&, const double) const;
+    double getMin(const std::string&, const double) const;
+    double getMax(const std::string&, const double) const;
+
     void setInit(const std::string n, const double _init);
     void setMin(const std::string n, const double _min);
     void setMax(const std::string n, const double _max);
@@ -188,13 +194,14 @@ struct VarCuts
   UShort_t _NtrkofflineMax;
   bool _usedz1p0;
   bool _usegplus;
+  bool _useWeight;
   bool _useMB;
   bool _useHM;
 
   // constructor
   VarCuts() :  _mvaCut(-1), _pTMin(0), _pTMax(100), _yAbsMax(2.4),
     _NtrkofflineMin(0), _NtrkofflineMax(UShort_t(-1)),
-    _usedz1p0(0), _usegplus(0), _useMB(0), _useHM(0)
+    _usedz1p0(0), _usegplus(0), _useWeight(0), _useMB(0), _useHM(0)
   {}
 
   VarCuts(const FitParConfigs::CutConfigs cutConfigs);
@@ -207,5 +214,22 @@ struct VarCuts
   std::string getMva() const;
 };
 
+// fit options for HF
+struct FitOptsHF
+{
+  int  nBins;
+  int  numCPU;
+  bool useWeight;
+  bool useHist;
+  bool useHistOnly;
+  bool fixScale;
+  bool fixMean;
+  FitOptsHF() : nBins(100), numCPU(1),
+                useWeight(0), useHist(0), useHistOnly(0),
+                fixScale(0), fixMean(0) {}
+};
+
+std::map<std::string, std::string>
+getNames(const FitParConfigs&, const VarCuts&);
 
 #endif

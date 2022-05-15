@@ -4,6 +4,7 @@
 #include "RooDataSet.h"
 #include "RooDataHist.h"
 #include "RooCurve.h"
+#include "RooFitResult.h"
 #include "TCanvas.h"
 
 #include "Utilities/FitUtils/ReadConfig.h"
@@ -76,13 +77,12 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
                     FitParConfigs::ParConfigs& par,
                     std::map<std::string, std::string> strs);
 
-void fitD0(RooRealVar& mass, RooAbsData& ds,
-           FitParConfigs::ParConfigs& par,
+RooFitResult fitD0(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+           FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
            std::map<std::string, std::string> strs);
 
-void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
-             FitParConfigs::ParConfigs& par,
-             std::map<std::string, std::string> strs,
-             const bool useHistOnly=true);
+RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+             FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
+             std::map<std::string, std::string> strs);
 
 #endif

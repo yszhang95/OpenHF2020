@@ -9,6 +9,8 @@
 
 #include "Utilities/FitUtils/ReadConfig.h"
 
+#include "Utilities/Ana/Common.h"
+
 #ifdef __READ_CONFIG__
 
 using std::ifstream;
@@ -176,6 +178,10 @@ FitParConfigs::ParConfigs::setInit(const std::string n, const double _init)
     std::get<1>(_data.at(n)) = _init;
   }
 }
+bool
+FitParConfigs::ParConfigs::hasVariable(const std::string& n) const
+{ return _data.find(n) != _data.end(); }
+
 bool FitParConfigs::ParConfigs::hasInit(const std::string& n) const
 {
   return std::get<0>(_data.at(n));
@@ -191,6 +197,36 @@ double FitParConfigs::ParConfigs::getMin(const std::string& n) const
 double FitParConfigs::ParConfigs::getMax(const std::string& n) const
 {
   return std::get<3>(_data.at(n));
+}
+double FitParConfigs::ParConfigs::getInit(const std::string& n, const double val) const
+{
+  try{
+    return std::get<1>(_data.at(n));
+  } catch (std::out_of_range& e) {
+    std::cout << "Not found the initialized value for variable " << n
+      << "in configurations. Taking "<< val << "as the return value.\n";
+    return val;
+  }
+}
+double FitParConfigs::ParConfigs::getMin(const std::string& n, const double val) const
+{
+  try{
+    return std::get<2>(_data.at(n));
+  } catch (std::out_of_range& e) {
+    std::cout << "Not found the minimum value for variable " << n
+      << "in configurations. Taking "<< val << "as the return value.\n";
+    return val;
+  }
+}
+double FitParConfigs::ParConfigs::getMax(const std::string& n, const double val) const
+{
+  try{
+    return std::get<3>(_data.at(n));
+  } catch (std::out_of_range& e) {
+    std::cout << "Not found the minimum value for variable " << n
+      << "in configurations. Taking "<< val << "as the return value.\n";
+    return val;
+  }
 }
 
 void FitParConfigs::InputConfigs::initialize(const vector<string>& block)
@@ -376,7 +412,7 @@ bool FitParConfigs::CutConfigs::getBool(std::string s) const
 }
 
 VarCuts::VarCuts(const FitParConfigs::CutConfigs cutConfigs):
-    _usedz1p0(0), _usegplus(0), _useMB(0), _useHM(0)
+    _usedz1p0(0), _usegplus(0), _useWeight(0), _useMB(0), _useHM(0)
 {
   _mvaName = cutConfigs.getMvaName();
   _mvaCut = cutConfigs.getFloatMin("mva");
@@ -436,6 +472,13 @@ VarCuts::VarCuts(const FitParConfigs::CutConfigs cutConfigs):
   }
   catch (std::out_of_range& e) {
     std::cout << "[ERROR] Not found setup for useMB. "
+      "Set it to be false\n";
+  }
+  try {
+    _useWeight = cutConfigs.getBool("useweight");
+  }
+  catch (std::out_of_range& e) {
+    std::cout << "[ERROR] Not found setup for useWeight. "
       "Set it to be false\n";
   }
 
@@ -517,4 +560,70 @@ string VarCuts::getMva() const
   return mvaCutStr;
 }
 
+std::map<std::string, std::string>
+getNames(const FitParConfigs& configs, const VarCuts& mycuts)
+{
+  std::map<std::string, std::string> output;
+  auto outputConfigs = configs.getOutputConfigs();
+  const auto cutConfigs = configs.getCutConfigs();
+
+  int effTypeMin = 0;
+  int effTypeMax = 0;
+  try {
+    effTypeMin = cutConfigs.getIntMin("effType");
+    effTypeMax = cutConfigs.getIntMax("effType");
+  } catch (std::out_of_range& e) {
+    if (mycuts._useWeight) {
+      std::cout << "Cannot find effType in configuration. Set it to the central value\n";
+      effTypeMin = 0;
+      effTypeMax = 0;
+    }
+  }
+  if (mycuts._useWeight) {
+    if (effTypeMin != effTypeMax)
+      throw std::logic_error("minimum and maximum for weight type must be the same.\n");
+    const auto effType = EfficiencyTable<TGraph>::Value(effTypeMin);
+    if (effType > EfficiencyTable<TGraph>::Value::effUp ||
+        effType < EfficiencyTable<TGraph>::Value::effLow)
+      throw std::logic_error("weight type must be within the range of EfficiencyTable<TGraph>::Value.\n");
+    output["effType"] = std::to_string(effTypeMin);
+  }
+  const auto effType = EfficiencyTable<TGraph>::Value(effTypeMin);
+
+  const std::string mvaName = mycuts._mvaName;
+  const std::string mvaStr = mycuts.getMva();
+  const std::string kinStr = mycuts.getKinematics();
+  const std::string eventStr = mycuts.getEventFilter();
+  const std::string ntrkStr = mycuts.getNtrkoffline();
+
+  const std::string label = kinStr + "_" + mvaStr + "_" + eventStr + "_" + ntrkStr;
+  output["wsName"] = "ws_" + label;
+  output["dsName"] = "ds_" + label;
+  std::string& fileName = output["fileName"];
+  try {
+    fileName = outputConfigs.getPath("outdir");
+  } catch (std::out_of_range& e) {
+    fileName = "./";
+  }
+  if (*fileName.rend() != '/') fileName += "/";
+  fileName += "ofile_" + output.at("wsName");
+  if (mycuts._useWeight) {
+    switch (effType)  {
+      case EfficiencyTable<TGraph>::Value::effCent :
+        fileName += "_weighted.root"; output["weightstr"] = "weighted"; break;
+      case EfficiencyTable<TGraph>::Value::effLow :
+        fileName += "_weighted_up.root"; output["weightstr"] = "weighted_up"; break;
+      case EfficiencyTable<TGraph>::Value::effUp :
+        fileName += "_weighted_lo.root"; output["weightstr"] = "weighted_lo"; break;
+      default:
+        throw std::logic_error("The weight type is wrong.\n");
+    }
+  } else {
+    fileName += ".root";
+  }
+
+  const auto MClabel = "_" + kinStr + "_" + mvaStr;
+  output["dsMCSignalName"] = "dsMCSignal" + MClabel;
+  return output;
+}
 #endif

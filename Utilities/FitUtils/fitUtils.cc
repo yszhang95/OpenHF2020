@@ -1,6 +1,7 @@
 #include "Utilities/FitUtils/fitUtils.h"
 
 #include "TStyle.h"
+#include "TGaxis.h"
 #include "TLatex.h"
 #include "RooAddPdf.h"
 #include "RooRealVar.h"
@@ -10,6 +11,7 @@
 #include "RooFormulaVar.h"
 #include "RooPlot.h"
 #include "RooHist.h"
+#include "RooFitResult.h"
 #include "TH1.h"
 #include "TLegend.h"
 
@@ -22,6 +24,7 @@ using std::string;
 
 void setVLines(RooCurve* curve)
 {
+  if (!curve) return;
   double xlo = curve->GetPointX(0);
   double xhi = curve->GetPointX(curve->GetN()-1);
   curve->addPoint(xhi, 0);
@@ -95,9 +98,19 @@ void setKinematics(TVirtualPad* pad, map<string, string> strs,
     ypos = y + (n++) * moveUpFactor;
     tex.DrawLatexNDC(x, ypos, strs.at("y").c_str());
   }
-  if (strs.count("mult")) {
+  //if (strs.count("mult")) {
+  //  ypos = y + (n++) * moveUpFactor;
+  //  tex.DrawLatexNDC(x, ypos, strs.at("mult").c_str());
+  //}
+  //
+  if (strs.count("DCA")) {
     ypos = y + (n++) * moveUpFactor;
-    tex.DrawLatexNDC(x, ypos, strs.at("mult").c_str());
+    tex.DrawLatexNDC(x, ypos, strs.at("DCA").c_str());
+  }
+
+  if (strs.count("mult")) {
+    //ypos = y + (n++) * moveUpFactor;
+    tex.DrawLatexNDC(0.72, 0.2, strs.at("mult").c_str());
   }
 }
 
@@ -527,10 +540,12 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
 }
 
 
-void fitD0(RooRealVar& mass, RooAbsData& ds,
-           FitParConfigs::ParConfigs& par,
+RooFitResult fitD0(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+           FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
            std::map<std::string, std::string> strs)
 {
+  bool useRareProcesses = par.hasVariable("nKK") && par.hasVariable("nPiPi");
+  std::cout << "useRareProcesses is " << std::boolalpha << useRareProcesses << "\n";
   /**
      Model setup
   */
@@ -584,41 +599,41 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
 
   // Crystal Ball function for KK
   RooRealVar m0KK("m0KK", "Guassian mean of KK component",
-                  par.getInit("m0KK"),
-                  par.getMin("m0KK"), par.getMax("m0KK"));
+                  par.getInit("m0KK", 0),
+                  par.getMin("m0KK", 0), par.getMax("m0KK", 0));
   // sigma for KK in par was obtained in MC
   RooRealVar sigmaKKMC("sigmaKKMC", "Guassian sigma of KK component in MC",
-                     par.getInit("sigmaKK"),
-                     par.getMin("sigmaKK"), par.getMax("sigmaKK"));
+                     par.getInit("sigmaKK", 1),
+                     par.getMin("sigmaKK", 1), par.getMax("sigmaKK", 1));
   RooFormulaVar sigmaKK("sigmaKK", "sigma for D0->K+K-", "@0*@1",
                         RooArgList(sigmaKKMC, scale));
   RooRealVar alphaKK("alphaKK", "alpha of KK component",
-                     par.getInit("alphaKK"),
-                     par.getMin("alphaKK"), par.getMax("alphaKK"));
+                     par.getInit("alphaKK", 1),
+                     par.getMin("alphaKK", 1), par.getMax("alphaKK", 1));
   RooRealVar nCBKK("nCBKK", "n of KK component",
-                 par.getInit("nCBKK"),
-                 par.getMin("nCBKK"), par.getMax("nCBKK"));
+                 par.getInit("nCBKK", 1),
+                 par.getMin("nCBKK", 1), par.getMax("nCBKK", 1));
 
   RooCBShape cbShapeKK("cbShapeKK","Crystal Ball function for KK",
                        mass, m0KK, sigmaKK, alphaKK, nCBKK);
 
   // Crystal Ball function for PiPi
   RooRealVar m0PiPi("m0PiPi", "Guassian mean of PiPi component",
-                    par.getInit("m0PiPi"),
-                    par.getMin("m0PiPi"), par.getMax("m0PiPi"));
+                    par.getInit("m0PiPi", 0),
+                    par.getMin("m0PiPi", 0), par.getMax("m0PiPi", 0));
   // sigma for PiPi in par was obtained in MC
   RooRealVar sigmaPiPiMC("sigmaPiPiMC",
                          "Guassian sigma of PiPi component in MC",
-                         par.getInit("sigmaPiPi"),
-                         par.getMin("sigmaPiPi"), par.getMax("sigmaPiPi"));
+                         par.getInit("sigmaPiPi", 1),
+                         par.getMin("sigmaPiPi", 1), par.getMax("sigmaPiPi", 1));
   RooFormulaVar sigmaPiPi("sigmaPiPi", "sigma for D0->Pi+Pi-", "@0*@1",
                         RooArgList(sigmaPiPiMC, scale));
   RooRealVar alphaPiPi("alphaPiPi", "alpha of PiPi component",
-                       par.getInit("alphaPiPi"),
-                       par.getMin("alphaPiPi"), par.getMax("alphaPiPi"));
+                       par.getInit("alphaPiPi", 1),
+                       par.getMin("alphaPiPi", 1), par.getMax("alphaPiPi", 1));
   RooRealVar nCBPiPi("nCBPiPi", "n of PiPi component",
-                   par.getInit("nCBPiPi"),
-                   par.getMin("nCBPiPi"), par.getMax("nCBPiPi"));
+                   par.getInit("nCBPiPi", 1),
+                   par.getMin("nCBPiPi", 1), par.getMax("nCBPiPi", 1));
 
   RooCBShape cbShapePiPi("cbShapePiPi","Crystal Ball function for PiPi",
                          mass, m0PiPi, sigmaPiPi, alphaPiPi, nCBPiPi);
@@ -645,19 +660,23 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   RooFormulaVar nswap("nswap", "yields for swap component",
                       "@0/@1*(1-@1)", RooArgList(nsig, doubGausFrac));
   RooRealVar nKK("nKK", "yields for KK component",
-                 par.getInit("nKK"),
-                 par.getMin("nKK"), par.getMax("nKK"));
+                 par.getInit("nKK", 0),
+                 par.getMin("nKK", 0), par.getMax("nKK", 0));
   RooRealVar nPiPi("nPiPi", "yields for PiPi component",
-                 par.getInit("nPiPi"),
-                 par.getMin("nPiPi"), par.getMax("nPiPi"));
+                 par.getInit("nPiPi", 0),
+                 par.getMin("nPiPi", 0), par.getMax("nPiPi", 0));
   RooRealVar nbkg("nbkg", "yields for background component",
                   par.getInit("nbkg"),
                   par.getMin("nbkg"), par.getMax("nbkg"));
 
   // add components together
-  RooAddPdf sum("sum", "sig+swap+KK+PiPi+bkg",
+  auto sum = useRareProcesses ?
+    RooAddPdf("sum", "sig+swap+KK+PiPi+bkg",
                 RooArgList(bkg, cbShapePiPi, cbShapeKK, swapGaus, doubGaus),
-                RooArgList(nbkg, nPiPi, nKK, nswap, nsig));
+                RooArgList(nbkg, nPiPi, nKK, nswap, nsig)) :
+    RooAddPdf("sum", "sig+swap+bkg",
+                RooArgList(bkg, swapGaus, doubGaus),
+                RooArgList(nbkg, nswap, nsig));
   /**
      Fit
    */
@@ -675,28 +694,45 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   const double doubGausFracInit = doubGausFrac.getVal();
   const double doubGausFracErrorHiInit = doubGausFrac.getErrorHi();
   const double doubGausFracErrorLoInit = doubGausFrac.getErrorLo();
-  // CB for KK
-  m0KK.setConstant(kTRUE);
-  sigmaKKMC.setConstant(kTRUE);
-  alphaKK.setConstant(kTRUE);
-  nCBKK.setConstant(kTRUE);
-  // CB for PiPi
-  m0PiPi.setConstant(kTRUE);
-  sigmaPiPiMC.setConstant(kTRUE);
-  alphaPiPi.setConstant(kTRUE);
-  nCBPiPi.setConstant(kTRUE);
+  if (useRareProcesses) {
+    // CB for KK
+    m0KK.setConstant(kTRUE);
+    sigmaKKMC.setConstant(kTRUE);
+    alphaKK.setConstant(kTRUE);
+    nCBKK.setConstant(kTRUE);
+    // CB for PiPi
+    m0PiPi.setConstant(kTRUE);
+    sigmaPiPiMC.setConstant(kTRUE);
+    alphaPiPi.setConstant(kTRUE);
+    nCBPiPi.setConstant(kTRUE);
+  }
 
+  try {
+    if (strs.at("fixscale") == "true")
+      scale.setConstant(kTRUE);
+  } catch (std::out_of_range& e) {
+    // do nothing
+  }
+  try {
+    if (strs.at("fixmean") == "true")
+      mean.setConstant(kTRUE);
+  } catch (std::out_of_range& e) {
+    // do nothing
+  }
 
   RooAbsData* dsAbsPtr = &ds;
   if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
-    auto h = dsPtr->createHistogram("binned", mass,
-                                    Range("full"), Binning(80));
-    auto dh = RooDataHist("dh", "", mass, h);
-    sum.fitTo(dh, Range("full"));
-    delete h;
+    if (fitOpts.useHist) {
+      auto h = dsPtr->createHistogram("binned", mass,
+          Range("full"), Binning(fitOpts.nBins));
+      auto dh = RooDataHist("dh", "", mass, h);
+      sum.fitTo(dh, Range("full"));
+      delete h;
+    }
   }
 
-  sum.fitTo(ds, Range("full"));
+  auto result = sum.fitTo(ds, Range("full"), Save(), 
+                          NumCPU(fitOpts.numCPU), AsymptoticError(fitOpts.useWeight));
 
   /**
      Draw
@@ -731,20 +767,22 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
              Range("full"), NormRange("full"),
              Name("curve_swapGaus")
              );
-  sum.plotOn(mass_frame, Components(cbShapeKK), DrawOption("F"),
-             FillColor(TColor::GetColorTransparent(kBlue-6, 0.3)),
-             LineWidth(0),
-             Normalization(1.0, RooAbsReal::RelativeExpected),
-             Range("full"), NormRange("full"),
-             Name("curve_cbShapeKK")
-             );
-  sum.plotOn(mass_frame, Components(cbShapePiPi), DrawOption("F"),
-             FillColor(TColor::GetColorTransparent(kRed-3, 0.3)),
-             LineWidth(0),
-             Normalization(1.0, RooAbsReal::RelativeExpected),
-             Range("full"), NormRange("full"),
-             Name("curve_cbShapePiPi")
-             );
+  if (useRareProcesses) {
+    sum.plotOn(mass_frame, Components(cbShapeKK), DrawOption("F"),
+        FillColor(TColor::GetColorTransparent(kBlue-6, 0.3)),
+        LineWidth(0),
+        Normalization(1.0, RooAbsReal::RelativeExpected),
+        Range("full"), NormRange("full"),
+        Name("curve_cbShapeKK")
+        );
+    sum.plotOn(mass_frame, Components(cbShapePiPi), DrawOption("F"),
+        FillColor(TColor::GetColorTransparent(kRed-3, 0.3)),
+        LineWidth(0),
+        Normalization(1.0, RooAbsReal::RelativeExpected),
+        Range("full"), NormRange("full"),
+        Name("curve_cbShapePiPi")
+        );
+  }
   sum.plotOn(mass_frame,
              Normalization(1.0, RooAbsReal::RelativeExpected),
              Range("full"), NormRange("full"));
@@ -756,8 +794,8 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   auto curve_bkg = mass_frame->getCurve("curve_bkg");
   auto curve_doubGaus = mass_frame->getCurve("curve_doubGaus");
   auto curve_swapGaus = mass_frame->getCurve("curve_swapGaus");
-  auto curve_cbShapeKK = mass_frame->getCurve("curve_cbShapeKK");
-  auto curve_cbShapePiPi = mass_frame->getCurve("curve_cbShapePiPi");
+  auto curve_cbShapeKK = useRareProcesses ? mass_frame->getCurve("curve_cbShapeKK") : nullptr;
+  auto curve_cbShapePiPi = useRareProcesses ? mass_frame->getCurve("curve_cbShapePiPi") : nullptr;
 
   // set VLines
   setVLines(curve_doubGaus);
@@ -772,10 +810,12 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   leg.AddEntry(curve_data, "Data", "p");
   leg.AddEntry(curve_doubGaus, "Signal", "f");
   leg.AddEntry(curve_swapGaus, "Swap", "f");
-  leg.AddEntry(curve_cbShapeKK,
-               "D^{0}#rightarrow#pi^{+}#pi{-} #times 2", "f");
-  leg.AddEntry(curve_cbShapePiPi,
-               "D^{0}#rightarrow#pi^{+}#pi{-} #times 2", "f");
+  if (useRareProcesses) {
+    leg.AddEntry(curve_cbShapeKK,
+        "D^{0}#rightarrow#pi^{+}#pi{-} #times 2", "f");
+    leg.AddEntry(curve_cbShapePiPi,
+        "D^{0}#rightarrow#pi^{+}#pi{-} #times 2", "f");
+  }
   leg.AddEntry(curve_bkg, "Background", "l");
   // leg.Draw();
 
@@ -787,7 +827,6 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   auto mass_frame_pull = mass.frame(Title(pull->GetTitle()));
   mass_frame_pull->addPlotable(pull, "P");
   mass_frame_pull->Draw();
-
 
   c.cd(1);
   mass_frame->Draw();
@@ -818,8 +857,10 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
   par.setInit("a3", a3.getVal());
   par.setInit("scale", scale.getVal());
   par.setInit("nsig", nsig.getVal());
-  par.setInit("nKK", nKK.getVal());
-  par.setInit("nPiPi", nPiPi.getVal());
+  if (useRareProcesses) {
+    par.setInit("nKK", nKK.getVal());
+    par.setInit("nPiPi", nPiPi.getVal());
+  }
   par.setInit("nbkg", nbkg.getVal());
   par.setInit("doubGausFrac", doubGausFrac.getVal());
 
@@ -836,13 +877,14 @@ void fitD0(RooRealVar& mass, RooAbsData& ds,
             << " + " << doubGausFrac.getAsymErrorHi()
             << " - " << doubGausFrac.getAsymErrorLo()
             << std::endl;
+  ws.import(sum);
+  return *result;
 }
 
 
-void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
-             FitParConfigs::ParConfigs& par,
-             std::map<std::string, std::string> strs,
-             const bool useHistOnly)
+RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+             FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
+             std::map<std::string, std::string> strs)
 {
   /**
      Model setup
@@ -852,10 +894,18 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
                    par.getInit("scale"),
                    par.getMin("scale"), par.getMax("scale"));
 
+  if (fitOpts.fixScale) {
+    scale.setVal(1.);
+    scale.setConstant(kTRUE);
+  }
+
   // construct double gaussian
   // parameters
   RooRealVar mean("mean", "mean (GeV)", par.getInit("mean"),
                   par.getMin("mean"), par.getMax("mean"));
+  if (fitOpts.fixMean) {
+    mean.setConstant(kTRUE);
+  }
   // sigma1 in par was obtained from MC
   RooRealVar sigma1MC("sigma1MC", "sigma of 1st gaussian in MC",
                     par.getInit("sigma1"), par.getMin("sigma1"),
@@ -910,18 +960,23 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   frac1.setConstant(kTRUE);
 
   RooAbsData* dsAbsPtr = &ds;
+
+  RooFitResult* result;
   if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
-    auto h = dsPtr->createHistogram("binned", mass,
-                                    Range("full"), Binning(100));
-    auto dh = RooDataHist("dh", "", mass, h);
-    sum.fitTo(dh, Range("full"));
-    delete h;
+    if(fitOpts.useHist) {
+      auto h = dsPtr->createHistogram("binned", mass,
+          Range("full"), Binning(fitOpts.nBins));
+      auto dh = RooDataHist("dh", "", mass, h);
+      result = sum.fitTo(dh, Range("full"), Save(), AsymptoticError(fitOpts.useWeight));
+      // if (fitOpts.useWeight) result = sum.chi2FitTo(dh, Range("full"), Save());
+      // else result = sum.fitTo(dh, Range("full"), Save());
+      delete h;
+    }
   } else {
-    sum.fitTo(ds, Range("full"));
+    result = sum.fitTo(ds, Range("full"), NumCPU(fitOpts.numCPU), Save(), AsymptoticError(fitOpts.useWeight));
   }
-  if (!useHistOnly) {
-    // sum.fitTo(ds, Range("full"));
-    sum.fitTo(ds, Range("full"), NumCPU(4));
+  if (!fitOpts.useHistOnly) {
+    result = sum.fitTo(ds, Range("full"), NumCPU(fitOpts.numCPU), Save(), AsymptoticError(fitOpts.useWeight));
   }
 
 
@@ -929,6 +984,8 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
      Draw
    */
   // gStyle->SetCanvasPreferGL(1);
+  //
+  TGaxis::SetExponentOffset(-0.05, 0, "y");
   auto mass_frame = mass.frame(Range("full"));
   mass_frame->SetTitle("");
   mass_frame->GetXaxis()->SetTitle("M_{K_{S}^{0}p} (GeV)");
@@ -942,10 +999,10 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   // Name option is for the RooHist or RooCurve objects
   // I do not know how to handle Normalization(scaleType)
   auto dsplot = ds.plotOn(mass_frame, Name("curve_mydataset"),
-                          Binning(100, binEdges.first, binEdges.second),
+                          Binning(fitOpts.nBins, binEdges.first, binEdges.second),
                           MarkerStyle(20));
   sum.plotOn(mass_frame, Components(bkg), LineColor(kRed),
-             Normalization(1.0, RooAbsReal::RelativeExpected),
+             //Normalization(1.0, RooAbsReal::RelativeExpected),
              LineStyle(kDashed), MarkerStyle(20),
              Range("full"), NormRange("full"),
              Name("curve_bkg")
@@ -953,12 +1010,12 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   sum.plotOn(mass_frame, Components(doubGaus), DrawOption("F"),
              FillColor(TColor::GetColorTransparent(kOrange-3, 0.3)),
              LineWidth(0),
-             Normalization(1.0, RooAbsReal::RelativeExpected),
+             //Normalization(1.0, RooAbsReal::RelativeExpected),
              Range("full"), NormRange("full"),
              Name("curve_doubGaus")
              );
   sum.plotOn(mass_frame,
-             Normalization(1.0, RooAbsReal::RelativeExpected),
+             //Normalization(1.0, RooAbsReal::RelativeExpected),
              Range("full"), NormRange("full"),
              Name("curve_sum")
              );
@@ -969,6 +1026,7 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   // curve_data is RooHist, instead of RooCurve
   auto curve_data = mass_frame->getHist("curve_mydataset");
   // pdf plots are RooCurve
+  auto curve_sum = mass_frame->getCurve("curve_sum");
   auto curve_bkg = mass_frame->getCurve("curve_bkg");
   auto curve_doubGaus = mass_frame->getCurve("curve_doubGaus");
 
@@ -976,7 +1034,8 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   setVLines(curve_doubGaus);
 
   // build legend
-  TLegend leg(0.62, 0.5, 0.9, 0.91);
+  //TLegend leg(0.62, 0.5, 0.9, 0.91);
+  TLegend leg(0.62, 0.45, 0.9, 0.82);
   leg.SetFillStyle(0);
   leg.SetBorderSize(0);
   // this line works
@@ -989,6 +1048,30 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   // leg.AddEntry(dsplot, "Data", "p");
   leg.AddEntry(curve_doubGaus, "Signal", "f");
   leg.AddEntry(curve_bkg, "Background", "l");
+
+  c.cd();
+  auto smallPad =  TPad("smallPad", "", 0.15, 0.57, 0.55, 0.82, 0, -1, 1);
+  smallPad.Draw();
+  smallPad.cd();
+  mass.setRange("plotable", 2.22, 2.34);
+  auto small_frame = mass.frame(Name("small_frame"), Range("plotable"), Title("zoomin"));
+  ds.plotOn(small_frame, Name(""),
+            Binning(fitOpts.nBins, binEdges.first, binEdges.second),
+            MarkerStyle(20));
+  sum.plotOn(small_frame, Name("zoomin_sum"),
+             //Normalization(1.0, RooAbsReal::RelativeExpected),
+             MarkerStyle(20), Range("plotable"), NormRange("full"));
+  auto curve_zoomin = small_frame->getCurve("zoomin_sum");
+  double y_max = *std::max_element(curve_zoomin->GetY(),
+                                   curve_zoomin->GetY() + curve_zoomin->GetN());
+  double y_min = *std::min_element(curve_zoomin->GetY(),
+                                   curve_zoomin->GetY() + curve_zoomin->GetN());
+  small_frame->SetMaximum(y_max + 0.5 * (y_max - y_min));
+  small_frame->SetMinimum(y_min - 0.5 * (y_max - y_min));
+  small_frame->GetXaxis()->SetTitle();
+  small_frame->GetYaxis()->SetTitle();
+  small_frame->Draw();
+  smallPad.Draw();
 
   c.cd(2);
   auto pull = mass_frame->pullHist();
@@ -1010,7 +1093,10 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   TLatex tex;
   tex.SetTextFont(42);
   tex.SetTextAlign(11);
-  tex.DrawLatexNDC(0.2, 0.2,
+  //tex.DrawLatexNDC(0.2, 0.25,
+  //                 Form("scale=%.1f+/-%.1f", scale.getVal(),
+  //                      scale.getErrorHi()));
+  tex.DrawLatexNDC(0.2, 0.08,
                    Form("N_{sig}=%.1f+/-%.1f", nsig.getVal(),
                         nsig.getErrorHi()));
 
@@ -1041,6 +1127,7 @@ void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   // 1. D0 is fast
   // 2. D0 is too complex
   ws.import(sum);
+  return *result;
 }
 
 #endif
