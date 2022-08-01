@@ -217,16 +217,23 @@ struct VarCuts
 // fit options for HF
 struct FitOptsHF
 {
+  double prefitDataFraction;
   int  nBins;
   int  numCPU;
+  int  order;
   bool useWeight;
   bool useHist;
   bool useHistOnly;
   bool fixScale;
   bool fixMean;
-  FitOptsHF() : nBins(100), numCPU(1),
+  bool saveToWS;
+  bool useRareProcesses;
+  bool adjustRanges;
+  std::vector<std::string> fixNames;
+  FitOptsHF() : prefitDataFraction(-1), nBins(100), numCPU(1), order(3),
                 useWeight(0), useHist(0), useHistOnly(0),
-                fixScale(0), fixMean(0) {}
+                fixScale(0), fixMean(0), saveToWS(1),
+                useRareProcesses(1), adjustRanges(1) {}
 };
 
 std::map<std::string, std::string>

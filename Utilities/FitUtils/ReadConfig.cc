@@ -624,6 +624,10 @@ getNames(const FitParConfigs& configs, const VarCuts& mycuts)
 
   const auto MClabel = "_" + kinStr + "_" + mvaStr;
   output["dsMCSignalName"] = "dsMCSignal" + MClabel;
+  output["dsMCSwapName"] = "dsMCSwap" + MClabel;
+  output["dsMCAllName"] = "dsMCAll" + MClabel;
+  output["dsMCKKName"] = "dsMCKK" + MClabel;
+  output["dsMCPiPiName"] = "dsMCPiPi" + MClabel;
   return output;
 }
 #endif

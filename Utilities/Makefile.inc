@@ -42,6 +42,7 @@ $(MYLIB)/MyTreeReaderDict.cxx: \
 
 $(MYLIB)/libMyFitUtils.so: \
 	$(MYLIB)/fitUtils.o \
+	$(MYLIB)/fitUtilsD0.o \
 	$(MYLIB)/ReadConfig.o \
 	$(MYLIB)/MyFitUtilsDict.cxx
 	@echo "Generating shared library for fit utilities.."
