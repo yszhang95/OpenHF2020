@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 parser = argparse.ArgumentParser(description='Convert ParticleTree to simplified ParticleNTuple.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('-i', dest='inputList', help='input file list', type=str)
+parser.add_argument('-i', '--inputList', help='input file list', type=str)
 parser.add_argument('--pTMin', dest='pTMin', help='minimum pT', type=float, default=0.9)
 parser.add_argument('--pTMax', dest='pTMax', help='maximum pT', type=float, default=20)
 parser.add_argument('--absMassLw', dest='absMassLw', help='minimum distance to PDG mass', type=float, default=-1.)
@@ -21,6 +21,7 @@ parser.add_argument('--filterIndex', dest='filterIndex', help='filter index', ty
 parser.add_argument('--effFile', dest='effFile', help='file saving efficiency', type=str, default="")
 parser.add_argument('--NtrkLow', dest='NtrkLow', help='lowest multiplicity', type=int, default=0)
 parser.add_argument('--NtrkHigh', dest='NtrkHigh', help='highest multiplicity', type=int, default=1000)
+parser.add_argument('--wantAbort', help='want abort', action='store_const', const=True, default=False)
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
@@ -42,15 +43,21 @@ conf.SetDeDxSelection((0.7, 1.5, 0.75, 1.25))
 conf.SetFlipEta(args.flipEta)
 conf.SetTriggerIndex(args.triggerIndex)
 conf.SetFilterIndex(args.filterIndex)
-conf.SetKeptBranchNames(
-    ("cand_mass", "cand_pT", "cand_y", "cand_eta", "cand_phi",
+conf.SetWantAbort(args.wantAbort)
+
+branches = ["cand_mass", "cand_pT", "cand_y", "cand_eta", "cand_phi",
      "cand_massDau0", "cand_etaDau0", "cand_pTDau0", "cand_phiDau0",
      "cand_massDau1", "cand_etaDau1", "cand_pTDau1", "cand_phiDau1",
      "trk_dau1_dEdxRes", "trk_dau1_dEdx_dedxHarmonic2",
      "cand_angle3D", "cand_dauCosOpenAngle3D",
      "cand_dau_dR", "cand_dau0_angle3D",
      "cand_dau0_decayLength3D", "cand_dau0_decayLengthError3D", "cand_dau0_dca",
-     "cand_Ntrkoffline", "eventWeight")
+     "cand_Ntrkoffline",
+     "trigBit_2", "trigBit_4", "filterBit_4", "filterBit_5"]
+if args.effFile:
+    branches.append("eventWeight")
+conf.SetKeptBranchNames(
+    branches
 )
 conf.NtrkLow(args.NtrkLow)
 conf.NtrkHigh(args.NtrkHigh)
