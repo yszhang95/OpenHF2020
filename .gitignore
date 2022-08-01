@@ -105,3 +105,9 @@ Training/scripts/appMVA/legacy/
 ProduceNTuples/**/*.list
 ProduceNTuples/pT3to4/run_pT3to4.sh
 ProduceNTuples/run_pT3to4_MB.sh
+Spectra/LamCtoD/*.csv
+Fit/D0_Fit/*fonll*txt
+Fit/*_Fit/*alice*txt
+Spectra/LamCtoD/*LamToKs*txt
+Spectra/LamCtoD/Ks*.txt
+Spectra/LamCtoD/Lam*.txt
