@@ -1,0 +1,112 @@
+#if defined(__CLING__)
+R__ADD_INCLUDE_PATH($OPENHF2020TOP)
+R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
+#endif
+
+#include "Utilities/FitUtils/ReadConfig.h"
+#include "Utilities/FitUtils/fitUtils.h"
+
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+#include "TROOT.h"
+#include "TSystem.h"
+#include "TChain.h"
+#include "TFileCollection.h"
+#include "THashList.h"
+
+using namespace RooFit;
+
+using std::cout;
+using std::endl;
+
+const double binLow = 2.13;
+const double binHigh = 2.48;
+const double nBins = 100;
+
+void produceEachBin(const std::string& configName, const int order)
+{
+  // for loop
+  std::map<std::string, std::string> strs;
+
+  std::cout << configName << "\n";
+
+  FitParConfigs configs(configName);
+  auto inputConfigs = configs.getInputConfigs();
+  auto outputConfigs = configs.getOutputConfigs();
+  auto par = configs.getParConfigs();
+  const auto cutConfigs = configs.getCutConfigs();
+  // modify it later
+  VarCuts mycuts(cutConfigs);
+
+  const auto NtrkMin = mycuts._NtrkofflineMin;
+  const auto NtrkMax = mycuts._NtrkofflineMax;
+  const float pTMin = mycuts._pTMin;
+  const float pTMax = mycuts._pTMax;
+
+  const std::string mvaName = mycuts._mvaName;
+  const std::string mvaStr = mycuts.getMva();
+  const std::string kinStr = mycuts.getKinematics();
+  const std::string eventStr = mycuts.getEventFilter();
+  const std::string ntrkStr = mycuts.getNtrkoffline();
+
+  const auto names = ::getNames(configs, mycuts);
+
+  const std::string label = kinStr + "_" + mvaStr + "_" + eventStr + "_" + ntrkStr;
+  const std::string wsName = names.at("wsName");
+  strs["dsName"] = names.at("dsName");
+  strs.at("dsName").replace(1, 1, "h");
+  strs["fileName"] = gSystem->BaseName(names.at("fileName").c_str());
+  strs["fileName"] = "./ws_hists/" + strs.at("fileName");
+
+  strs["outdir"] = "./postfit/";
+  strs["order"] = "order" + std::to_string(order);
+
+  const char* weightstr = mycuts._useWeight ? "_weighted" : "";
+  strs["path_name_log"] = Form("dz1p0_output/LamCFit_pT%.1fto%.1f_Ntrk%dto%d_order%d%s.log",
+      pTMin, pTMax, NtrkMin, NtrkMax, order, weightstr);
+  strs["fig_path"] = Form("dz1p0_output/pT%.1fto%.1f_Ntrk%dto%d_order%d%s",
+      pTMin, pTMax, NtrkMin, NtrkMax, order, weightstr);
+
+  std::string fileName = strs.at("fileName");
+  cout << fileName << "\n";
+  TFile infile(fileName.c_str());
+  TFile infileMC(names.at("fileName").c_str());
+  RooWorkspace myws((wsName+"_clone").c_str(), "");
+  auto mywsOld = (RooWorkspace*) infileMC.Get(wsName.c_str());
+  RooDataSet* mydsMC = (RooDataSet*) mywsOld->data(names.at("dsMCSignalName").c_str());
+  RooDataSet* myds = (RooDataSet*) mywsOld->data(names.at("dsName").c_str());
+  RooRealVar* cand_mass = mywsOld->var("cand_mass");
+
+  TH1* h = myds->createHistogram("binned", *cand_mass, Binning(nBins, binLow, binHigh));
+  RooDataHist dh(strs.at("dsName").c_str(), "", *cand_mass, h);
+
+  myws.import(*mydsMC);
+  myws.import(dh);
+  TFile ofile(strs.at("fileName").c_str(), "recreate");
+  myws.SetName(wsName.c_str());
+  myws.Write(wsName.c_str());
+  delete h;
+}
+
+void produceHists(const int order = 3)
+{
+  const float pts[] =   {2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0};
+  const unsigned int nPt = sizeof(pts)/sizeof(float) - 1;
+  const int Ntrks[] = {0, 35, 60, 90, 120, 185, 250};
+  const unsigned int nbins = sizeof(Ntrks)/sizeof(int) - 1;
+  for (unsigned int ibin=0; ibin<nbins; ++ibin) {
+    for (unsigned int ipt=0; ipt<nPt; ++ipt) {
+      if (Ntrks[ibin+1] == 250 && Ntrks[ibin] == 185 && ipt == 0) continue;
+      std::string dir_order;
+      switch(order) {
+        case 2: dir_order = "_2nd"; break;
+        case 4: dir_order = "_4th"; break;
+      }
+      const char* useWeight = Ntrks[ibin+1] == 250 && Ntrks[ibin] == 185 ? "weighted" : "unweighted";
+      auto configName = ::string_format("${OPENHF2020TOP}/Spectra/ProduceWorkspace/LamC/dz1p0_%s%s/pT%.0fto%.0f_Ntrk%dto%d.conf",
+                                        useWeight, dir_order.c_str(), pts[ipt], pts[ipt+1], Ntrks[ibin], Ntrks[ibin+1]);
+      configName = gSystem->ExpandPathName(configName.c_str());
+      produceEachBin(configName, order);
+    }
+  }
+}

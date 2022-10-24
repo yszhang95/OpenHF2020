@@ -4,6 +4,7 @@
 #include "RooDataSet.h"
 #include "RooDataHist.h"
 #include "RooCurve.h"
+#include "RooFitResult.h"
 #include "TCanvas.h"
 
 #include "Utilities/FitUtils/ReadConfig.h"
@@ -55,6 +56,10 @@ void setCollision(TVirtualPad* pad);
 
 void setCollisionAndLumi(TVirtualPad* pad);
 
+void fitGausCB(RooRealVar& mass, RooAbsData& ds,
+               FitParConfigs::ParConfigs& par,
+               std::map<std::string, std::string> strs);
+
 void fitSignal(RooRealVar& mass, RooAbsData& ds,
                FitParConfigs::ParConfigs& par,
                std::map<std::string, std::string> strs);
@@ -76,13 +81,44 @@ void fitCBShapePiPi(RooRealVar& mass, RooAbsData& ds,
                     FitParConfigs::ParConfigs& par,
                     std::map<std::string, std::string> strs);
 
-void fitD0(RooRealVar& mass, RooAbsData& ds,
-           FitParConfigs::ParConfigs& par,
+RooFitResult fitD0(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+           FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
            std::map<std::string, std::string> strs);
 
-void fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
-             FitParConfigs::ParConfigs& par,
-             std::map<std::string, std::string> strs,
-             const bool useHistOnly=true);
+RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+             FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
+             std::map<std::string, std::string> strs);
 
+RooFitResult fitLamCGausCB(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+             FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
+             std::map<std::string, std::string> strs);
+
+RooFitResult fitSideband(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
+             FitParConfigs::ParConfigs& par, const FitOptsHF& fitOpts,
+             std::map<std::string, std::string> strs);
+
+class MassFitter
+{
+public:
+  explicit MassFitter(const FitParConfigs::ParConfigs& par): _par(par) {}
+  RooFitResult fitDoubGaus(RooRealVar& mass, RooAbsData& ds,
+                           std::map<std::string, std::string> strs);
+protected:
+  FitParConfigs::ParConfigs _par;
+
+};
+
+class D0Fitter : MassFitter
+{
+public:
+  explicit D0Fitter(const FitParConfigs::ParConfigs& par): MassFitter(par) {}
+  RooFitResult fitD0(RooRealVar& mass, RooWorkspace& myws,
+                       const FitOptsHF& fitOpts, std::map<std::string, std::string> strs);
+  RooFitResult fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& myws,
+                       const FitOptsHF& fitOpts, std::map<std::string, std::string> strs);
+
+  RooFitResult fitSwap(RooRealVar& mass, RooAbsData& ds, std::map<std::string, std::string> strs);
+  RooFitResult fitDoubGausAndSwap(RooRealVar& mass, RooAbsData& ds, std::map<std::string, std::string> strs);
+  RooFitResult fitCBShape(RooRealVar& mass, RooAbsData& ds, std::map<std::string, std::string> strs);
+};
 #endif

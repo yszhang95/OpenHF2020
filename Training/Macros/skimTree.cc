@@ -53,7 +53,7 @@ public:
     _matchCriterion(dR, dPt),
     _ntrkLow(0), _ntrkHigh(UShort_t(-1)),
     _nentries(n), _isMC(isMC),
-    _saveMatchedOnly(1), _selectDeDx(0) {}
+    _saveMatchedOnly(1), _selectDeDx(0), _wantAbort(0) {}
   TString GetInputList() const { return _inputList; }
   void SetInputList(const TString s) { _inputList = s; }
   TString GetTreeDir() const { return _treeDir; }
@@ -69,6 +69,8 @@ public:
   void SetFlipEta(const bool flip) { _flipEta = flip; }
   bool SaveMatchedOnly() const { return _saveMatchedOnly; }
   void SetSaveMatchedOnly(const bool save) { _saveMatchedOnly = save; }
+  bool WantAbort() const { return _wantAbort; }
+  void SetWantAbort(const bool want) { _wantAbort = want; }
   const MatchCriterion& GetMatchCriterion() const { return _matchCriterion; }
   const DeDxSelection&  GetDeDxSelection() const { return _dEdxSelection; }
   void SetDeDxSelection(const DeDxSelection& sel){ _dEdxSelection = sel; }
@@ -117,6 +119,7 @@ private:
   bool     _flipEta;
   bool     _saveMatchedOnly;
   bool     _selectDeDx;
+  bool     _wantAbort;
 };
 
 TString getPhaseSpaceString(const KineCut& kins)
@@ -140,6 +143,7 @@ TString getPhaseSpaceString(const KineCut& kins)
 int skimTree(const Config& conf,
              Particle particle, KineCut kins)
 {
+  if (conf.WantAbort()){ gErrorAbortLevel = kError; }
   const auto inputList = conf.GetInputList();
   const auto treeDir = conf.GetTreeDir();
   const auto postfix = conf.GetPostfix();
@@ -188,8 +192,8 @@ int skimTree(const Config& conf,
       outName.Replace(index, 5, "_etaFlipped.root");
     }
   }
-
-  TFile effFile(conf.GetEffFileName().c_str());
+  const std::string effFileNameStr = conf.GetEffFileName();
+  auto effFile = effFileNameStr.empty() ? TFile() : TFile(effFileNameStr.c_str());
   TGraph* g(nullptr);
   if (effFile.IsOpen()) {
     if (conf.GetEffGraphType() == "TGraphAsymmErrors") {
@@ -213,7 +217,21 @@ int skimTree(const Config& conf,
   ofile.mkdir(treeDir);
   ofile.cd(treeDir);
 
-  TH1I hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 300, 0, 300);
+  TH1D hNtrkoffline("hNtrkoffline", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineDz1p0("hNtrkofflineDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineGplus("hNtrkofflineGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+
+  TH1D hNtrkofflineUp("hNtrkofflineUp", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineUpDz1p0("hNtrkofflineUpDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineUpGplus("hNtrkofflineUpGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+
+  TH1D hNtrkofflineLo("hNtrkofflineLo", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineLoDz1p0("hNtrkofflineLoDz1p0", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineLoGplus("hNtrkofflineLoGplus", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
+
+  TH1D hNtrkofflineUnweight("hNtrkofflineUnweight", "N_{trk}^{offline} for PV with highest N;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineDz1p0Unweight("hNtrkofflineDz1p0Unweight", "N_{trk}^{offline} for PV with highest N, dz1p0;N_{trk}^{offline};", 301, -0.5, 300.5);
+  TH1D hNtrkofflineGplusUnweight("hNtrkofflineGplusUnweight", "N_{trk}^{offline} for PV with highest N, Gplus;N_{trk}^{offline};", 301, -0.5, 300.5);
 
   TFileCollection tf("tf", "", inputList);
   TChain t(treeDir+"/ParticleTree");
@@ -248,12 +266,44 @@ int skimTree(const Config& conf,
 
     // check pileup filter
     // if (!p.evtSel().at(4)) continue;
+    // if (!isMC) {
+    //  const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
+    //  if (!passEventSel) continue;
+    // }
+
+    double ntrkWeight = 1.;
+    double ntrkWeightUp = 1.;
+    double ntrkWeightLo = 1.;
     if (!isMC) {
-      const bool passEventSel = passEvent(p, filterIndex, triggerIndex);
-      if (!passEventSel) continue;
+      const auto ntrk = p.Ntrkoffline();
+      if (reweightEvent && ntrk < 400) {
+        ntrkWeight = effTab.getWeight(ntrk);
+        ntrkWeightUp = effTab.getWeight(ntrk, EfficiencyTable<TGraph>::Value::effLow);
+        ntrkWeightLo = effTab.getWeight(ntrk, EfficiencyTable<TGraph>::Value::effUp);
+      }
+      hNtrkoffline.Fill(ntrk, ntrkWeight);
+      hNtrkofflineUp.Fill(ntrk, ntrkWeightUp);
+      hNtrkofflineLo.Fill(ntrk, ntrkWeightLo);
+      hNtrkofflineUnweight.Fill(ntrk);
+      if (p.evtSel().at(4)) {
+        hNtrkofflineDz1p0.Fill(ntrk, ntrkWeight);
+        hNtrkofflineUpDz1p0.Fill(ntrk, ntrkWeightUp);
+        hNtrkofflineLoDz1p0.Fill(ntrk, ntrkWeightLo);
+        hNtrkofflineDz1p0Unweight.Fill(ntrk);
+      }
+      if (p.evtSel().at(5)) {
+        hNtrkofflineGplus.Fill(ntrk, ntrkWeight);
+        hNtrkofflineUpGplus.Fill(ntrk, ntrkWeightUp);
+        hNtrkofflineLoGplus.Fill(ntrk, ntrkWeightLo);
+        hNtrkofflineGplusUnweight.Fill(ntrk);
+      }
+
+      // temporary usage
+      // check it in the future if I have new trees
+      // now use vertex.trackSize() with largest number
+      // if ( ntrk >= NtrkHigh || ntrk < NtrkLow) continue;
     }
 
-    if (!isMC) hNtrkoffline.Fill(p.Ntrkoffline());
 
     const auto recosize = p.cand_mass().size();
 

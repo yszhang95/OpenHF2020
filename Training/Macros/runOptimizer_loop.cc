@@ -187,9 +187,9 @@ void runOptimizer_loop()
   // pt_trig = 2 + 0*10; // pT 4-5, MB, missing
   // pt_trig = 3 + 0*10; // pT 5-6, MB, missing
   // pt_trig = 4 + 0*10; // pT 6-8, MB
-  pt_trig = 5 + 0*10; // pT 8-10, MB
+  // pt_trig = 5 + 0*10; // pT 8-10, MB
   // pt_trig = 1 + 1*10; // pT 3-4, HM, missing
-  // pt_trig = 2 + 1*10; // pT 4-5, HM
+  pt_trig = 2 + 1*10; // pT 4-5, HM
   // pt_trig = 3 + 1*10; // pT 5-6, HM
   // pt_trig = 4 + 1*10; // pT 6-8, HM
   // pt_trig = 5 + 1*10; // pT 8-10, HM

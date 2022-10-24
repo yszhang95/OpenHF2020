@@ -400,7 +400,9 @@ void optimizer(PARS mypars)
   const double sigMin = 2.0;
   const double sigMax = 12.0;
   hframe->GetYaxis()->SetRangeUser(sigMin, sigMax);
-  hframe->SetTitle(Form("%s pT %.1f to %.1f;MVA;S/#sqrt{S+B}",
+  // hframe->SetTitle(Form("%s pT %.1f to %.1f;MVA;S/#sqrt{S+B}",
+  //                      mypars.mvaName.c_str(), pTMin, pTMax));
+  hframe->SetTitle(Form("%s pT %.1f to %.1f;MVA;S/#sqrt{B}",
                         mypars.mvaName.c_str(), pTMin, pTMax));
   TF1 fitToSig("fitToSig", "pol3", mvaCuts[0], mvaCuts[nMVA-1]);
   fitToSig.SetParameter(0, 5);
@@ -415,7 +417,7 @@ void optimizer(PARS mypars)
   sig.Draw("PE");
   TGraph sigDataFit(nMVA, mvaCuts.data(), sigFit.data());
   sigDataFit.SetMarkerStyle(kFullSquare);
-  sigDataFit.Draw("PE");
+  // sigDataFit.Draw("PE");
   TLine l;
   l.SetLineStyle(2);
   l.DrawLine(fitToSig.GetMaximumX(), sigMin, fitToSig.GetMaximumX(), sigMax);

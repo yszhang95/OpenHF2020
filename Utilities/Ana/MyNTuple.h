@@ -48,6 +48,8 @@ struct MyNTuple
   Int_t           filterBit[100];
 
   Float_t         eventWeight;
+  Float_t         eventWeightUp;
+  Float_t         eventWeightLo;
 
   UInt_t          cand_nMVA;
   Float_t         cand_MVA[100];
@@ -210,8 +212,9 @@ struct MyNTuple
   {
     std::cout << "Delete NTuple" << std::endl;
   }
-  void  initWeightBranch();
-  void  setEventWeight(const float);
+  void  initWeightBranch(const bool saveError=false);
+  void  setEventWeight(const float, EfficiencyTable<TGraph>::Value
+                       eff=EfficiencyTable<TGraph>::Value::effCent);
   void  initMVABranches(const std::vector<TString>&);
   void  initNTuple();
   void  initGenBranches();

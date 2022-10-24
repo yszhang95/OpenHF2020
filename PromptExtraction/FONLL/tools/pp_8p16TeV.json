@@ -1,0 +1,6 @@
+{ 
+  "collider": "LHC  (pp,   8.16 TeV) [ptmax < 300 GeV]",
+  "pdf" : "NNPDF30nlo_as0118",
+  "npoints" : 2,
+  "xsect_type" : "dsigma/dpt"
+}

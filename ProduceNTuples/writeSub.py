@@ -14,7 +14,9 @@ args = parser.parse_args()
 
 dest = ""
 if args.site == "lxplus":
-    dest = "root://eoscms.cern.ch//store/group/phys_heavyions/yousen/OpenHF2020Storage/AppMVAv2/%s_%s/pT_%.1f_%.1f" % \
+    # dest = "root://eoscms.cern.ch//store/group/phys_heavyions/yousen/OpenHF2020Storage/AppMVAv2/%s_%s/pT_%.1f_%.1f" % \
+    #     (args.dataset, args.boost, args.pTMin, args.pTMax)
+    dest = "root://eoscms.cern.ch//store/group/phys_heavyions/ec/yousen/OpenHF2020Storage/AppMVAv2/%s_%s/pT_%.1f_%.1f" % \
         (args.dataset, args.boost, args.pTMin, args.pTMax)
 elif args.site == "fnal":
     dest = "root://cmseos.fnal.gov///store/user/yousen//RiceHIN/OpenHF2020_LamCKsP/AppMVAv2/%s_%s/pT_%.1f_%.1f" % \

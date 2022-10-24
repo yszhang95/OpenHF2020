@@ -1,0 +1,65 @@
+# A new test file
+# Let us do it
+[BEG InputConfigs]
+KK, tree, /storage1/users/yz144/HIN-21-016/D0Trees/histsMC_D0ToKK.root, D0_pT2to3
+PromptDMC, tree, /storage1/users/yz144/HIN-21-016/D0Trees/histsMC_PromptDMC.root, D0_pT2to3
+PiPi, tree, /storage1/users/yz144/HIN-21-016/D0Trees/histsMC_D0ToPiPi.root, D0_pT2to3
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB1_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB2_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB3_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB4_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB5_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB6_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB7_pPb.root, D0NTuple
+Data, tree, /storage1/users/yz144/HIN-21-016/D0Trees/d0output_dataMB8_pPb.root, D0NTuple
+[END InputConfigs]
+
+[BEG OutputConfigs]
+log, txt, output.log
+photo, png, output
+outdir, directory, ws_Ntrk0to185
+[END OutputConfigs]
+
+[BEG CutConfigs]
+# redundant, required
+pT, 0.00, 100.00, float
+# redundant, required
+yAbs, -inf, 1.00, float
+# reundant
+Ntrkoffline, 0, 400, int
+# standard, required
+BDT, 0.62, 1, mva
+useGplus, false, bool
+useDz1p0, true, bool
+useMB, true, bool
+useHM, false, bool
+[END CutConfigs]
+
+
+[BEG ParConfigs]
+mean, 1.8648, 1.85, 1.88 # mean of signal
+sigma1, 0.005, 0.0005, 0.02 # sigma 1
+sigma1N, 8, 0, 20 # ratio sigma1 to sigma2
+frac1, 0.9, 0., 1. # fraction
+meanSwap, 1.8648, 1.7, 2.0 # mean of swap
+sigmaSwap, 0.1, 0.05, 1.0 # sigma of swap
+#doubGausFrac, 0.56, 0., 1.0 # fraction of double gaussian
+doubGausFrac, 0.56, 0.45, 0.65 # fraction of double gaussian
+m0KK, 1.8, 1.74, 1.84 # gaussian mean of KK component
+sigmaKK, 0.08, 0.01, 0.2 # gaussian sigma of KK component
+alphaKK, 1, 0.01, 2 # alpha of KK component
+nCBKK, 2, 0.99, 5# n of KK component
+m0PiPi, 1.93, 1.9, 2.0 # gaussian mean of PiPi component
+sigmaPiPi, 0.08, 0.01, 0.2 # gaussian sigma of PiPi component
+alphaPiPi, -1, -20, -0.01 # alpha of PiPi component
+nCBPiPi, 2, 0.99, 100 # n of PiPi component
+a1, 0.9, -2, 2 # a1
+a2, 0.01, -1, 1 # a2
+a3, 0.01, -1, 1 # a3
+nsig, 20000, 5000, 40000 # yields for signal
+nKK, 2000, 0, 8000# yields for KK
+nPiPi, 2000, 0, 8000# yields for PiPi
+nbkg, 50000, 20000, 100000 # yields for background
+scale, 1, 0, 2 # scale factor
+
+[END ParConfigs]

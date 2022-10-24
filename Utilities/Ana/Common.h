@@ -108,6 +108,7 @@ class EfficiencyTable
 {
 public:
   explicit EfficiencyTable(T*) = delete;
+  void setTable(T*) = delete;
   double getEfficiency(double) = delete;
   double getWeight(double) = delete;
   double getEfficiency(int) = delete;
@@ -119,11 +120,14 @@ template<>
 class EfficiencyTable<TGraph>
 {
 public:
+  // lower, central up
+  enum struct Value {effLow=-1, effCent=0, effUp=1};
   explicit EfficiencyTable(TGraph*);
-  double getEfficiency(double);
-  double getWeight(double);
-  double getEfficiency(int);
-  double getWeight(int);
+  void setTable(TGraph*);
+  double getEfficiency(double, Value val=Value::effCent);
+  double getEfficiency(int, Value val=Value::effCent);
+  double getWeight(double, Value val=Value::effCent);
+  double getWeight(int, Value val=Value::effCent);
 
 private:
   std::vector<double> x;

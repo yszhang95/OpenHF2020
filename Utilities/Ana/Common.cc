@@ -184,6 +184,19 @@ double DeDxSelection::getMean(const float p)
 
 EfficiencyTable<TGraph>::EfficiencyTable(TGraph* g) : n(0)
 {
+  setTable(g);
+}
+
+void EfficiencyTable<TGraph>::setTable(TGraph* g)
+{
+  n = 0;
+  x.clear();
+  xErrHigh.clear();
+  xErrLow.clear();
+  y.clear();
+  yErrHigh.clear();
+  yErrLow.clear();
+  if (!g) return;
   if (auto p = dynamic_cast<TGraphAsymmErrors*>(g)) {
     std::cout << "The input type of efficiency table"
       " is TGraphasymmErrors" << std::endl;
@@ -215,43 +228,57 @@ EfficiencyTable<TGraph>::EfficiencyTable(TGraph* g) : n(0)
   }
 }
 
-double EfficiencyTable<TGraph>::getEfficiency(double _x)
+double EfficiencyTable<TGraph>::getEfficiency(double _x, Value val)
 {
   for (int i=0; i != n; ++i) {
     const auto upper = x.at(i) + xErrHigh.at(i);
     const auto lower = x.at(i) - xErrLow.at(i);
-    if (_x < upper && _x >= lower)
-      return y.at(i);
+    if (_x < upper && _x >= lower) {
+      switch (val)
+        {
+        case Value::effLow : return y.at(i) - yErrLow.at(i); break;
+        case Value::effCent : return y.at(i); break;
+        case Value::effUp : return y.at(i) + yErrHigh.at(i); break;
+        default: return 0;
+        }
+    }
   }
   throw
     std::runtime_error("Cannot find the input in efficiency table");
   return 0;
 }
 
-double EfficiencyTable<TGraph>::getEfficiency(int _x)
+double EfficiencyTable<TGraph>::getEfficiency(int _x, Value val)
 {
   for (int i=0; i != n; ++i) {
     // [ ) for integers
     const auto upper = x.at(i) + xErrHigh.at(i) - 0.5;
     const auto lower = x.at(i) - xErrLow.at(i) - 0.5;
-    if (_x < upper && _x >= lower)
-      return y.at(i);
+    if (_x < upper && _x >= lower) {
+      switch (val)
+        {
+        case Value::effLow : return y.at(i) - yErrLow.at(i); break;
+        case Value::effCent : return y.at(i); break;
+        case Value::effUp : return y.at(i) + yErrHigh.at(i); break;
+        default: return 0;
+        }
+    }
   }
   throw
     std::runtime_error("Cannot find the input in efficiency table");
   return 0;
 }
 
-double EfficiencyTable<TGraph>::getWeight(double _x)
+double EfficiencyTable<TGraph>::getWeight(double _x, Value val)
 {
-  const auto eff = getEfficiency(_x);
+  const auto eff = getEfficiency(_x, val);
   if (eff > 1E-6) return 1./eff;
   return 0;
 }
 
-double EfficiencyTable<TGraph>::getWeight(int _x)
+double EfficiencyTable<TGraph>::getWeight(int _x, Value val)
 {
-  const auto eff = getEfficiency(_x);
+  const auto eff = getEfficiency(_x, val);
   if (eff > 1E-6) return 1./eff;
   return 0;
 }
