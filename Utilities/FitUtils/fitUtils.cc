@@ -744,8 +744,12 @@ RooFitResult fitD0(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
     }
   }
   RooArgList bkg_args(a1, a2);
-  if (fitOpts.order <= 4) bkg_args.add(a3);
-  if (fitOpts.order == 4) bkg_args.add(a4);
+  switch (fitOpts.order) {
+    case 3 : bkg_args.add(a3);
+             break;
+    case 4 : bkg_args.add(a3); bkg_args.add(a4);
+             break;
+  }
   RooChebychev bkg("bkg", "3rd Chebyshev poly.", mass, bkg_args);
 
   // yields for different components
