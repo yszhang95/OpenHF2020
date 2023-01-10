@@ -111,3 +111,8 @@ Fit/*_Fit/*alice*txt
 Spectra/LamCtoD/*LamToKs*txt
 Spectra/LamCtoD/Ks*.txt
 Spectra/LamCtoD/Lam*.txt
+PromptExtraction/FONLL/tools/*/*txt
+PromptExtraction/FONLL/**/*txt
+PromptExtraction/FONLL/*list
+PromptExtraction/**/*list
+**/__pycache__/

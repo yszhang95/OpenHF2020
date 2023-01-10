@@ -203,8 +203,8 @@ double FitParConfigs::ParConfigs::getInit(const std::string& n, const double val
   try{
     return std::get<1>(_data.at(n));
   } catch (std::out_of_range& e) {
-    std::cout << "Not found the initialized value for variable " << n
-      << "in configurations. Taking "<< val << "as the return value.\n";
+    std::cout << "[Warning] Not found the initialized value for variable " << n
+      << " in configurations. Taking "<< val << "as the return value.\n";
     return val;
   }
 }
@@ -213,8 +213,8 @@ double FitParConfigs::ParConfigs::getMin(const std::string& n, const double val)
   try{
     return std::get<2>(_data.at(n));
   } catch (std::out_of_range& e) {
-    std::cout << "Not found the minimum value for variable " << n
-      << "in configurations. Taking "<< val << "as the return value.\n";
+    std::cout << "[Warning] Not found the minimum value for variable " << n
+      << " in configurations. Taking "<< val << "as the return value.\n";
     return val;
   }
 }
@@ -223,8 +223,8 @@ double FitParConfigs::ParConfigs::getMax(const std::string& n, const double val)
   try{
     return std::get<3>(_data.at(n));
   } catch (std::out_of_range& e) {
-    std::cout << "Not found the minimum value for variable " << n
-      << "in configurations. Taking "<< val << "as the return value.\n";
+    std::cout << "[Warning] Not found the minimum value for variable " << n
+      << " in configurations. Taking "<< val << "as the return value.\n";
     return val;
   }
 }
