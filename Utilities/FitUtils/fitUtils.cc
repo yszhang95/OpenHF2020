@@ -829,9 +829,58 @@ RooFitResult fitD0(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   RooFitResult* result = nullptr;
   std::pair<double, double> binEdges = mass.getRange("full");
   RooAbsData* dsAbsPtr = &ds;
-  if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
-    h = dsPtr->createHistogram("binned", mass,
+
+  // hard coded
+  h = dsAbsPtr->createHistogram("binned", mass,
                                     Binning(fitOpts.nBins));
+  if (fitOpts.adjustRanges) {
+    std::pair<double, double> fullEdges = mass.getRange("full");
+    std::pair<double, double> leftEdges = mass.getRange("left");
+    std::pair<double, double> rightEdges = mass.getRange("right");
+    std::pair<double, double> peakEdges = mass.getRange("peak");
+    auto total = h->Integral();
+    double init_bkg = total;
+    double init_sig = 0.5 * total;
+    if (mass.hasRange("left") && mass.hasRange("right") && mass.hasRange("right")) {
+      init_bkg = h->Integral(h->FindBin(leftEdges.first), h->FindBin(leftEdges.second))
+        + h->Integral(h->FindBin(rightEdges.first), h->FindBin(rightEdges.second));
+      init_sig = h->Integral(h->FindBin(peakEdges.first), h->FindBin(peakEdges.second));
+      init_bkg = init_bkg * (fullEdges.second - fullEdges.first)
+        / (leftEdges.second - leftEdges.first + rightEdges.second - rightEdges.first);
+      init_sig = init_sig - init_bkg * (peakEdges.second - peakEdges.first) / (fullEdges.second - fullEdges.first);
+    }
+
+    if (init_bkg > 0) {
+      nbkg.setVal(init_bkg);
+      nbkg.setMin(0.1 * init_bkg);
+      nbkg.setMax(2.0 * init_bkg);
+    } else {
+      nbkg.setVal(0.5 * total);
+      nbkg.setMin(0);
+      nbkg.setMax(2*total);
+    }
+
+    if (init_sig>0) {
+      nsig.setVal(init_sig);
+      nsig.setMin(0.1 * init_sig);
+      nsig.setMax(10.0 * init_sig);
+    } else if (init_bkg>0){
+      const double diff = std::abs(total-init_bkg);
+      nsig.setVal(diff);
+      nsig.setMin(0);
+      nsig.setMax(20*diff);
+    } else {
+      nsig.setVal(0.5 * total);
+      nsig.setMin(0);
+      nsig.setMax(2*total);
+    }
+
+    std::cout << "Initial guess for auto-adjusting\n"
+      << "\tnsig init: " << nsig.getVal() << ", min: " << nsig.getMin() << ", max: " << nsig.getMax() << "\n"
+      << "\tnbkg init: " << nbkg.getVal() << ", min: " << nbkg.getMin() << ", max: " << nbkg.getMax() << "\n";
+    
+  }
+  if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
     if (fitOpts.useHist) {
       auto dh = RooDataHist("dh", "", mass, h);
       result = sum.fitTo(dh, Range("full"), Save(), AsymptoticError(fitOpts.useWeight));
@@ -1331,6 +1380,7 @@ RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
             << " + " << nsig.getAsymErrorHi()
             << " - " << nsig.getAsymErrorLo()
             << std::endl;
+  std::cout << "And the range of nsig is " << nsig.getMin() << " -- " << nsig.getMax() << "\n";
   /**
    * Update the workspace
    */
@@ -1661,7 +1711,8 @@ RooFitResult fitLamCGausCB(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   std::cout << "Final nsig is " << nsig.getVal()
             << " + " << nsig.getAsymErrorHi()
             << " - " << nsig.getAsymErrorLo()
-            << std::endl;
+            << "\n";
+  std::cout << "And the range of nsig is " << nsig.getMin() << " -- " << nsig.getMax() << "\n";
   /**
    * Update the workspace
    */
