@@ -8,6 +8,8 @@
 # Code   : Example usage for TMVA analyses                           #
 ######################################################################
 
+HepMC3IncFlag=-I$(shell HepMC3-config --includedir)
+
 MYMVASRCDIR := $(OPENHF2020TOPDIR)/Training/src
 MYMVABINDIR := $(OPENHF2020TOPDIR)/Training/bin
 MYMVABINS := \
@@ -26,7 +28,7 @@ $(MYMVABINDIR)/TMVA%: $(MYMVABINDIR)/TMVA%.o $(MYMVABINDIR)/functions.o
 
 $(MYMVABINDIR)/%.o: $(MYMVASRCDIR)/%.cc
 	@echo -n "Building $@ ... "
-	$(CXX) $(CCFLAGS) $<  $(addprefix -I, $(ROOTINCS)) -I$(OPENHF2020TOPDIR) -g -c -o $@
+	$(CXX) $(CCFLAGS) $(HepMC3IncFlag) $<  $(addprefix -I, $(ROOTINCS)) -I$(OPENHF2020TOPDIR) -g -c -o $@
 	@echo "Done"
 
 $(MYMVABINDIR):

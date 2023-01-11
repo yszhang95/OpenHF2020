@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import argparse
 parser = argparse.ArgumentParser(description='Convert ParticleTree to simplified ParticleNTuple.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-i', '--inputList', help='input file list', type=str)
