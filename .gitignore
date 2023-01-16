@@ -116,3 +116,6 @@ PromptExtraction/FONLL/**/*txt
 PromptExtraction/FONLL/*list
 PromptExtraction/**/*list
 **/__pycache__/
+**/OpenHF2020/
+**/OpenHF2020.tar.gz
+**/crab_projects/
