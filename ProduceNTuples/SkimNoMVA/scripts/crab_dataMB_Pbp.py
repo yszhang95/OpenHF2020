@@ -27,7 +27,6 @@ config.Data.outLFNDirBase = '/store/user/yousen/LamC_pPb2016'
 config.JobType.outputFiles = ['output.root']
 # do it later
 # config.Data.userInputFiles = [ f.strip() for f in open("lists/dataMB1_pPb.list").readlines() ]
-config.Data.outputDatasetTag = 'condor_dataMB_LamC'
 
 config.Site.whitelist = ['T2_BR_SPRACE']
 config.Site.storageSite = 'T2_CH_CERN'
@@ -46,13 +45,15 @@ def submit(config):
 
 dataMap = {}
 #for i in range(1, 9):
-for i in range(1, 21):
+#for i in range(1, 21):
+for i in [16, 18, 20]:
     dataMap["dataMB{}_Pbp".format(i)] = {
             "files" : [ l.strip() for l in open("lists/dataMB{}_Pbp.list".format(i)).readlines() ]
             }
 ## Submit the PA PDs
 for key, val in dataMap.items():
     config.General.requestName = key
+    config.Data.outputDatasetTag = 'condor_SkimNoMVA_LamC_{}'.format(key)
     config.Data.userInputFiles = val["files"]
     print("Submitting CRAB job for: {}".format(key))
     submit(config)
