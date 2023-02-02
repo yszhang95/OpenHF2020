@@ -134,6 +134,8 @@ public:
     float getFloatMin(std::string) const;
     float getFloatMax(std::string) const;
     bool getBool(std::string) const;
+    const std::vector<double> getVDouble(std::string) const;
+    const std::vector<int   > getVInt   (std::string) const;
   private:
     void initialize(const std::vector<std::string>&);
     std::string _mvaName;
@@ -142,6 +144,8 @@ public:
     std::map<std::string, float> _data_float_min;
     std::map<std::string, float> _data_float_max;
     std::map<std::string, bool> _data_bool;
+    std::map<std::string, std::vector<double > > _data_vdouble;
+    std::map<std::string, std::vector<int    > > _data_vint;
   };
 
   explicit FitParConfigs(const char*);
