@@ -44,16 +44,22 @@ using PtEtaPhiM_t = ROOT::Math::PtEtaPhiMVector;
 
 using MatchPairInfo =  tuple<size_t, size_t, double, double>;
 
+TString getPhaseSpaceString(const KineCut& kins);
+
 struct Config
 {
 public:
-  Config(const bool isMC): Config(-1, isMC) {}
-  Config(const Long64_t n, const bool isMC): Config(n, isMC, 0.03, 0.1) {}
-  Config(const Long64_t n, const bool isMC, const float dR, const float dPt):
-    _matchCriterion(dR, dPt),
+  Config(const bool isMC, const KineCut& k): Config(-1, isMC, k) {}
+  Config(const Long64_t n, const bool isMC, const KineCut& k):
+    Config(n, isMC, k, 0.03, 0.1) {}
+  Config(const Long64_t n, const bool isMC, const KineCut& k,
+         const float dR, const float dPt):
+    _matchCriterion(dR, dPt), _kins(k),
     _ntrkLow(0), _ntrkHigh(UShort_t(-1)),
     _nentries(n), _isMC(isMC),
     _saveMatchedOnly(1), _selectDeDx(0), _wantAbort(0) {}
+  void SetKineCut(const KineCut& k) { _kins = k; }
+  const KineCut& GetKineCut() const { return _kins; }
   TString GetInputList() const { return _inputList; }
   void SetInputList(const TString s) { _inputList = s; }
   TString GetTreeDir() const { return _treeDir; }
@@ -62,6 +68,7 @@ public:
   void SetPostfix(const TString s) { _postfix = s; }
   TString GetOutDir() const { return _outDir; }
   void SetOutDir(const TString s) { _outDir = s; }
+  TString GetOutPath() const;
   Long64_t GetNEntries() const { return _nentries; }
   void SetNEntries(Long64_t n) { _nentries = n; }
   bool isMC() const { return _isMC; }
@@ -102,6 +109,7 @@ public:
 private:
   MatchCriterion _matchCriterion;
   DeDxSelection  _dEdxSelection;
+  KineCut _kins;
   std::vector<TString> _keptBranchNames;
   TString _inputList;
   TString _treeDir;
@@ -122,6 +130,45 @@ private:
   bool     _wantAbort;
 };
 
+TString Config::GetOutPath() const
+{
+  // null; initialize it with meaningful content
+  TString basename(gSystem->BaseName(_inputList));
+  auto firstPos = basename.Index(".list");
+  if (firstPos>0) {
+    basename.Replace(firstPos, 5, "_");
+  }
+  if (basename[basename.Length()-1] != '_')
+    basename.Append('_');
+  firstPos = basename.Index(".");
+  while (firstPos>0) {
+    basename.Replace(firstPos, 1, "_");
+    firstPos = basename.Index("__");
+    while (firstPos>0) {
+      basename.Replace(firstPos, 2, "_");
+      firstPos = basename.Index("__");
+    }
+    firstPos = basename.Index(".");
+  }
+
+  basename += _nentries > 0 ?
+    ::Form("%s%lld_", _treeDir.Data(), _nentries)
+    : (_treeDir + "_AllEntries_");
+  basename += getPhaseSpaceString(_kins);
+  if (_postfix.Length()) basename += "_";
+  basename += _postfix + ".root";
+  TString outName;
+  if (_outDir == "") outName = basename;
+  else outName = _outDir + "/" + basename;
+  if (_flipEta) {
+    auto index = outName.Index(".root");
+    if (index >0) {
+      outName.Replace(index, 5, "_etaFlipped.root");
+    }
+  }
+  return outName;
+}
+
 TString getPhaseSpaceString(const KineCut& kins)
 {
   auto phase = TString::Format("pT%.1fto%.1f_", kins.pTMin, kins.pTMax);
@@ -141,9 +188,10 @@ TString getPhaseSpaceString(const KineCut& kins)
 }
 
 int skimTree(const Config& conf,
-             Particle particle, KineCut kins)
+             Particle particle)
 {
   if (conf.WantAbort()){ gErrorAbortLevel = kError; }
+  const auto kins = conf.GetKineCut();
   const auto inputList = conf.GetInputList();
   const auto treeDir = conf.GetTreeDir();
   const auto postfix = conf.GetPostfix();
@@ -161,37 +209,8 @@ int skimTree(const Config& conf,
   DeDxSelection   dEdxSelection  = conf.GetDeDxSelection();
   MatchCriterion  matchCriterion = conf.GetMatchCriterion();
 
-  TString basename(gSystem->BaseName(inputList));
-  auto firstPos = basename.Index(".list");
-  if (firstPos>0) {
-    basename.Replace(firstPos, 5, "_");
-  }
-  if (basename[basename.Length()-1] != '_')
-    basename.Append('_');
-  firstPos = basename.Index(".");
-  while (firstPos>0) {
-    basename.Replace(firstPos, 1, "_");
-    firstPos = basename.Index("__");
-    while (firstPos>0) {
-      basename.Replace(firstPos, 2, "_");
-      firstPos = basename.Index("__");
-    }
-    firstPos = basename.Index(".");
-  }
+  const auto outName = conf.GetOutPath();
 
-  basename += nentries > 0 ? Form("%s%lld_", treeDir.Data(), nentries) : (treeDir + "_AllEntries_");
-  basename += getPhaseSpaceString(kins);
-  if (postfix.Length()) basename += "_";
-  basename += postfix + ".root";
-  TString outName;
-  if (outDir == "") outName = basename;
-  else outName = outDir + "/" + basename;
-  if (flipEta) {
-    auto index = outName.Index(".root");
-    if (index >0) {
-      outName.Replace(index, 5, "_etaFlipped.root");
-    }
-  }
   const std::string effFileNameStr = conf.GetEffFileName();
   auto effFile = effFileNameStr.empty() ? TFile() : TFile(effFileNameStr.c_str());
   TGraph* g(nullptr);
@@ -437,5 +456,6 @@ int skimTree(const Config& conf,
   delete pp;
   ofile.Write();
 
+  cout << "Finished writing " << conf.GetOutPath() << "\n";
   return 0;
 }

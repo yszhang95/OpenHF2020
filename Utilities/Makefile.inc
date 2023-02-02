@@ -5,6 +5,7 @@ Ana=$(UtilitiesDir)/Ana
 MYLIB=$(UtilitiesDir)/lib
 
 CXXFLAGS += -I$(shell HepMC3-config --includedir)
+HepMC3IncFlag=-I$(shell HepMC3-config --includedir)
 # CXXFLAGS += $(shell HepMC3-config --libs)
 LDFLAGS += $(shell HepMC3-config --ldflags)
 
@@ -61,7 +62,7 @@ $(MYLIB)/MyTreeReaderDict.cxx: \
 	$(TreeReaderDir)/ParticleTree.hxx \
 	$(UtilitiesDir)/Linkdef.h
 	@echo "Generating dictionary..."
-	rootcling --inlineInputHeader -f $@ -rmf $(MYLIB)/MyTreeReaderDict.rootmap -rml $(MYLIB)/libMyTreeReader.so $^
+	rootcling --inlineInputHeader -f $@ -rmf $(MYLIB)/MyTreeReaderDict.rootmap -rml $(MYLIB)/libMyTreeReader.so $^ $(HepMC3IncFlag)
 	@echo "Done..."
 	@echo
 

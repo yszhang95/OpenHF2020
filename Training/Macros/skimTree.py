@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import argparse
 parser = argparse.ArgumentParser(description='Convert ParticleTree to simplified ParticleNTuple.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-i', '--inputList', help='input file list', type=str)
@@ -22,6 +22,8 @@ parser.add_argument('--effFile', dest='effFile', help='file saving efficiency', 
 parser.add_argument('--NtrkLow', dest='NtrkLow', help='lowest multiplicity', type=int, default=0)
 parser.add_argument('--NtrkHigh', dest='NtrkHigh', help='highest multiplicity', type=int, default=1000)
 parser.add_argument('--wantAbort', help='want abort', action='store_const', const=True, default=False)
+parser.add_argument('--branches', help='kept branches, either in the file branches.list like input list or in format of pT,eta,mass separated in comma', type=str, default="")
+
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
@@ -29,9 +31,17 @@ if args.isMC and args.treeDir == "lambdacAna":
     args.treeDir = "lambdacAna_mc"
 
 import ROOT as r
-r.gROOT.LoadMacro('skimTree.cc+')
+failed = r.gROOT.LoadMacro('${OPENHF2020TOP}/Training/Macros/skimTree.cc+')
+if not failed:
+    print("Loaded and compiled macro skimTree.cc")
+else:
+    print("Failed loading macro skimTree.cc")
 r.gSystem.Load('${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so')
-conf = r.Config(args.isMC)
+
+MassPDG = 2.2865 # GeV
+kinsCut = r.KineCut(args.pTMin, args.pTMax, 0., 1000, args.absYMin, args.absYMax, MassPDG, args.absMassLw, args.absMassUp)
+
+conf = r.Config(args.isMC, kinsCut)
 conf.SetInputList(args.inputList)
 conf.SetNEntries(args.maxEvents)
 conf.SetTreeDir(args.treeDir)
@@ -45,7 +55,17 @@ conf.SetTriggerIndex(args.triggerIndex)
 conf.SetFilterIndex(args.filterIndex)
 conf.SetWantAbort(args.wantAbort)
 
-branches = ["cand_mass", "cand_pT", "cand_y", "cand_eta", "cand_phi",
+kept = []
+if args.branches:
+    if args.branches.find(".list") <0:
+        kept = [s.strip() for s in args.branches.split(',')]
+    else:
+        # this means it is a file contianing the list of branches, separated in "\n"
+        with open(args.branches) as f:
+            kept = [e.strip() for e in f.readlines()]
+
+else:
+    kept = ["cand_mass", "cand_pT", "cand_y", "cand_eta", "cand_phi",
      "cand_massDau0", "cand_etaDau0", "cand_pTDau0", "cand_phiDau0",
      "cand_massDau1", "cand_etaDau1", "cand_pTDau1", "cand_phiDau1",
      "trk_dau1_dEdxRes", "trk_dau1_dEdx_dedxHarmonic2",
@@ -54,10 +74,12 @@ branches = ["cand_mass", "cand_pT", "cand_y", "cand_eta", "cand_phi",
      "cand_dau0_decayLength3D", "cand_dau0_decayLengthError3D", "cand_dau0_dca",
      "cand_Ntrkoffline",
      "trigBit_2", "trigBit_4", "filterBit_4", "filterBit_5"]
+    print("No branches given; will use default information", kept)
+
 if args.effFile:
     branches.append("eventWeight")
 conf.SetKeptBranchNames(
-    branches
+    kept
 )
 conf.NtrkLow(args.NtrkLow)
 conf.NtrkHigh(args.NtrkHigh)
@@ -72,12 +94,10 @@ LambdaC = r.Particle(4122)
 LambdaC.addDaughter(Ks)
 LambdaC.addDaughter(r.Particle(+2212))
 
-MassPDG = 2.2865 # GeV
-kinsCut = r.KineCut(args.pTMin, args.pTMax, 0., 1000, args.absYMin, args.absYMax, MassPDG, args.absMassLw, args.absMassUp)
 
 ts = r.TStopwatch()
 ts.Start()
 print (conf.isMC())
-r.skimTree(conf, LambdaC, kinsCut)
+r.skimTree(conf, LambdaC)
 ts.Stop()
 ts.Print()

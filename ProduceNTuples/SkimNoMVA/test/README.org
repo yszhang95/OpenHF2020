@@ -1,0 +1,44 @@
+* General
+This is a README for submitting user-customized script by CRAB.
+* Instructions
+Read the details in the [[https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3AdvancedTopic#Running_a_user_script_with_CRAB][twiki page]].
+** Files must exist
+- A summary file [[./FrameworkJobReport.xml][=FrameworkJobReport.xml=]] when you do not want to run
+  ~cmsRun~.
+  #+begin_src nxml
+    <FrameworkJobReport>
+    <ReadBranches>
+    </ReadBranches>
+    <PerformanceReport>
+      <PerformanceSummary Metric="StorageStatistics">
+        <Metric Name="Parameter-untracked-bool-enabled" Value="true"/>
+        <Metric Name="Parameter-untracked-bool-stats" Value="true"/>
+        <Metric Name="Parameter-untracked-string-cacheHint" Value="application-only"/>
+        <Metric Name="Parameter-untracked-string-readHint" Value="auto-detect"/>
+        <Metric Name="ROOT-tfile-read-totalMegabytes" Value="0"/>
+        <Metric Name="ROOT-tfile-write-totalMegabytes" Value="0"/>
+      </PerformanceSummary>
+    </PerformanceReport>
+
+    <GeneratorInfo>
+    </GeneratorInfo>
+    </FrameworkJobReport>
+  #+end_src
+ - A dummy python with (maybe) the minimum python fragments. I name it
+   [[./dummy.py][=dummy.py=]].
+ - A script to run remotely. I named it [[./run.sh][=run.sh=]].
+** TODO A few tests [2/4]
+- [X] It seems that I cannot do =ls job_input_file_list_*.txt=. I cannot
+  find the content. I can try to dump the file names in
+  =process.source.fileNames=.
+- [-] Is it fast to read the file locally? [1/2]
+  - [X] Write a test section for it
+  - [ ] Test output: 4 seconds from CERN to connect T2_BR_SPRACE.
+- [X] Is it CMSSW ENV available in =run.sh=? [2/2]
+  - [X] Write a test section for it.
+  - [X] Test output: CMSSW is OK. But OpenHF2020 not in the
+    tarball. Need to ship it by myself.
+- [-] Do compilation and run script. [1/2]
+  - [X] Write the compilation code
+  - [ ] Write the code to run ROOT macro. A tricky thing is that how
+    to find =skimTree.cc=. Maybe I should use ~${OPENHF2020TOP}~?

@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
+#include <deque>
 
 #include "TPRegexp.h"
 #include "TObjArray.h"
@@ -313,34 +314,36 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
     while (std::getline(words, word, ',')) {
       TString word_nospace = word;
       word_nospace = word_nospace.Strip(TString::kBoth);
-      word = word_nospace.Data();
+      word_nospace.ToLower();
+      word = word_nospace.View();
       temp.push_back(word);
     }
-    // push path to the end of _path
-    string dataName = temp.at(0);
-    string dataMin = temp.at(1);
-    string dataMax = temp.at(2);
-    // urgly but easy to write
-    // temporarily use dataMin as boolean storage
-    string dataType = temp.size()==4 ? temp.at(3) : temp.at(2);
+    if (temp.size() < 3) {
+      throw std::logic_error("Please make sure the cut variables must be arranged in at least 3 slots\n");
+    }
+
+    // check the data name and its type at the first
+    string dataName = temp.front();
+    string dataType = temp.back();
 
     std::transform(dataType.begin(), dataType.end(), dataType.begin(),
                    [](unsigned char c) { return std::tolower(c); });
 
+    // urgly but easy to write
+    // temporarily use dataMin as boolean storage
+    string dataMin = temp.at(1);
+    string dataMax = temp.at(2);
+
     // if it is a boolean
-    if (temp.size() == 3) {
-      std::transform(dataName.begin(), dataName.end(), dataName.begin(),
-                     [](unsigned char c) { return std::tolower(c); });
-      std::transform(dataMin.begin(), dataMin.end(), dataMin.begin(),
-                     [](unsigned char c) { return std::tolower(c); });
+    if (dataType == "bool" && temp.size() == 3) {
       if (dataType == "bool") {
-        if (dataMin == "0" || dataMin == "false" || dataMin == "null")
+        if (dataMin.empty() || dataMin == "0" || dataMin == "false" || dataMin == "null")
           _data_bool[dataName] = false;
         else
           _data_bool[dataName] = true;
       }
-      else {
-        throw std::logic_error("[FATAL] Only boolean variable can in three slots.");
+      else if (dataType == "bool") {
+        throw std::logic_error("[FATAL] Boolean variable must be occupy three slots.");
       }
     }
 
@@ -351,9 +354,6 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
       dataType = "float";
     }
 
-    std::transform(dataName.begin(), dataName.end(), dataName.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-
     // I should replace [] with insert to check duplicates in the future
     if (dataType == "float") {
       const float dataMinVal = std::stof(dataMin);
@@ -362,10 +362,6 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
       _data_float_max[dataName] = dataMaxVal;
     }
     if (dataType == "int") {
-      std::transform(dataMin.begin(), dataMin.end(), dataMin.begin(),
-                     [](unsigned char c) { return std::tolower(c); });
-      std::transform(dataMax.begin(), dataMax.end(), dataMax.begin(),
-                     [](unsigned char c) { return std::tolower(c); });
       auto pos_for_min = dataMin.find("inf");
       auto pos_for_max = dataMax.find("inf");
       if (pos_for_min == std::string::npos) {
@@ -376,6 +372,24 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
         const int dataMaxVal = std::stoi(dataMax);
         _data_int_max[dataName] = dataMaxVal;
       }
+    }
+
+    std::deque<std::string> numbers(temp.begin(), temp.end());
+    numbers.pop_front();
+    numbers.pop_back();
+
+    if (dataType == "vdouble") {
+      _data_vdouble[dataName].reserve(numbers.size());
+      std::transform(numbers.begin(), numbers.end(),
+          std::back_inserter(_data_vdouble.at(dataName)),
+            [](std::string s) { return std::stod(s); });
+    }
+
+    if (dataType == "vint") {
+      _data_vint[dataName].reserve(numbers.size());
+      std::transform(numbers.begin(), numbers.end(),
+          std::back_inserter(_data_vint.at(dataName)),
+            [](std::string s) { return std::stoi(s); });
     }
   }
 }
@@ -409,6 +423,18 @@ bool FitParConfigs::CutConfigs::getBool(std::string s) const
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return _data_bool.at(s);
+}
+const std::vector<double> FitParConfigs::CutConfigs::getVDouble(std::string s) const
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_vdouble.at(s);
+}
+const std::vector<int   > FitParConfigs::CutConfigs::getVInt   (std::string s) const
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return _data_vint.at(s);
 }
 
 VarCuts::VarCuts(const FitParConfigs::CutConfigs cutConfigs):
