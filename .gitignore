@@ -76,6 +76,7 @@ MCStudies/MCSamples
 D0Productions/*
 !D0Productions/skimMC.C
 !D0Productions/skimReco.C
+!D0Productions/cmssw_latest
 !Utilities/bin/*
 *log*
 */test/*list*
