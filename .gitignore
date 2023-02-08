@@ -120,3 +120,5 @@ PromptExtraction/**/*list
 **/OpenHF2020/
 **/OpenHF2020.tar.gz
 **/crab_projects/
+*pyc
+Cert_*_JSON_NoL1T.txt
