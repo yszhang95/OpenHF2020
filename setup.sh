@@ -5,7 +5,7 @@
 echo -e "\nSetting up environment\n"
 if [ -z ${CMSSW_BASE+x} ]; then
     echo "CMSSW ENV is unset. Use LCG instead."
-    source /cvmfs/sft.cern.ch/lcg/views/LCG_101/x86_64-centos7-gcc10-opt/setup.sh
+    source /cvmfs/sft.cern.ch/lcg/views/LCG_102/x86_64-centos7-gcc11-opt/setup.sh
     export OPENHF2020TOP=`git rev-parse --show-toplevel`
 else
     echo "Will work under CMSSW ENV. This will (probably) contaminate CMSSW."
