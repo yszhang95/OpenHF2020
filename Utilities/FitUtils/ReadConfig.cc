@@ -314,7 +314,8 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
     while (std::getline(words, word, ',')) {
       TString word_nospace = word;
       word_nospace = word_nospace.Strip(TString::kBoth);
-      word_nospace.ToLower();
+      // does not do it because MVA name cannot be determined
+      // word_nospace.ToLower();
       word = word_nospace.View();
       temp.push_back(word);
     }
@@ -323,14 +324,29 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
     }
 
     // check the data name and its type at the first
-    string dataName = temp.front();
     string dataType = temp.back();
 
     std::transform(dataType.begin(), dataType.end(), dataType.begin(),
                    [](unsigned char c) { return std::tolower(c); });
 
+    // dataType == MVA is a special case
+    if (dataType == "mva") {
+      string dataName = temp.front();
+      _mvaName = dataName;
+      temp.front() = "mva";
+      dataType = "float";
+    }
+
+    // to lower case
+    for(auto& s : temp) {
+      std::transform(s.begin(), s.end(), s.begin(),
+          [](unsigned char c) { return std::tolower(c); });
+    }
+
+
     // urgly but easy to write
     // temporarily use dataMin as boolean storage
+    string dataName = temp.front();
     string dataMin = temp.at(1);
     string dataMax = temp.at(2);
 
@@ -345,13 +361,6 @@ void FitParConfigs::CutConfigs::initialize(const vector<string>& block)
       else if (dataType == "bool") {
         throw std::logic_error("[FATAL] Boolean variable must be occupy three slots.");
       }
-    }
-
-    // dataType == MVA is a special case
-    if (dataType == "mva") {
-      _mvaName = dataName;
-      dataName = "mva";
-      dataType = "float";
     }
 
     // I should replace [] with insert to check duplicates in the future
