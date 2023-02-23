@@ -223,12 +223,14 @@ void  MyNTuple::initGenBranches()
   // particle level
   // t->Branch("gen_charge", &gen_charge);
   t->Branch("gen_pdgId", &gen_pdgId);
+  t->Branch("gen_ancestorId", &gen_ancestorId);
+  t->Branch("gen_ancestorIter", &gen_ancestorIter);
+  t->Branch("gen_momPdgId", &gen_momPdgId);
   t->Branch("gen_eta", &gen_eta);
   t->Branch("gen_y", &gen_y);
   t->Branch("gen_mass", &gen_mass);
   t->Branch("gen_pT", &gen_pT);
   t->Branch("gen_phi", &gen_phi);
-  t->Branch("gen_momPdgId", &gen_momPdgId);
 
   if (!dropDau) {
     t->Branch("gen_angle2D", &gen_angle2D);
@@ -466,6 +468,8 @@ bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
   gen_phi = -99;
   gen_y = -99;
   gen_momPdgId = -99;
+  gen_ancestorId = -99;
+  gen_ancestorIter = -99;
   for (size_t i=0; i<100; ++i) {
     gen_dau_pdgId[i] = -99;
     gen_dau_angle3D[i] = -99;
@@ -503,24 +507,30 @@ bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
 
   int ipar = it;
   auto pdgId = p.gen_pdgId();
+  int iter = 0;
   for (auto momIdxs = p.gen_momIdx().at(it); !momIdxs.empty();
        momIdxs = p.gen_momIdx().at(ipar)) {
     if (momIdxs.size() > 1) {
       std::cerr << "Multiple mother particles" << std::endl;
     }
+    iter++;
     auto momIdx = momIdxs.front();
     auto id = pdgId.at(momIdx);
-    std::string idstr = std::to_string(id);
+    // must be absolute value 
+    std::string idstr = std::to_string(std::abs(id));
     if (idstr.at(0) == '5') {
       gen_isPrompt = false;
+      gen_ancestorId = id;
       break;
     }
+    gen_ancestorId = id;
     ipar = momIdx;
   }
   if (gen_isPrompt) {
     auto id = pdgId.at(ipar);
-    if (abs(id) == 5) {
+    if (abs(std::abs(id)) == 5) {
       gen_isPrompt = false;
+      gen_ancestorId = id;
     }
     // if (abs(id) != 5) {
     //   auto dauIdxs = p.gen_dauIdx().at(ipar);
@@ -530,6 +540,7 @@ bool MyNTuple::retrieveGenInfo(ParticleTreeMC& p, Particle* ptr)
     //   std::cout << std::endl;
     // }
   }
+  this->gen_ancestorIter = iter;
 
   this->gen_angle2D = p.gen_angle2D().at(it);
   this->gen_angle3D = p.gen_angle3D().at(it);

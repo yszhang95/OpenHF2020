@@ -162,6 +162,11 @@ struct MyNTuple
   // matched gen info
   bool            gen_isPrompt;
   Char_t          gen_charge;
+  // ancestor ID
+  Int_t           gen_ancestorId;
+  // how many iterations it takes to get ancestor
+  Int_t           gen_ancestorIter;
+  Int_t           gen_momPdgId;
   Int_t           gen_pdgId;
   Float_t         gen_angle3D;
   Float_t         gen_angle2D;
@@ -172,7 +177,6 @@ struct MyNTuple
   Float_t         gen_eta;
   Float_t         gen_phi;
   Float_t         gen_y;
-  Int_t           gen_momPdgId;
   // gen dau
   Int_t           gen_dau_pdgId[100];
   Float_t         gen_dau_angle3D[100];
