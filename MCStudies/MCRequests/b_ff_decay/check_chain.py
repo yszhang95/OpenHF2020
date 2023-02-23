@@ -20,6 +20,11 @@ def all_dau_refs(genPar):
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing ('python')
+options.register ('outputRecord',
+                  'record.txt',
+                  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  "Name of output text containing counting information")
 options.parseArguments()
 
 events = Events (options)
@@ -94,3 +99,10 @@ print("Number of B0 to Lambda_c+", nbd2lc)
 print("Number of B+B0", sameEvent)
 print("Number of Lambda_c+", nlc)
 print("Total events:", iev)
+
+with open(options.outputRecord, 'w') as fout:
+  fout.write(
+"""#Lb0,#Bu,#Bd,#Lb02Lc+,#Bu2Lc+,#Bd2Lc+,#Lc+,#events
+{nlb},{nbu},{nbd},{nlb2lc},{nbu2lc},{nbd2lc},{nlc},{nevt}"""
+    .format(nlb=nlb, nbu=nbu, nbd=nbd, nlb2lc=nlb2lc, nbu2lc=nbu2lc, nbd2lc=nbd2lc, nlc=nlc, nevt=iev))
+  fout.close()
