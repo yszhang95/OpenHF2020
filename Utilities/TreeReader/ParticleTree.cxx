@@ -135,7 +135,7 @@ void ParticleTree::Init(TTree *tree)
   fChain->SetBranchAddress("cand_pdgId", &_cand_pdgId, &b_cand_pdgId);
   fChain->SetBranchAddress("cand_status", &_cand_status, &b_cand_status);
   fChain->SetBranchAddress("cand_trkIdx", &_cand_trkIdx, &b_cand_trkIdx);
-  fChain->SetBranchAddress("cand_Ntrkoffline", &_cand_Ntrkoffline, &b_cand_Ntrkoffline);
+  if (fChain->GetBranch("cand_Ntrkoffline")) fChain->SetBranchAddress("cand_Ntrkoffline", &_cand_Ntrkoffline, &b_cand_Ntrkoffline);
   fChain->SetBranchAddress("cand_angle2D", &_cand_angle2D, &b_cand_angle2D);
   fChain->SetBranchAddress("cand_angle3D", &_cand_angle3D, &b_cand_angle3D);
   fChain->SetBranchAddress("cand_dca", &_cand_dca, &b_cand_dca);
