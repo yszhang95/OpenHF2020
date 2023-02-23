@@ -20,11 +20,11 @@ R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyTreeReader.so)
 /*
  * Uncomment the following if you want to compile
  */
-/*
 #include "Utilities/TreeReader/ParticleTree.hxx"
 #include "Utilities/TreeReader/ParticleTreeMC.hxx"
 #include "Utilities/Ana/Common.h"
 #include "Utilities/Ana/TreeHelpers.h"
+/*
 */
 
 using std::vector;
@@ -46,16 +46,26 @@ int get_last_idx(const std::vector<T>& v, Func f)
   return -1;
 }
 
+enum bcode{Bu=1<<0, Bd=1<<1, Lc=1<<2};
+
+/*
+ * Input Parameter: inputList -- the file containing a list of files.
+ *
+ * Output: A file containing histograms
+ *
+ * Details:
+ *     1. inputList will be parsed by TFileCollection.
+ *     2. A output file called EvtGen.root will be created.
+ *     3. Output files has several histograms, classified by
+ *        - Histograms over rapidities for all b hadrons, e.g., hLb_all_y0
+ *        - Histograms over rapidities and given Lambda_c pT for b hadrons, e.g., hLb_pass_pt0_y0
+ *        - Histogram that counts the number of events containing, one hadorn, two hadrons, and three hadrons 
+ */
 void produce2DPlots(const char* inputList)
 {
   TFile ofile("EvtGen.root", "recreate");
-  // const vector<double> LbPt = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10., 11., 12., 13., 14., 16., 18., 20., 25.};
-  //const vector<double> LcPt = {3.0, 4.0, 5.0, 6.0, 8.0, 10.};
-  // const vector<double> LcPt = {2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.};
-  // TH2D hLcVsLb("hLcVsLb", ";Lb pT;Lc pT", LbPt.size()-1, LbPt.data(), LcPt.size()-1, LcPt.data());
-  // TH1D hLbPt("hLbPt", ";Lb pT", LbPt.size()-1, LbPt.data());
-  // TH1D hLcPt("hLcPt", ";Lb pT", LcPt.size()-1, LcPt.data());
 
+  TH1D *hcode = new TH1D("hcode", ::Form("Bu:%d Bd:%d Lc:%d if presents;code;Counts", bcode::Bu, bcode::Bd, bcode::Lc), 10, -0.5, 9.5);
   // 2D
   const std::vector<double> pts_Lc = {2, 3, 4, 5, 6, 8, 10};
   std::vector<double> pts = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 26, 28};
@@ -143,13 +153,14 @@ void produce2DPlots(const char* inputList)
         if (!checkDecayChain(particle_copy, ipar, p)) continue;
         particle_copy.setTreeIdx(ipar);
 
-        std::vector<int> momIds;
-        std::vector<int> momIdxs;
+        std::vector<int> momIds; // pdgID of mother particle
+        std::vector<int> momIdxs; // index for the corresponding particle
         for (auto momIdxVec = p.gen_momIdx().at(ipar);
               !momIdxVec.empty(); ) {
+          // obtain index
           int momIdx = momIdxVec.at(0);
           momIdxs.push_back(momIdx);
-          // pdgId = momId;
+          // obtain pdgId
           int momId = p.gen_pdgId().at(momIdx);
           momIds.push_back(momId);
           // update it
@@ -170,6 +181,15 @@ void produce2DPlots(const char* inputList)
         auto has_Bd = std::find_if(momIds.begin(), momIds.end(), Bd) != momIds.end();
         auto has_bquark = std::find_if(momIds.begin(), momIds.end(), bquark) != momIds.end();
         auto has_bdecay = std::find_if(momIds.begin(), momIds.end(), bdecay) != momIds.end();
+
+        // check overlap
+        // check enum bcode
+        int code = 0;
+        if (has_Bu) code += bcode::Bu;
+        if (has_Bd) code += bcode::Bd;
+        if (has_Lambda_b) code += bcode::Lc;
+
+        hcode->Fill(code);
 
         // last copy
         auto idx_Bmeson = get_last_idx(momIds, Bmeson);
@@ -221,25 +241,11 @@ void produce2DPlots(const char* inputList)
           }
         }
 
-
-
         if (has_Lambda_b) { ++nlb; }
         if (has_Bu) { ++nBu; }
         if (has_Bd) { ++nBd; }
         if (has_bquark) { ++nbquark; }
         if (has_bdecay) { ++nbdecay; }
-
-        // Lambda_b
-        // Bu + Bd
-        
-        // if (abs(pdgId.at(momPdgIdIdx)) != 5122) continue;
-        // auto parLbPt = p.gen_pT().at(momPdgIdIdx);
-        // auto parLcPt = p.gen_pT().at(ipar);
-        // if (abs(p.gen_y().at(ipar)) > 1.) continue;
-        // hLcPt.Fill(parLcPt);
-        // if (abs(p.gen_y().at(momPdgIdIdx)) > 1.) continue;
-        // hLcVsLb.Fill(parLbPt, parLcPt);
-        // hLbPt.Fill(parLbPt);
       }
     }
   }
@@ -256,7 +262,11 @@ void produce2DPlots(const char* inputList)
   std::vector<int> a{1, 2, 3, 33, 4};
   auto has_3 = [](int i) -> bool { return std::to_string(i)[0] == '3'; };
   int idx = get_last_idx(a, has_3);
-  std::cout << "last copy index" << idx << " And it is " << a[idx] << "\n";
+  std::cout << "Given ";
+  for (const auto e : a) {
+    std::cout << e << ", ";
+  }
+  std::cout << "index for last copy initializing with 3 for test is " << idx << ". And it is " << a[idx] << "\n";
 
   for (auto& v : hLb_all) delete v;
   for (auto& v : hB_all) delete v;
@@ -266,4 +276,5 @@ void produce2DPlots(const char* inputList)
   for (auto& v : hB_pass) {
     for (auto e : v) delete e;
   }
+  delete hcode;
 }

@@ -1,0 +1,11 @@
+- Create spectra for `y_{abs}` [-3, -2], [-2, -1], [-1, 0], [0, 1], [1, 2], [2, 3]
+    - `fonll_calc.py` and `read_spectra.py`
+- Map `Lambda_b` and `B` to `Lambda_c`
+    - Given `Lambda_c` within [pTMin, pTMax] and `y_{lab}` [-1, 1], fill six histograms of `p_T` spectra for `Lambda_b` and `B` seperately.
+    - Fill six histograms of `p_T` spectra for `Lambda_b` and `B` seperately without considering `Lambda_c`
+    - Reweight `Lambda_b` to `Lambda_c` and `B` (including `B_u`, `B_d` but not `B_s`) to `Lambda_c` according to fonll in the first step
+        - Need to multiply B.R. to the FONLL cross section
+        - Multiply output of last step with luminosity (~4nb^-1)
+    - Sum over the six histograms from the second step using FONLL
+    - Use output of the first step to get the `p_T` spectra of `Lambda_b` and `B`
+    - Integrate over each [pTMin, pTMax] of `Lambda_c`. That's it.
