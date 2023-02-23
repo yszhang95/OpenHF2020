@@ -1,0 +1,12 @@
+* README
+** Usage
+- =./generate.sh configName nEvents tempDir=. Replace the arguments with the proper ones.
+  - Fragment =Lambda_b0.py= is for generating Lambda_b0.
+  - Fragment =bquark.py= is for generating b hadrons without
+    specifying the further hadronization. Default setup from CMS is
+    used.
+  Example is:
+  : ./generate.sh bquark.py 10000 bquark_dir
+- The script =check_chain.py= is written in =FWLite= and for counting
+  number of b hadrons. An example of usage is below:
+  : python check_chain.py inputFiles=bquark_dir/CMSSW_10_6_32_patch1/src/bquark.root maxEvents=10000 outputRecord=bquark_record.txt

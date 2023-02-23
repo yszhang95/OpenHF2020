@@ -154,6 +154,9 @@ class fonll_calc(object):
         for k, v in load.items():
             self.config[k] = load[k]
 
+        if self.config.get("verbose", True):
+            print(self.config)
+
     @property
     def ptmin(self):
         return self.config["ptmin"]
@@ -183,7 +186,6 @@ class fonll_calc(object):
         self.config["ymax"] = ymax
 
     def calc(self, path=None):
-        print(self.config)
         url = 'https://www.lpthe.jussieu.fr/~cacciari/cgi-bin/call_band-13.pl'
         out = requests.post(url, data=self.config)
 
@@ -201,17 +203,29 @@ class fonll_calc(object):
 
 if __name__ == '__main__':
     calc = fonll_calc("pp_8p16TeV.json")
-    ymins = [-2.46, -1.46, -0.46, 0.54]
-    ymaxs = [-1.46, -0.46, 0.54, 1.54]
-    ptmins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-              15, 16, 18, 20, 22, 24, 26, 28]
-    ptmaxs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-              15, 16, 18, 20, 22, 24, 26, 28, 30]
+    # ymins = [-3.46, -2.46, -1.46, -0.46, 0.54, 1.54]
+    # ymaxs = [-2.46, -1.46, -0.46, 0.54, 1.54, 2.54]
+    #ymins = [-0.46, 0.54, 1.54]
+    # ymaxs = [0.54, 1.54, 2.54]
+    # ptmins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    #           15, 16, 18, 20, 22, 24, 26, 28]
+    # ptmaxs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    #           15, 16, 18, 20, 22, 24, 26, 28, 30]
+    # ymins = [-0.46]
+    # ymaxs = [0.54]
+    # ptmins = [20]
+    # ptmaxs = [22]
+    # ptmins = [3]
+    # ptmaxs = [4]
+    ymins = [-2.46]
+    ymaxs = [-1.46]
+    ptmins = [14]
+    ptmaxs = [15]
     for ymin, ymax in zip(ymins, ymaxs):
         foutstr = 'output_pp_8p16TeV/pTspectra_y{ymin}to{ymax}'.format(ymin=ymin, ymax=ymax)
         foutstr = foutstr.replace(".", 'p')
         foutstr = foutstr + ".txt"
-        fout = open(foutstr, 'w')
+        # fout = open(foutstr, 'w')
         for ptmin, ptmax in zip(ptmins, ptmaxs):
             calc.ymin  = ymin
             calc.ymax  = ymax
@@ -222,19 +236,19 @@ if __name__ == '__main__':
             outstr = outstr.replace(".", "p")
             outstr = outstr + ".txt"
             calc.calc(outstr)
-            with open(outstr) as f:
-                lines = []
-                for l in f.readlines():
-                    if not l[0] == '#':
-                        lines.append(l.strip())
-                # print(lines)
-                nums_min = [ float(l) for l in lines[0].split(' ')]
-                nums_max = [ float(l) for l in lines[1].split(' ')]
-                # first pt, second central, third min, fourth max
-                pt = (nums_min[0] + nums_max[0]) / 2
-                pt_err = (nums_max[0] - nums_min[0]) / 2
-                xsec = (nums_min[1] + nums_max[1]) / 2
-                xsec_lo = (nums_min[2] + nums_max[2]) / 2
-                xsec_hi = (nums_min[3] + nums_max[3]) / 2
-                outnums = "{pt} {pt_err} {xsec} {lo} {hi}\n".format(pt=pt, pt_err=pt_err, xsec=xsec, lo=xsec-xsec_lo, hi=xsec_hi-xsec)
-                fout.write(outnums)
+            # with open(outstr) as f:
+            #     lines = []
+            #     for l in f.readlines():
+            #         if not l[0] == '#':
+            #             lines.append(l.strip())
+            #     # print(lines)
+            #     nums_min = [ float(l) for l in lines[0].split(' ')]
+            #     nums_max = [ float(l) for l in lines[1].split(' ')]
+            #     # first pt, second central, third min, fourth max
+            #     pt = (nums_min[0] + nums_max[0]) / 2
+            #     pt_err = (nums_max[0] - nums_min[0]) / 2
+            #     xsec = (nums_min[1] + nums_max[1]) / 2
+            #     xsec_lo = (nums_min[2] + nums_max[2]) / 2
+            #     xsec_hi = (nums_min[3] + nums_max[3]) / 2
+            #     outnums = "{pt} {pt_err} {xsec} {lo} {hi}\n".format(pt=pt, pt_err=pt_err, xsec=xsec, lo=xsec-xsec_lo, hi=xsec_hi-xsec)
+            #     fout.write(outnums)

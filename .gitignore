@@ -76,6 +76,7 @@ MCStudies/MCSamples
 D0Productions/*
 !D0Productions/skimMC.C
 !D0Productions/skimReco.C
+!D0Productions/cmssw_latest
 !Utilities/bin/*
 *log*
 */test/*list*
@@ -111,3 +112,13 @@ Fit/*_Fit/*alice*txt
 Spectra/LamCtoD/*LamToKs*txt
 Spectra/LamCtoD/Ks*.txt
 Spectra/LamCtoD/Lam*.txt
+PromptExtraction/FONLL/tools/*/*txt
+PromptExtraction/FONLL/**/*txt
+PromptExtraction/FONLL/*list
+PromptExtraction/**/*list
+**/__pycache__/
+**/OpenHF2020/
+**/OpenHF2020.tar.gz
+**/crab_projects/
+*pyc
+Cert_*_JSON_NoL1T.txt

@@ -66,3 +66,19 @@
         There are other things remaining before saving this candidate: to check if the particle can also
         be constructed as $\Lambda/\bar{\Lambda}$ and photon conversions. Finally, the candidate will
         be saved.
+
+
+**** =skimTree.cc= and ~skimTree.py~
+***** =skimTree.cc=
+      This the source code doing everything. To run it, =skimTree.py= is
+      necessary. Or one can write his own =skimTree.py= script.
+
+***** =skimTree.py=
+      This is the wrapper script for =skimTree.cc=. Any other similar script must contain the following blocks:
+      - A code block like:
+	#+begin_src: python
+import ROOT as r
+r.gROOT.LoadMacro('skimTree.cc+')
+r.gSystem.Load('${OPENHF2020TOP}/Utilities/lib/libMyTreeReader.so')
+	#+end_src:
+      - A setup for =Config= structure in ~skimTree.c~. 

@@ -393,9 +393,15 @@ RooFitResult  D0Fitter::fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& 
       throw std::out_of_range("a4 is not set in configuration");
     }
   }
-  RooArgList bkg_args(a1, a2);
-  if (fitOpts.order <= 4) bkg_args.add(a3);
-  if (fitOpts.order == 4) bkg_args.add(a4);
+  RooArgList bkg_args(a1);
+  switch (fitOpts.order) {
+    case 2 : bkg_args.add(a2);
+             break;
+    case 3 : bkg_args.add(a2); bkg_args.add(a3);
+             break;
+    case 4 : bkg_args.add(a2); bkg_args.add(a3); bkg_args.add(a4);
+             break;
+  }
   RooChebychev bkg("bkg", "3rd Chebyshev poly.", mass, bkg_args);
 
   // yields for different components
@@ -469,16 +475,18 @@ RooFitResult  D0Fitter::fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& 
   if (nKK.isConstant()) std::cout << "nKK is constant\n";
   if (nPiPi.isConstant()) std::cout << "nPiPi is constant\n";
 
+  RooAbsData* dsAbsPtr = &ds;
   RooDataHist* dhptr = nullptr;
   RooFitResult* result = nullptr;
   TH1* h = ds.createHistogram(::Form("%s_binned", ds.GetName()), mass,
-                              Binning(fitOpts.nBins));
+        Binning(fitOpts.nBins, mass.getMin(), mass.getMax()));
   // hard coded
   if (fitOpts.adjustRanges) {
     std::pair<double, double> fullEdges = mass.getRange("full");
     std::pair<double, double> leftEdges = mass.getRange("left");
     std::pair<double, double> rightEdges = mass.getRange("right");
     std::pair<double, double> peakEdges = mass.getRange("peak");
+    auto total = h->Integral();
     auto init_bkg = h->Integral(h->FindBin(leftEdges.first), h->FindBin(leftEdges.second))
                     + h->Integral(h->FindBin(rightEdges.first), h->FindBin(rightEdges.second));
     auto init_sig = h->Integral(h->FindBin(peakEdges.first), h->FindBin(peakEdges.second));
@@ -486,12 +494,39 @@ RooFitResult  D0Fitter::fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& 
                / (leftEdges.second - leftEdges.first + rightEdges.second - rightEdges.first);
     init_sig = init_sig - init_bkg * (peakEdges.second - peakEdges.first) / (fullEdges.second - fullEdges.first);
 
-    nsig.setVal(init_sig);
-    nsig.setMin(0.1 * init_sig);
-    nsig.setMax(5.0 * init_sig);
-    nbkg.setVal(init_bkg);
-    nbkg.setMin(0.1 * init_bkg);
-    nbkg.setMax(2.0 * init_bkg);
+    if (init_bkg > 0) {
+      nbkg.setVal(init_bkg);
+      nbkg.setMin(0.1 * init_bkg);
+      nbkg.setMax(2.0 * init_bkg);
+    } else {
+      nbkg.setVal(0.5 * total);
+      nbkg.setMin(0);
+      nbkg.setMax(2*total);
+    }
+
+    if (init_sig>0) {
+      nsig.setVal(init_sig);
+      nsig.setMin(0.1 * init_sig);
+      nsig.setMax(10.0 * init_sig);
+    } else if (init_bkg>0){
+      const double diff = std::abs(total-init_bkg);
+      nsig.setVal(diff);
+      nsig.setMin(0);
+      nsig.setMax(20*diff);
+    } else {
+      nsig.setVal(0.5 * total);
+      nsig.setMin(0);
+      nsig.setMax(2*total);
+    }
+
+    // arbitrary number , sqrt(25) = 5
+    if (nsig.getMin() < 25) {
+      nsig.setMin(0);
+    }
+    // nsig.setMin(0);
+    // nsig.setMax(RooNumber::infinity ());
+    // nbkg.setMin(0);
+    // nbkg.setMax(RooNumber::infinity ());
 
     std::cout << "Initial guess for auto-adjusting\n"
       << "\tnsig init: " << nsig.getVal() << ", min: " << nsig.getMin() << ", max: " << nsig.getMax() << "\n"
@@ -510,14 +545,45 @@ RooFitResult  D0Fitter::fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& 
     dhptr = dynamic_cast<RooDataHist*>(&ds); 
   }
 
+  const double mean_mc_val = mean.getVal();
+  auto refit = [&](RooAbsData& ds) -> bool {
+    double meanVal = mean.getVal();
+    double sigma1Val = sigma1.getVal();
+    double sigma1NVal = sigma1N.getVal();
+    double fracVal = frac1.getVal();
+    double sigmaVal = sigma1Val*std::sqrt(fracVal*fracVal+(1-fracVal)*(1-fracVal)*sigma1NVal*sigma1NVal);
+    while (std::abs(meanVal - mean_mc_val)>sigmaVal) {
+      std::cout << "Bad fit leads to wrong mean\n";
+      std::cout << "Width = "<< sigmaVal << "\n";
+      scale.setConstant(kTRUE);
+      mean.setVal(mean_mc_val);
+      mean.setMin(1.865-1*sigmaVal);
+      mean.setMin(1.865+1*sigmaVal);
+      sum.fitTo(ds, Range("full"), Save(), AsymptoticError(fitOpts.useWeight), Minos());
+      mean.setConstant(kTRUE);
+      scale.setConstant(kFALSE);
+      result = sum.fitTo(ds, Range("full"), Save(), AsymptoticError(fitOpts.useWeight), Minos());
+      meanVal = mean.getVal();
+      std::cout << "Mean value after refit is " << meanVal << "\n";
+      // std::cout << "At limit " << gMinuit->fLimset << "\n";
+      return true;
+    }
+    return false;
+  };
   if (fitOpts.useHist) {
     auto dh = *dhptr;
     result = sum.fitTo(dh, Range("full"), Save(), AsymptoticError(fitOpts.useWeight));
+    auto done =refit(dh);
+    if (done) {
+      const std::string is_const = mean.isConstant() ? "is " : "is not";
+      std::cout << "After refit, mean " << is_const << "constant.\n";
+    }
   }
 
   if (!fitOpts.useHistOnly) {
     result = sum.fitTo(ds, Range("full"), Save(), NumCPU(fitOpts.numCPU),
                        AsymptoticError(fitOpts.useWeight));
+    refit(ds);
   }
 
   /**
@@ -639,7 +705,6 @@ RooFitResult  D0Fitter::fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& 
   else {
     // works after 6.26
     // ndf = dhptr->getBinnings()->numBins() - result->floatParsFinal().getSize();
-    ndf = ((RooUniformBinning &)mass.getBinning(0)).numBins() - result->floatParsFinal().getSize();
   }
   tex.DrawLatexNDC(0.2, 0.02, Form("#chi^{2}/N.D.F = %.1f/%d", chi2Val, ndf));
 
@@ -677,6 +742,7 @@ RooFitResult  D0Fitter::fitData(RooRealVar& mass, RooAbsData& ds, RooWorkspace& 
             << " - " << doubGausFrac.getAsymErrorLo()
             << std::endl;
   std::cout << "status is " << result->status() << std::endl;
+  std::cout << "chi2/ndf = " << chi2Val << "/" << ndf << std::endl;
   if (fitOpts.saveToWS) ws.import(sum);
   if (dhptr) {
     if (fitOpts.saveToWS) ws.import(*dhptr);
@@ -690,6 +756,11 @@ RooFitResult D0Fitter::fitD0(RooRealVar& mass, RooWorkspace& myws,
                              const FitOptsHF& fitOpts,
                              std::map<std::string, std::string> strs)
 {
+  bool useRareProcesses = fitOpts.useRareProcesses ? useRareProcesses = MassFitter::_par.hasVariable("nKK") && MassFitter::_par.hasVariable("nPiPi") : false;
+  if (!useRareProcesses && fitOpts.useRareProcesses)
+    std::cout << "Conflict setup for useRareProcesses. KKPiPi parameters are not set.\n";
+
+  std::cout << "useRareProcesses is " << std::boolalpha << useRareProcesses << "\n";
   std::cout << ">>>>>>>> Fit true D\n" << "\n";
   const auto strs_doubGaus = strs;
   auto dsMCSignal = myws.data(strs_doubGaus.at("dsMCSignal").c_str());
@@ -708,7 +779,7 @@ RooFitResult D0Fitter::fitD0(RooRealVar& mass, RooWorkspace& myws,
   fitDoubGausAndSwap(mass, *dsMCAll, strs_mc);
   std::cout << "\n";
 
-  if (fitOpts.useRareProcesses) {
+  if (useRareProcesses) {
     std::cout << ">>>>>>>> Fit D0->KK\n" << "\n";
     auto strs_KK = strs;
     strs_KK["process_label"] = "KK";

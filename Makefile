@@ -30,6 +30,9 @@ all::
 -include Training/Makefile.inc
 
 all:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyTreeReader.so $(MYLIB)/libMyFitUtils.so $(MYMVABINS)
+tree-reader:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyTreeReader.so
+fit-utils:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyFitUtils.so
+mva-bins:: $(MYLIB) $(MYMVABINDIR) $(MYLIB)/libMyTreeReader.so $(MYMVABINS)
 
 .PHONY: clean
 clean:

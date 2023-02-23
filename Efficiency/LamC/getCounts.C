@@ -1,4 +1,3 @@
-  
 #if defined(__CLING__) and !defined(__ROOTCLING__)
 R__ADD_INCLUDE_PATH($OPENHF2020TOP)
 R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
