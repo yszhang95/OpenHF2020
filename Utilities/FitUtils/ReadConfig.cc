@@ -429,6 +429,10 @@ float FitParConfigs::CutConfigs::getFloatMax(std::string s) const
 }
 bool FitParConfigs::CutConfigs::getBool(std::string s) const
 {
+  if (_data_bool.find(s) == _data_bool.end()) {
+    std::cout << "[ERROR] FitParConfigs::CutConfigs -- Not found "
+      << s << " in configuration\n";
+  }
   std::transform(s.begin(), s.end(), s.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return _data_bool.at(s);
