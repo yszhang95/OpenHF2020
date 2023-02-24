@@ -7,7 +7,7 @@ void getYields()
   const unsigned int ntrks = sizeof(Ntrks)/sizeof(unsigned int) - 1;
   const double pts[] = {2., 3., 4., 5., 6., 8., 10.};
   const unsigned int nPt = sizeof(pts)/sizeof(double) - 1;
-  TH1D* h[nPt];
+  TH1D* h[ntrks];
   for (int itrk=0; itrk<ntrks; ++itrk) {
     h[itrk] = new TH1D(::Form("Ntrk%dto%d", Ntrks[itrk], Ntrks[itrk+1]),
                        ::Form("N_{trk}^{offline} %d -- %d;p_{T};1/N_{evt} dN^{raw}/dp_{T}", Ntrks[itrk], Ntrks[itrk+1]),
