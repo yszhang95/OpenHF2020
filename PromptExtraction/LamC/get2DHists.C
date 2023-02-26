@@ -28,6 +28,7 @@ using TH2DMap = std::map<std::string, ROOT::RDF::RResultPtr<::TH2D > >;
 /**
  * Return the node of MC samples. Simple cuts on pT and y applied.
  * New branches, DCA are created.
+ * mc_type can only be "Prompt" and "NonPrompt".
  */
 ROOT::RDF::RNode get_node_MC(FitParConfigs configs, const std::string mc_type)
 {
@@ -42,6 +43,13 @@ ROOT::RDF::RNode get_node_MC(FitParConfigs configs, const std::string mc_type)
       "&& abs(cand_y)<%f && %s > %f",
       mycuts._pTMin, mycuts._pTMax, mycuts._yAbsMax, mycuts._mvaName.c_str(), mycuts._mvaCut);
   std::string cuts_mc = cuts + " && cand_matchGEN > 0.5";
+
+  if (mc_type == "NonPrompt") {
+    cuts_mc += " && gen_isPrompt < 0.5";
+  }
+  else if (mc_type == "Prompt") {
+    cuts_mc += " && gen_isPrompt > 0.5";
+  }
 
   const auto fileMC = inputConfigs.getPaths(mc_type);
   std::string treeMC = inputConfigs.getName(mc_type);
