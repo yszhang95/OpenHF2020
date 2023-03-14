@@ -15,12 +15,35 @@
 
 using namespace std;
 
-void meanpt_vs_Nch(){
+void meanpt_vs_Nch(std::string inputTxt="NtrkCoarse.txt"){
+  std::ifstream myrange(inputTxt);
+  std::vector<int> edges;
+  for (int i=0; myrange>>i; ) {
+    edges.push_back(i);
+  }
 
-  const int num_bins = 20;
-  int minNchCut[num_bins] = {0,5,10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 120, 150, 180, 220};
-  int maxNchCut[num_bins] = {5,10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 120, 150, 180, 220, 10000};
 
+  // std::vector<int> minNchCut{2,  35, 60, 90,  120, 185};
+  // std::vector<int> maxNchCut{35, 60, 90, 120, 185, 250};
+  std::vector<int> minNchCut{};
+  std::vector<int> maxNchCut{};
+  for (size_t i=0; i<edges.size()-1; ++i) {
+    minNchCut.push_back(edges.at(i));
+    maxNchCut.push_back(edges.at(i+1));
+  }
+
+  std::vector<TH1*> hCorr(minNchCut.size());
+  std::vector<TH1*> hOff(minNchCut.size());
+  for (size_t itrk=0; itrk<minNchCut.size(); ++itrk) {
+    std::string name_corr = ::Form("hNtrkCorr%dto%d", minNchCut.at(itrk), maxNchCut.at(itrk));
+    std::string title_corr = ::Form("N_{trk}^{offline} %d--%d;N_{trk}^{corrected};Events",
+        minNchCut.at(itrk), maxNchCut.at(itrk));
+    hCorr.at(itrk) = new TH1D(name_corr.c_str(), title_corr.c_str(), 400, -0.5, 399.5);
+    std::string name_off = ::Form("hNtrkOff%dto%d", minNchCut.at(itrk), maxNchCut.at(itrk));
+    std::string title_off = ::Form("N_{trk}^{offline} %d--%d;N_{trk}^{offline};Events",
+        minNchCut.at(itrk), maxNchCut.at(itrk));
+    hOff.at(itrk) = new TH1D(name_off.c_str(), title_off.c_str(), 400, -0.5, 399.5);
+  }
 
   ifstream flist;
   flist.open("listFiles_jb0.txt");
@@ -38,7 +61,6 @@ void meanpt_vs_Nch(){
   const int maxNch=800;
   Float_t pt[maxNch], eta[maxNch], phi[maxNch], b;
   Int_t nParticle, Nch; 
-  int multBin = -1;
 
   Float_t trackPtErrOverPt[maxNch], trackDzOverDzSigma[maxNch]; 
   Float_t trackDxyOverDxySigma[maxNch], trackChiNdofOverNlayers[maxNch];
@@ -50,13 +72,7 @@ void meanpt_vs_Nch(){
   Float_t ptsumCorr, MptCorr, meanptCorr, NchCorr;
   Float_t Ma_2, Mb_2;
 
-  TH1D::SetDefaultSumw2();
-  TH1D *histMeanPT_2[num_bins];
-  TH1D *histMeanPT_2Corr[num_bins];
-  for(int i=0; i<num_bins; i++){
-    histMeanPT_2[i] = new TH1D(Form("histMeanPT_2_%d",i), "", 330,-11,1000);
-    histMeanPT_2Corr[i] = new TH1D(Form("histMeanPT_2Corr_%d",i), "", 330,-11,1000);
-  }
+  // TH1D::SetDefaultSumw2();
   TrkEff2016pPb trkEff =  TrkEff2016pPb("general", "", false, "root://eoscms.cern.ch//store/user/yousen/Ntrk_PPb/eff/");
   double weight=1;
   TH1D *histNchAll = new TH1D("histNchAll", "Nch", 500,0,500);
@@ -120,69 +136,33 @@ void meanpt_vs_Nch(){
       histNchAll->Fill(Nch);
       histNchCorrAll->Fill(NchCorr);
 
-      for(int imult=0;imult<num_bins;imult++){
-        if((Nch>minNchCut[imult]&&Nch<=maxNchCut[imult])){
+      int multBin = -1;
+      for(size_t imult=0;imult<minNchCut.size();imult++){
+        if(Nch>=minNchCut[imult] && Nch<maxNchCut[imult]){
           multBin=imult;
+          break;
         }
       }
-      if(Nch==0) multBin=0;
-
-      ptsum=0; Mpt=0;
-      ptsumCorr=0; MptCorr=0;
-      Ma_2=0; Mb_2=0;
-      //particle loop
-      for(int ip=0; ip<nParticle; ip++){
-        if(pt[ip]>pt_min && pt[ip]<pt_max){
-          if(fabs(eta[ip])<2.4){
-
-            // track selections -> default
-            if(trackPtErrOverPt[ip]>=0.1 || trackDzOverDzSigma[ip]>=3 || trackDxyOverDxySigma[ip]>=3) continue;
-
-            if(eta[ip]>-0.5 && eta[ip]<0.5){
-              ptsum += pt[ip];
-              Mpt += 1.;
-              weight = trkEff.getCorrection(pt[ip], eta[ip], centralityBin);
-              ptsumCorr += pt[ip]*weight;
-              MptCorr += weight;
-              continue;
-            }
-
-            if(eta[ip]<-0.75){
-              Ma_2+=1.;
-            } else if(eta[ip]>0.75){
-              Mb_2+=1.;
-            }
-          }
-        }
-      }
-
-      if(Ma_2>1.9 && Mpt>1.9 && Mb_2>1.9){
-        meanpt = ptsum/Mpt;
-        histMeanPT_2[multBin]->Fill(meanpt);
-        meanptCorr = ptsumCorr/MptCorr;
-        histMeanPT_2Corr[multBin]->Fill(meanptCorr);
-        histNchAllAnaCut->Fill(Nch);
-        histNchCorrAllAnaCut->Fill(NchCorr);
-      }
-
+      if (multBin<0) continue;
+      hCorr.at(multBin)->Fill(NchCorr);
+      hOff.at(multBin)->Fill(Nch);
     }    
     delete infile;
   } 
 
+  for (size_t i=0; i<minNchCut.size(); ++i) {
+    // std::cout << minNchCut.at(i) << " -- " << maxNchCut.at(i) << " " << hCorr.at(i)->GetMean() << "+/-" << hCorr.at(i)->GetMeanError() << " " << hOff.at(i)->GetMean() << "+/-" << hOff.at(i)->GetMeanError() << "\n";
+    std::cout << minNchCut.at(i) << " -- " << maxNchCut.at(i) << "\t" << hOff.at(i)->GetMean() << "+/-" << hOff.at(i)->GetMeanError() << "\t" << hCorr.at(i)->GetMean() << "+/-" << hCorr.at(i)->GetMeanError() << "\n";
+  }
 
-  TFile *f = new TFile("output_meanpt.root","recreate");
+  TFile *f = new TFile("output_Ntrk.root","recreate");
   f->cd();
 
-  for(int i=0; i<num_bins; i++){
-    histMeanPT_2[i]->Write();
-    histMeanPT_2Corr[i]->Write();
-  }
   histNchAll->Write();
   histNchCorrAll->Write();
-  histNchAllAnaCut->Write();
-  histNchCorrAllAnaCut->Write();
+  for (auto h : hCorr) h->Write();
+  for (auto h : hOff) h->Write();
 
-  f->Write();
   f->Close();
   delete f;
 }
