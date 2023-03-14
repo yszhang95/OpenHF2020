@@ -3,6 +3,14 @@ static const std::vector<double> yMin {-3, -2, -1, 0, 1, 2};
 static const std::vector<double> yMax {-2, -1, 0, 1, 2, 3};
 
 static const std::vector<double> pts = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 26, 28};
+// obtained from HIN-22-001
+// currently not used
+static const std::vector<double> Bmodify = {2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5,
+  1.6, 1.6, 1.6, 
+  1.7, 1.7, 1.7, 1.7, 1.7,
+  1.8, 1.8, 1.8,
+  2.4, 2.4, 2.4, 2.4, 2.4
+};
 static const std::vector<double> yMin_cm {-3.46, -2.46, -1.46, -0.46, 0.54, 1.54};
 static const std::vector<double> yMax_cm {-2.46, -1.46, -0.46, 0.54, 1.54, 2.54};
 
@@ -46,14 +54,18 @@ static inline std::string trim_copy(std::string s) {
 
 /*
  * calculate Lambda_b cross section using LHCb fraction; 6 rapidity unites; from FONLL
+ *
+ * I multiply the results by 2 becuase my yields does not take the average, (particle+anti-particle)/2.
+ * Always check macros!
  * */
-std::map<std::string, std::vector<TGraphAsymmErrors* > > get_xsec()
+std::map<std::string, std::vector<TGraphAsymmErrors* > >
+get_xsec(const bool modify, const std::string model = "FONLL", const bool modifyFF=false, const bool modifyFONLL = false, const std::string outputname="")
 {
     /*
      * 0-4 are empty
      * 25-30 are empty
      * */
-  const vector<double> pTMin_FF = {0, 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 16., 18., 20., 25};
+  const vector<double> pTMin_FF = {0, 1., 2., 3., 4., 5., 6., 7., 8., 9.,  10., 11., 12., 13., 14., 16., 18., 20, 25};
   const vector<double> pTMax_FF = {1, 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 16., 18., 20., 25, 30};
   std::vector<double> fb;
   {
@@ -66,7 +78,14 @@ std::map<std::string, std::vector<TGraphAsymmErrors* > > get_xsec()
       string numlb;
       {
         getline(lbstreamtemp, numlb, ' ');
-        fb.push_back(std::stof(numlb));
+        string temp1;
+        string temp2;
+        getline(lbstreamtemp, temp1, ' ');
+        getline(lbstreamtemp, temp2, ' ');
+        const double err = std::sqrt(std::pow(std::stof(temp1), 2) + std::pow(std::stof(temp2), 2));
+        double ff = std::stof(numlb);
+        if (modifyFF) ff += err;
+        fb.push_back(ff);
         //cout << fb.back() << endl;
       }
     }
@@ -81,7 +100,7 @@ std::map<std::string, std::vector<TGraphAsymmErrors* > > get_xsec()
 
   auto find_ff = [&](double pt) -> double {
     for (size_t ipt=0; ipt<pTMin_FF.size(); ++ipt) {
-      if (pt > pTMin_FF.at(ipt) && pt < pTMax_FF.at(ipt))
+      if (pt >= pTMin_FF.at(ipt) && pt < pTMax_FF.at(ipt))
         return fb.at(ipt);
     }
     return -1;
@@ -101,17 +120,49 @@ std::map<std::string, std::vector<TGraphAsymmErrors* > > get_xsec()
   std::vector<TGraphAsymmErrors*> g_Lb{yMin.size(), nullptr};
 
   // read input from FONLL for B
-  for (int i=0; i<yMin.size(); ++i) {
-    std::string name = ::Form("output_pp_8p16TeV/pTspectra_y%.2fto%.2f", yMin_cm.at(i), yMax_cm.at(i));
-    for (auto pos=name.find("."); pos!=std::string::npos; ) {
-      name.replace(pos, 1, "p");
-      pos = name.find(".");
-    }
-    name += ".txt";
-    // std::cout << name << "\n";
+  if (model == "FONLL") {
+    double sum = 0;
+    for (int i=0; i<yMin.size(); ++i) {
+      std::string name = ::Form("output_pp_8p16TeV/pTspectra_y%.2fto%.2f", yMin_cm.at(i), yMax_cm.at(i));
+      for (auto pos=name.find("."); pos!=std::string::npos; ) {
+        name.replace(pos, 1, "p");
+        pos = name.find(".");
+      }
+      name += ".txt";
+      // std::cout << name << "\n";
 
-    g_B.at(i) = new TGraphAsymmErrors(name.c_str());
-    // g_B.at(i)->Print();
+      g_B.at(i) = new TGraphAsymmErrors(name.c_str());
+      // g_B.at(i)->Print();
+      // B+ 0.4, B0 0.4, Bs 0.1
+      for (int ip=0; ip<g_B.at(i)->GetN(); ip++) {
+        double y = g_B.at(i)->GetY()[ip];
+        double yerr_h = g_B.at(i)->GetEYhigh()[ip];
+        double yerr_l = g_B.at(i)->GetEYlow()[ip];
+
+        if (modifyFONLL) {
+          y = y + std::max(yerr_h, yerr_l);
+        }
+
+        if (modify) y = y * Bmodify.at(ip);
+        if (modify) yerr_h = yerr_h * Bmodify.at(ip);
+        if (modify) yerr_l = yerr_l * Bmodify.at(ip);
+
+        // sum += y;
+
+        g_B.at(i)->SetPoint(ip, g_B.at(i)->GetX()[ip], 0.8/0.9*y * 2);
+        g_B.at(i)->SetPointEYhigh(ip, 8/9.*yerr_h * 2);
+        g_B.at(i)->SetPointEYlow(ip, 8/9.*yerr_l * 2);
+
+        // std::cout << g_B.at(i)->GetX()[ip] << g_B.at(i)->GetY()[ip ]<< "\n";
+      }
+    }
+    // std::cout << "FONLL " << sum << "pb\n";
+  } else if (model == "PYTHIA") {
+    for (int i=0; i<yMin.size(); ++i) {
+      TFile f("BuBd_pythia_spectra.root");
+      TH1D* h = f.Get<TH1D>(::Form("spectra_y%d", i));
+      g_B.at(i) = new TGraphAsymmErrors(h);
+    }
   }
 
   // reweight
@@ -129,6 +180,9 @@ std::map<std::string, std::vector<TGraphAsymmErrors* > > get_xsec()
 
       auto ff = find_ff(pt);
 
+      std::cout << ff << "\n";
+      ff = ff;
+
       y *= ff;
       yErrHigh *= ff;
       yErrLow *= ff;
@@ -137,15 +191,26 @@ std::map<std::string, std::vector<TGraphAsymmErrors* > > get_xsec()
       g_Lb.at(i)->SetPointEYhigh(ip, yErrHigh);
       g_Lb.at(i)->SetPointEYlow(ip, yErrLow);
 
-      // std::cout << "B\n";
-      // g_B.at(i)->Print();
-      // std::cout << "Lb\n";
-      // g_Lb.at(i)->Print();
     }
+      std::cout << "B\n";
+      g_B.at(i)->Print();
+      std::cout << "Lb\n";
+      g_Lb.at(i)->Print();
   }
   std::map<std::string, std::vector<TGraphAsymmErrors* > > output;
   output["B"] = g_B;
   output["Lb"] = g_Lb;
+
+  if (!outputname.empty()) {
+    TFile ofile(outputname.c_str(), "RECREATE");
+    for (const auto & m : output) {
+      for (int iy=0; iy<m.second.size(); ++iy) {
+        const auto h = m.second.at(iy);
+        h->SetTitle(::Form("%.1f<y_{lab}<%.1f ;p_{T};cross section (pb)", yMin[iy], yMax[iy]));
+        h->Write(::Form("%sy%d", m.first.c_str(), iy));
+      }
+    }
+  }
   return output;
 }
 
@@ -196,10 +261,10 @@ get_acc()
  * xsec * BR * acc
  * */
 std::vector<std::vector<TH1D* > >
-get_feeddown_pp(std::string name, const double BR)
+get_feeddown_pp(std::string name, const double BR, const bool modify, std::string model, const bool modifyFF, const bool modifyFONLL)
 {
   std::vector<std::vector<TH1D* > > output;
-  auto output1 = get_xsec();
+  auto output1 = get_xsec(modify, model, modifyFF, modifyFONLL);
   auto output2 = get_acc();
   auto fonlls = output1.at(name);
   auto accs = output2.at(name);
@@ -224,24 +289,72 @@ get_feeddown_pp(std::string name, const double BR)
   }
   return output;
 }
-void get_feeddown_pp()
+// modify is useless now, temporarily
+void get_feeddown_pp(const std::string model="FONLL", const bool modifyFF = false, const bool modifyFONLL=false, const bool modify=false)
 {
-  TFile ofile("pp_8p16TeV_b_to_Lambda_c.root", "recreate");
-  auto Lb = get_feeddown_pp("Lb", 0.33);
-  auto B = get_feeddown_pp("B", 0.05);
+  std::string outputname;
+  std::string outname;
+  if (model == "FONLL") {
+    if (modifyFF) {
+      outputname = "pp_8p16TeV_bhadron_spectra_modifyFF.root";
+      outname = "pp_8p16TeV_b_to_Lambda_c_modifyFF.root";
+    } else if (modifyFONLL){
+      outputname = "pp_8p16TeV_bhadron_spectra_modifyFONLL.root";
+      outname = "pp_8p16TeV_b_to_Lambda_c_modifyFONLL.root";
+    }else {
+      outputname = "pp_8p16TeV_bhadron_spectra.root";
+      outname = "pp_8p16TeV_b_to_Lambda_c.root";
+    }
+  }
+  if (model == "PYTHIA") {
+    outputname = "pp_8p16TeV_bhadron_pythia_spectra.root";
+    outname = "pp_8p16TeV_b_to_Lambda_c_pythia.root";
+  }
+  get_xsec(false, model, modifyFF, modifyFONLL, outputname);
+  // std::string outname = modify ? "pp_8p16TeV_b_to_Lambda_c_modify.root" : "pp_8p16TeV_b_to_Lambda_c.root";
+  TFile ofile(outname.c_str(), "recreate");
+  // auto Lb = get_feeddown_pp("Lb", 0.33);
+  auto Lb = get_feeddown_pp("Lb", 0.83, modify, model, modifyFF, modifyFONLL);
+  auto B = get_feeddown_pp("B", 0.05, modify, model, modifyFF, modifyFONLL);
   auto hLc = new TH1D(::Form("hLc_pt"), "b #rightarrow #Lambda_{c}^{+};p_{T} (GeV);d#sigma^{pp}/dp_{T} (pb/GeV)",
+      pts_Lc.size()-1, pts_Lc.data());
+  auto hBtoLc = new TH1D(::Form("hBtoLc_pt"), "B^{+} and B^{0} #rightarrow #Lambda_{c}^{+};p_{T} (GeV);d#sigma^{pp}/dp_{T} (pb/GeV)",
+      pts_Lc.size()-1, pts_Lc.data());
+  auto hLbtoLc = new TH1D(::Form("hLbtoLc_pt"), "#Lambda_{b}^{0} #rightarrow #Lambda_{c}^{+};p_{T} (GeV);d#sigma^{pp}/dp_{T} (pb/GeV)",
       pts_Lc.size()-1, pts_Lc.data());
   for (int ipt=0; ipt<pts_Lc.size()-1; ++ipt) {
     auto h = new TH1D(::Form("hbtoLc_pt%d", ipt), "", pts.size()-1, pts.data());
+    auto hB = new TH1D(::Form("hBtoLc_pt%d", ipt), "", pts.size()-1, pts.data());
+    auto hLb = new TH1D(::Form("hLbtoLc_pt%d", ipt), "", pts.size()-1, pts.data());
+
     for (int iy=0; iy<yMin.size(); ++iy) {
       h->Add(Lb.at(ipt).at(iy));
       h->Add(B.at(ipt).at(iy));
+      hB->Add(B.at(ipt).at(iy));
+      hLb->Add(Lb.at(ipt).at(iy));
+
     }
     const double y = h->Integral("width");
+    const double yB = hB->Integral("width");
+    const double yLb = hLb->Integral("width");
     const double width = hLc->GetBinWidth(ipt+1);
     hLc->SetBinContent(ipt+1, y/width);
+    hLbtoLc->SetBinContent(ipt+1, yLb/width);
+    hBtoLc->SetBinContent(ipt+1, yB/width);
   }
   // hLc->Print("all");
   ofile.cd();
   hLc->Write();
+  hLbtoLc->Write();
+  hBtoLc->Write();
+  for (const auto& hs : Lb) {
+    for (const auto& h : hs ) {
+      h->Write();
+    }
+  }
+  for (const auto& hs : B) {
+    for (const auto& h : hs ) {
+      h->Write();
+    }
+  }
 }

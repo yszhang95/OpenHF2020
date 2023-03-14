@@ -34,11 +34,11 @@ if __name__ == '__main__':
                 xsec = nums_min[1]/(ptmax - ptmin)
                 xsec_lo = nums_min[2]/(ptmax - ptmin)
                 xsec_hi = nums_min[3]/(ptmax - ptmin)
-                outnums = "{pt} {xsec}  {pt_err} {pt_err} {lo} {hi}\n".format(pt=pt, pt_err=pt_err, xsec=xsec, lo=xsec-xsec_lo, hi=xsec_hi-xsec)
+                outnums = "{pt} {xsec} {pt_err} {pt_err} {lo} {hi}\n".format(pt=pt, pt_err=pt_err, xsec=xsec, lo=xsec-xsec_lo, hi=xsec_hi-xsec)
                 fout.write(outnums)
 
                 xsec = nums_min[1]
                 xsec_lo = nums_min[2]
                 xsec_hi = nums_min[3]
-                outnums = "{pt} {xsec}  {pt_err} {pt_err} {lo} {hi}\n".format(pt=pt, pt_err=pt_err, xsec=xsec, lo=xsec-xsec_lo, hi=xsec_hi-xsec)
+                outnums = "{pt} {xsec} {pt_err} {pt_err} {lo} {hi}\n".format(pt=pt, pt_err=pt_err, xsec=xsec, lo=xsec-xsec_lo, hi=xsec_hi-xsec)
                 fout2.write(outnums)
