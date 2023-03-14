@@ -7,7 +7,9 @@ void calSyst()
 {
   const int nSources = 4;
   TFile* file[nSources];
-  file[0] = TFile::Open("Cuts/syst.root");
+  // file[0] = TFile::Open("Cuts/syst.root");
+  // updated on March 9, 2023
+  file[0] = TFile::Open("Cuts_morepoints/syst.root");
   file[1] = TFile::Open("FitOrder/syst.root");
   file[2] = TFile::Open("PU/syst.root");
   file[3] = TFile::Open("NP/syst.root");
