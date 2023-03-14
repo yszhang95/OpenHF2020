@@ -1,0 +1,3 @@
+# Build options
+ACLiC.BuildDir:        .compiles
+ACLiC.IncludePaths:     -I$(OPENHF2020TOP)
