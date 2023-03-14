@@ -7,6 +7,7 @@ parser.add_argument('--treeDir', dest='treeDir', help='TDirectory for ParticleTr
 parser.add_argument('--outdir', dest='outdir', help='output directory', type=str, default='.')
 parser.add_argument('--suffix', dest='suffix', help='suffix', type=str, default='Gen')
 parser.add_argument('--flipEta', dest='flipEta', help='flip the (pseudo-) rapidities of particles', action='store_const', const=True, default=False)
+parser.add_argument('--KsStable', dest='KsStable', help='If Ks decay in GEN', action='store_const', const=True, default=False)
 args = parser.parse_args()
 print ('The input file list is', args.inputList)
 
@@ -25,9 +26,11 @@ conf.SetFlipEta(args.flipEta)
 
 Ks = r.Particle(310)
 Ks.selfConj(True);
-#Ks.longLived(True)
-Ks.addDaughter(r.Particle(-211));
-Ks.addDaughter(r.Particle(+211));
+if args.KsStable:
+  Ks.longLived(True)
+else:
+  Ks.addDaughter(r.Particle(-211));
+  Ks.addDaughter(r.Particle(+211));
 LambdaC = r.Particle(4122)
 LambdaC.addDaughter(Ks)
 LambdaC.addDaughter(r.Particle(+2212))
