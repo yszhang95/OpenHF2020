@@ -44,20 +44,30 @@ if [[ ! -d CMSSW_10_6_32_patch1 ]]; then
   scramv1 project CMSSW_10_6_32_patch1
 fi
 cd CMSSW_10_6_32_patch1/src/
-#scramv1 project CMSSW_10_6_19
-#cd CMSSW_10_6_19/src/
+
+# if [[ ! -d CMSSW_8_0_36_patch1 ]]; then
+#   scramv1 project CMSSW_8_0_36_patch1
+# fi
+# cd CMSSW_8_0_36_patch1/src/
+
 eval `scramv1 runtime -sh`
 mkdir -p Configuration/GenProduction/python
 cp ../../$fBaseName Configuration/GenProduction/python/
 scram b clean
 scram b
+# I do not use pileup
+# cmsDriver.py Configuration/GenProduction/python/$configName \
+#   --python_filename ${fLabelName}_cfg.py \
+#   --eventcontent RAWSIM \
+#   --customise Configuration/StandardSequences/SimWithCastor_cff.py,Configuration/DataProcessing/Utils.addMonitoring \
+#   --datatier GEN-SIM \
+#   --fileout file:${fLabelName}.root \
+#   --conditions 80X_mcRun2_pA_v4 --beamspot MatchPbPBoost --step GEN,SIM --scenario HeavyIons --era Run2_2016_pA --no_exec --mc -n $nEvents
+
 cmsDriver.py Configuration/GenProduction/python/$configName \
   --python_filename ${fLabelName}_cfg.py \
-  --eventcontent RAWSIM --customise Configuration/DataProcessing/Utils.addMonitoring \
-  --datatier GEN \
+  --eventcontent RAWSIM --customise Configuration/DataProcessing/Utils.addMonitoring --datatier GEN \
   --fileout file:${fLabelName}.root \
-  --conditions 106X_upgrade2018_realistic_v4 \
-  --beamspot Realistic25ns13TeVEarly2018Collision --step GEN \
-  --geometry DB:Extended --era Run2_2018 --no_exec --mc -n ${nEvents}
+  --conditions 106X_upgrade2018_realistic_v4 --beamspot Realistic25ns13TeVEarly2018Collision --step GEN --geometry DB:Extended --era Run2_2018 --no_exec --mc -n $nEvents
 
 cmsRun ${fLabelName}_cfg.py
