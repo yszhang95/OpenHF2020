@@ -11,10 +11,17 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.MessageLogger.cerr.FwkReport.reportEvery = 200
 
+# The line below always has to be included to make VarParsing work
+from FWCore.ParameterSet.VarParsing import VarParsing
+
+# In teh line below 'analysis' is an instance of VarParsing object
+options = VarParsing ('analysis')
+
+if not options.inputFiles:
+    options.inputFiles = ['/store/hidata/PARun2016C/PAHighMultiplicity1/AOD/PromptReco-v1/000/285/505/00000/006F1E14-85AF-E611-9F9E-02163E014508.root']
+
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring(
-'/store/hidata/PARun2016C/PAHighMultiplicity1/AOD/PromptReco-v1/000/285/505/00000/006F1E14-85AF-E611-9F9E-02163E014508.root'
-)
+    fileNames = cms.untracked.vstring(options.inputFiles)
 )
 
 # =============== Other Statements =====================
@@ -96,6 +103,11 @@ process.d0selectorMid.candYMin = cms.untracked.double(-1.2)
 process.d0selectorMidAngle3D = process.d0selectorMid.clone()
 process.d0selectorMidDlsig3D = process.d0selectorMid.clone()
 
+process.d0selectorMidAngle3D.DCAValCollection = cms.InputTag("generalD0CandidatesNew:DCAValuesD0")
+process.d0selectorMidAngle3D.DCAErrCollection = cms.InputTag("generalD0CandidatesNew:DCAErrorsD0")
+process.d0selectorMidDlsig3D.DCAValCollection = cms.InputTag("generalD0CandidatesNew:DCAValuesD0")
+process.d0selectorMidDlsig3D.DCAErrCollection = cms.InputTag("generalD0CandidatesNew:DCAErrorsD0")
+
 process.d0selectorMidDlsig3D.cand3DDecayLengthSigMin = cms.untracked.double(2.0)
 process.d0selectorMidAngle3D.cand3DPointingAngleMax = cms.untracked.double(0.25)
 
@@ -106,9 +118,13 @@ process.d0anaNoCut.multMax = cms.untracked.double(100000)
 
 process.d0anaCutDLSig = process.d0anaNoCut.clone()
 process.d0anaCutDLSig.VertexCompositeCollection = cms.untracked.InputTag("d0selectorMidDlsig3D:D0")
+process.d0anaCutDLSig.DCAValCollection = cms.InputTag("d0selectorMidDlsig3D:DCAValuesNewD0")
+process.d0anaCutDLSig.DCAErrCollection = cms.InputTag("d0selectorMidDlsig3D:DCAErrorsNewD0")
 
 process.d0anaCutAlpha = process.d0anaNoCut.clone()
 process.d0anaCutAlpha.VertexCompositeCollection = cms.untracked.InputTag("d0selectorMidAngle3D:D0")
+process.d0anaCutAlpha.DCAValCollection = cms.InputTag("d0selectorMidAngle3D:DCAValuesNewD0")
+process.d0anaCutAlpha.DCAErrCollection = cms.InputTag("d0selectorMidAngle3D:DCAErrorsNewD0")
 
 process.d0ana_seq_dlsig = cms.Sequence(process.eventFilter_HM * process.d0selectorMidDlsig3D* process.d0anaCutDLSig)
 process.d0ana_seq_angle = cms.Sequence(process.eventFilter_HM * process.d0selectorMidAngle3D* process.d0anaCutAlpha)

@@ -11,10 +11,17 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.MessageLogger.cerr.FwkReport.reportEvery = 200
 
+# The line below always has to be included to make VarParsing work
+from FWCore.ParameterSet.VarParsing import VarParsing
+
+# In teh line below 'analysis' is an instance of VarParsing object
+options = VarParsing ('analysis')
+
+if not options.inputFiles:
+    options.inputFiles = ['/store/himc/pPb816Summer16DR/NonPromptD0_D0pT-1p2_pPb-EmbEPOS_8p16_Pythia8/AODSIM/pPbEmb_80X_mcRun2_pA_v4-v1/90000/0007792C-D8A0-E711-9B47-FA163EEC8769.root']
+
 process.source = cms.Source("PoolSource",
-   fileNames = cms.untracked.vstring(
-'/store/himc/pPb816Summer16DR/PromptD0_D0pT-1p2_pPb-EmbEPOS_8p16_Pythia8/AODSIM/pPbEmb_80X_mcRun2_pA_v4-v1/70000/EE4A348A-CC9D-E711-9738-28924A33AFD2.root'
-)
+   fileNames = cms.untracked.vstring(options.inputFiles)
 )
 
 # =============== Other Statements =====================
@@ -78,17 +85,25 @@ process.d0selectorMCWS = process.d0selectorMC.clone(
 )
 
 process.d0selectorMCNewReduced = process.d0selectorMC.clone()
-process.d0selectorMCNewReducedWS = process.d0selectorMCWS.clone()
 process.d0selectorMCNewReduced.GBRForestFileName = cms.string('GBRForestfile_BDT_PromptD0InpPb_default_HLT185_WS_Pt1p5MassPeak_NoPtErrNHitDLAngle2D_v3.root')
+process.d0selectorMCNewReduced.DCAValCollection = cms.InputTag("generalD0CandidatesNew:DCAValuesD0")
+process.d0selectorMCNewReduced.DCAErrCollection = cms.InputTag("generalD0CandidatesNew:DCAErrorsD0")
+process.d0selectorMCNewReducedWS = process.d0selectorMCWS.clone()
 process.d0selectorMCNewReducedWS.GBRForestFileName = cms.string('GBRForestfile_BDT_PromptD0InpPb_default_HLT185_WS_Pt1p5MassPeak_NoPtErrNHitDLAngle2D_v3.root')
+process.d0selectorMCNewReducedWS.DCAValCollection = cms.InputTag("generalD0CandidatesNewWrongSign:DCAValuesD0")
+process.d0selectorMCNewReducedWS.DCAErrCollection = cms.InputTag("generalD0CandidatesNewWrongSign:DCAErrorsD0")
 
 process.d0ana_mc_newreduced = process.d0ana_mc.clone()
 process.d0ana_mc_newreduced.VertexCompositeCollection = cms.untracked.InputTag("d0selectorMCNewReduced:D0")
 process.d0ana_mc_newreduced.MVACollection = cms.InputTag("d0selectorMCNewReduced:MVAValuesNewD0")
+process.d0ana_mc_newreduced.DCAValCollection = cms.InputTag("d0selectorMCNewReduced:DCAValuesNewD0")
+process.d0ana_mc_newreduced.DCAErrCollection = cms.InputTag("d0selectorMCNewReduced:DCAErrorsNewD0")
 
 process.d0ana_mc_newreduced_wrongsign = process.d0ana_mc_wrongsign.clone()
 process.d0ana_mc_newreduced_wrongsign.VertexCompositeCollection = cms.untracked.InputTag("d0selectorMCNewReducedWS:D0")
 process.d0ana_mc_newreduced_wrongsign.MVACollection = cms.InputTag("d0selectorMCNewReducedWS:MVAValuesNewD0")
+process.d0ana_mc_newreduced_wrongsign.DCAValCollection = cms.InputTag("d0selectorMCNewReducedWS:DCAValuesNewD0")
+process.d0ana_mc_newreduced_wrongsign.DCAErrCollection = cms.InputTag("d0selectorMCNewReducedWS:DCAErrorsNewD0")
 
 process.d0ana_seq2 = cms.Sequence(process.d0selectorMCNewReduced * process.d0ana_mc_newreduced)
 

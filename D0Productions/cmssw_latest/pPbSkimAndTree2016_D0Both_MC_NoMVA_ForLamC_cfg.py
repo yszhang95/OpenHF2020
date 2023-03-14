@@ -11,10 +11,17 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.MessageLogger.cerr.FwkReport.reportEvery = 200
 
+# The line below always has to be included to make VarParsing work
+from FWCore.ParameterSet.VarParsing import VarParsing
+
+# In teh line below 'analysis' is an instance of VarParsing object
+options = VarParsing ('analysis')
+
+if not options.inputFiles:
+    options.inputFiles = [ '/store/himc/pPb816Summer16DR/SoftQCD_D0ToKPi_PtGT1p2-pPb-Embed_8p16TeV_TuneCUETP8M1_Pythia8_evtgen/AODSIM/80X_mcRun2_pA_v4-v1/2820000/0073076D-F489-ED11-8B66-B02628DEBEB0.root' ]
+
 process.source = cms.Source("PoolSource",
-   fileNames = cms.untracked.vstring(
-'/store/himc/pPb816Summer16DR/SoftQCD_D0ToKPi_PtGT1p2-pPb-Embed_8p16TeV_TuneCUETP8M1_Pythia8_evtgen/AODSIM/80X_mcRun2_pA_v4-v1/2820000/0073076D-F489-ED11-8B66-B02628DEBEB0.root'
-)
+    fileNames = cms.untracked.vstring(options.inputFiles)
 )
 
 # =============== Other Statements =====================
@@ -78,12 +85,16 @@ process.d0selectorMCNoCut.VertexCompositeCollection = cms.untracked.InputTag("ge
 process.d0selectorMCNoCut.multMin = cms.untracked.double(0)
 process.d0selectorMCNoCut.multMax = cms.untracked.double(100000)
 process.d0selectorMCNoCut.selectGenMatch = cms.untracked.bool(True)
+process.d0selectorMCNoCut.DCAValCollection = cms.InputTag("generalD0CandidatesNew:DCAValuesD0")
+process.d0selectorMCNoCut.DCAErrCollection = cms.InputTag("generalD0CandidatesNew:DCAErrorsD0")
 
 process.d0anaMCNoCut  = process.d0ana_mc.clone()
 process.d0anaMCNoCut.useAnyMVA = cms.bool(False)
 process.d0anaMCNoCut.multMin = cms.untracked.double(0)
 process.d0anaMCNoCut.multMax = cms.untracked.double(100000)
 process.d0anaMCNoCut.VertexCompositeCollection = cms.untracked.InputTag("d0selectorMCNoCut:D0")
+process.d0anaMCNoCut.DCAValCollection = cms.InputTag("d0selectorMCNoCut:DCAValuesNewD0")
+process.d0anaMCNoCut.DCAErrCollection = cms.InputTag("d0selectorMCNoCut:DCAErrorsNewD0")
 
 process.d0ana_seq = cms.Sequence(process.eventFilter_HM * process.d0selectorMCNoCut * process.d0anaMCNoCut)
 
