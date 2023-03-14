@@ -137,7 +137,9 @@ void fitEachBin(const std::string& configName)
   FitOptsHF opts;
   opts.numCPU = 4;
   opts.useWeight = mycuts._useWeight;
-  opts.useHist = false;
+  //opts.useHist = false;
+  // opts.useHistOnly = false;
+  opts.useHist = true;
   opts.useHistOnly = false;
   opts.fixScale = true;
   fitEachBin(*myws, par, mycuts, opts, strs);
@@ -149,11 +151,11 @@ void fit()
   const unsigned int nPt = sizeof(pts)/sizeof(float) - 1;
   const int Ntrks[] = {0, 35, 60, 90, 120, 185, 250};
   const unsigned int nbins = sizeof(Ntrks)/sizeof(int) - 1;
-  // for (unsigned int ibin=0; ibin<nbins; ++ibin) {
-  for (unsigned int ibin=3; ibin<4; ++ibin) {
+  for (unsigned int ibin=0; ibin<nbins; ++ibin) {
+  // for (unsigned int ibin=3; ibin<4; ++ibin) {
     // for (unsigned int ipt=0; ipt<nPt; ++ipt) {
     // for (unsigned int ipt=nPt-2; ipt<nPt-1; ++ipt) {
-    for (unsigned int ipt=0; ipt<2; ++ipt) {
+    for (unsigned int ipt=nPt-1; ipt<nPt; ++ipt) {
       if (Ntrks[ibin+1] == 250 && Ntrks[ibin] == 185 && ipt == 0) continue;
       const char* useWeight = Ntrks[ibin+1] == 250 && Ntrks[ibin] == 185 ? "weighted" : "unweighted";
       auto configName = ::string_format("${OPENHF2020TOP}/Spectra/ProduceWorkspace/LamC/dz1p0_%s/pT%.0fto%.0f_Ntrk%dto%d.conf", useWeight, pts[ipt], pts[ipt+1], Ntrks[ibin], Ntrks[ibin+1]);

@@ -179,6 +179,23 @@ FitParConfigs::ParConfigs::setInit(const std::string n, const double _init)
     std::get<1>(_data.at(n)) = _init;
   }
 }
+
+void
+FitParConfigs::ParConfigs::setMin(const std::string n, const double _min)
+{
+  if (std::get<0>(_data.at(n))) {
+    std::get<2>(_data.at(n)) = _min;
+  }
+}
+
+void
+FitParConfigs::ParConfigs::setMax(const std::string n, const double _max)
+{
+  if (std::get<0>(_data.at(n))) {
+    std::get<3>(_data.at(n)) = _max;
+  }
+}
+
 bool
 FitParConfigs::ParConfigs::hasVariable(const std::string& n) const
 { return _data.find(n) != _data.end(); }

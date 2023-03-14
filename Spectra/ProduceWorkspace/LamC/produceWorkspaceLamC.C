@@ -7,9 +7,11 @@ R__LOAD_LIBRARY($OPENHF2020TOP/Utilities/lib/libMyFitUtils.so)
 
 #include "RooArgSet.h"
 #include "RooDataSet.h"
+#include "RooDataHist.h"
 #include "RooRealVar.h"
 #include "RooWorkspace.h"
 
+#include "TH1D.h"
 #include "TChain.h"
 #include "TFile.h"
 #include "TFileCollection.h"
@@ -71,6 +73,12 @@ struct NTupleVars
 
 void produceWorkspaceLamC(std::string configName)
 {
+  // I do not use RooDataHist::add
+  // because it seems that RooDataHist
+  // merge underflow/overflow to lowest/highest bin
+  // under rootv6.26.
+  // Instead, I use TH1D.
+  TH1D* hMass = new TH1D("hMass", ";Mass;Events", 100, 2.1, 2.47);
   const double massLo = 2.05;
   const double massHi = 2.55;
 
@@ -79,6 +87,13 @@ void produceWorkspaceLamC(std::string configName)
   auto outputConfigs = configs.getOutputConfigs();
   const auto cutConfigs = configs.getCutConfigs();
   const VarCuts mycuts(cutConfigs);
+
+  bool useHistOnly = false;
+  try {
+    useHistOnly = cutConfigs.getBool("useHistOnly");
+  } catch (std::out_of_range& e) {
+    std::cout << "[ERROR] Not found useHistOnly in the configuration. Set it be false.\n";
+  }
 
   const bool useWeight = mycuts._useWeight;
   TGraph* g(0);
@@ -285,9 +300,15 @@ void produceWorkspaceLamC(std::string configName)
       // }
       const double eventWeight = effTab.getWeight(ntupleVars._Ntrkoffline, effType);
       wgtVar.setVal(eventWeight);
-      mydata.add(argSets, eventWeight);
+      if (!useHistOnly) {
+        mydata.add(argSets, eventWeight);
+      }
+      hMass->Fill(ntupleVars._cand_mass, eventWeight);
     } else {
-      mydata.add(argSets);
+      if (!useHistOnly) {
+        mydata.add(argSets);
+      }
+      hMass->Fill(ntupleVars._cand_mass);
     }
   }
   // or you can myws.writeToFile("output.root", kTRUE)
@@ -297,6 +318,14 @@ void produceWorkspaceLamC(std::string configName)
   // t will flush parts of data to ofile once buffers are full
   // I do not know if writeToFile have similar results
   ofile.cd();
-  myws.import(mydata);
+  if (!useHistOnly) {
+    myws.import(mydata);
+  } else {
+    mydata.Delete();
+    RooDataSet mydata(dsName.c_str(), "", argSets, wgtVarName);
+    auto dh = RooDataHist(dsName.c_str(), "", cand_mass, hMass);
+    myws.import(dh);
+  }
   myws.Write();
+  delete hMass;
 }

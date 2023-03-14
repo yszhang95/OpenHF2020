@@ -1148,15 +1148,59 @@ RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
     default:
             throw std::logic_error("Cannot construct background pdf");
   }
-            std::cout << "bkg done \n";
+  std::cout << "bkg done \n";
 
   // yields for different components
+  if (fitOpts.adjustRanges) {
+    std::pair<double, double> binEdges = mass.getRange("full");
+    auto h = ds.createHistogram("binned2", mass,
+        Binning(fitOpts.nBins, binEdges.first, binEdges.second));
+    std::pair<double, double> fullEdges = mass.getRange("full");
+    std::pair<double, double> leftEdges = mass.getRange("left");
+    std::pair<double, double> rightEdges = mass.getRange("right");
+    std::pair<double, double> peakEdges = mass.getRange("peak");
+    double total = h->Integral();
+    double init_bkg = h->Integral(h->FindBin(leftEdges.first), h->FindBin(leftEdges.second))
+      + h->Integral(h->FindBin(rightEdges.first), h->FindBin(rightEdges.second));
+    double init_sig = h->Integral(h->FindBin(peakEdges.first), h->FindBin(peakEdges.second));
+    init_bkg = init_bkg * (fullEdges.second - fullEdges.first)
+      / (leftEdges.second - leftEdges.first + rightEdges.second - rightEdges.first);
+    init_sig = init_sig - init_bkg * (peakEdges.second - peakEdges.first) / (fullEdges.second - fullEdges.first);
+
+    std::cout << "Initial calculation for sig is " << init_sig <<  "\n";
+    std::cout << "Initial calculation for bkg is " << init_bkg <<  "\n";
+    par.setMin("nbkg", 0.1*init_bkg);
+    par.setInit("nbkg", init_bkg);
+    par.setMax("nbkg", 5*init_bkg);
+
+    if (init_sig>5) {
+      par.setMin("nsig", 0.1 * init_sig);
+      par.setInit("nsig", init_sig);
+      par.setMax("nsig", 5.0 * init_sig);
+    } else if (init_bkg>0){
+      const double diff = std::abs(total-init_bkg);
+      par.setMin("nsig", 0);
+      par.setInit("nsig", diff);
+      par.setMax("nsig", 20*diff);
+    } else {
+      par.setMin("nsig", 0);
+      par.setInit("nsig", 0.5 * total);
+      par.setMax("nsig", 2*total);
+    }
+
+    delete h;
+  }
   RooRealVar nsig("nsig", "yields for true component",
                   par.getInit("nsig"),
                   par.getMin("nsig"), par.getMax("nsig"));
   RooRealVar nbkg("nbkg", "yields for background component",
                   par.getInit("nbkg"),
                   par.getMin("nbkg"), par.getMax("nbkg"));
+  if (fitOpts.adjustRanges) {
+      std::cout << "Initial guess for auto-adjusting\n"
+        << "\tnsig init: " << nsig.getVal() << ", min: " << nsig.getMin() << ", max: " << nsig.getMax() << "\n"
+        << "\tnbkg init: " << nbkg.getVal() << ", min: " << nbkg.getMin() << ", max: " << nbkg.getMax() << "\n";
+  }
 
   // add components together
   RooAddPdf sum("sum", "sig+swap+KK+PiPi+bkg",
@@ -1178,14 +1222,16 @@ RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   RooDataHist* dhptr = nullptr;
   RooFitResult* result;
   std::pair<double, double> binEdges = mass.getRange("full");
+
   if (auto dsPtr = dynamic_cast<RooDataSet*>(dsAbsPtr) ) {
-    h = dsPtr->createHistogram("binned", mass,
+    h = ds.createHistogram("binned", mass,
                                Binning(fitOpts.nBins, binEdges.first, binEdges.second));
+
     auto bkgYields = h->Integral(1, fitOpts.nBins);
     // fix later
-    nbkg.setVal(bkgYields);
-    nbkg.setMin(bkgYields * 0.9);
-    nbkg.setMax(bkgYields * 1.1);
+    // nbkg.setVal(bkgYields);
+    // nbkg.setMin(bkgYields * 0.9);
+    // nbkg.setMax(bkgYields * 1.1);
     if(fitOpts.useHist) {
       auto dh = RooDataHist("dh", "", mass, h);
       result = sum.fitTo(dh, Range("full"), Save(), AsymptoticError(fitOpts.useWeight));
@@ -1207,7 +1253,8 @@ RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
     std::string name = ds.GetName();
     // name starts with ds
     auto pos = name.find("ds");
-    name.replace(pos, 2, "dh");
+    if (pos != std::string::npos)
+      name.replace(pos, 2, "dh");
     dhptr = new RooDataHist(name.c_str(), "", mass, h);
     std::cout << "Created RooDataHist " << name << "\n";
   } else { dhptr = dynamic_cast<RooDataHist*>(&ds); };
@@ -1381,6 +1428,7 @@ RooFitResult fitLamC(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
             << " - " << nsig.getAsymErrorLo()
             << std::endl;
   std::cout << "And the range of nsig is " << nsig.getMin() << " -- " << nsig.getMax() << "\n";
+  std::cout << "#chi^{2}/N.D.F = " << chi2Val << "/" << ndf << "\n";
   /**
    * Update the workspace
    */
@@ -1713,6 +1761,7 @@ RooFitResult fitLamCGausCB(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
             << " - " << nsig.getAsymErrorLo()
             << "\n";
   std::cout << "And the range of nsig is " << nsig.getMin() << " -- " << nsig.getMax() << "\n";
+  std::cout << "#chi^{2}/N.D.F = " << chi2Val << "/" << ndf << "\n";
   /**
    * Update the workspace
    */
@@ -1756,12 +1805,16 @@ RooFitResult fitSideband(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   RooRealVar a3("a3", "a3 for Chebyshev(3)", par.getInit("a3"),
                 par.getMin("a3"), par.getMax("a3"));
   RooRealVar* a4 = nullptr;
+  RooRealVar* a5 = nullptr;
   // RooChebychev bkg("bkg", "3rd Chebyshev poly.", mass,
   //                 RooArgList(a1, a2, a3));
   
   // you can also use RooWorkspace::factory
   RooChebychev* bkg;
   switch (fitOpts.order) {
+    case 1: bkg = new RooChebychev("bkg", "1st Chebyshev poly.",
+                                   mass, RooArgList(a1));
+            break;
     case 2: bkg = new RooChebychev("bkg", "2nd Chebyshev poly.",
                                    mass, RooArgList(a1, a2));
             break;
@@ -1776,10 +1829,21 @@ RooFitResult fitSideband(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
             std::cout << "Done a4 " << a4->getVal() << "\n";
             break;
             }
+    case 5: {
+            a4 = new RooRealVar("a4", "a4 for Chebyshev(4)", par.getInit("a4"),
+                          par.getMin("a4"), par.getMax("a4"));
+            a5 = new RooRealVar("a5", "a5 for Chebyshev(5)", par.getInit("a4"),
+                          par.getMin("a4"), par.getMax("a4"));
+            bkg = new RooChebychev("bkg", "5th Chebyshev poly.",
+                                   mass, RooArgList(a1, a2, a3, *a4, *a5));
+            std::cout << "Done a4 " << a4->getVal() << "\n";
+            std::cout << "Done a5 " << a4->getVal() << "\n";
+            break;
+            }
     default:
             throw std::logic_error("Cannot construct background pdf");
   }
-            std::cout << "bkg done \n";
+            std::cout << "bkg done with " << fitOpts.order << " order\n";
 
   /**
      Fit
@@ -1969,6 +2033,7 @@ RooFitResult fitSideband(RooRealVar& mass, RooAbsData& ds, RooWorkspace& ws,
   // ws.import(*chi2Var, Name(::Form("%s_chi2Var", ds.GetName())));
   ws.import(*result, ::Form("%s_result", ds.GetName()));
   delete a4;
+  delete a5;
   delete h;
   return *result;
 }
