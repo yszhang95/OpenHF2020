@@ -122,3 +122,13 @@ PromptExtraction/**/*list
 **/crab_projects/
 *pyc
 Cert_*_JSON_NoL1T.txt
+
+MCStudies/MCRequests/b_ff_decay/Bu_acc_dir_20k/
+MCStudies/MCRequests/b_ff_decay/Bu_acc_hard.py
+MCStudies/MCRequests/b_ff_decay/PYTHIA_SPECTRA/Bd_acc.root.bak
+MCStudies/MCRequests/b_ff_decay/PYTHIA_SPECTRA/test.py
+MCStudies/MCRequests/b_ff_decay/bquark_record.txt
+MCStudies/MCRequests/b_ff_decay/record.txt
+MCStudies/MCRequests/b_ff_decay/temp/
+MCStudies/MCRequests/b_ff_decay/temp_dir_123/
+MCStudies/MCRequests/b_ff_decay/template.py
