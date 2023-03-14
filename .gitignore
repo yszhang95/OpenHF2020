@@ -132,3 +132,5 @@ MCStudies/MCRequests/b_ff_decay/record.txt
 MCStudies/MCRequests/b_ff_decay/temp/
 MCStudies/MCRequests/b_ff_decay/temp_dir_123/
 MCStudies/MCRequests/b_ff_decay/template.py
+
+Fit/LamCFit/sidebands/*.txt

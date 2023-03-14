@@ -39,7 +39,7 @@ void getYields()
   TH1D* h[3];
   for (int i=0; i<3; ++i) {
     const auto weightType = weightTypes[i];
-    TFile ofile(::Form("yields_%s.root", weightType.c_str()), "recreate");
+    // TFile ofile(::Form("yields_%s.root", weightType.c_str()), "recreate");
     h[i] = new TH1D(::Form("h%s", weightType.c_str()), ::Form("Ntrk185to250_%s;p_{T} (GeV);1/N_{evt} dN^{raw}/dp_{T} (GeV^{-1})", weightType.c_str()), nPt, pts);
     for (int ipt=0; ipt<nPt; ++ipt) {
       const int itrk = 0;
