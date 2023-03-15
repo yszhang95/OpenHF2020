@@ -196,6 +196,7 @@ void skim2D(std::string inputList="test.list", std::string effFileName="")
         if (ipt<0) continue;
 
         if (reweight) {
+          if (ntrk >= 250 || ntrk<185) continue;
           hMassVsMVA[ipt]->Fill(devt.Mva(id0), devt.Mass(id0), weight);
         } else {
           hMassVsMVA[ipt]->Fill(devt.Mva(id0), devt.Mass(id0));
