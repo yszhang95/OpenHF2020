@@ -77,6 +77,9 @@ D0Productions/*
 !D0Productions/skimMC.C
 !D0Productions/skimReco.C
 !D0Productions/cmssw_latest
+!D0Productions/skim2D.C
+!D0Productions/run2D.C
+!D0Productions/D0HM?_pPb.list
 !Utilities/bin/*
 *log*
 */test/*list*
