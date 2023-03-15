@@ -80,6 +80,7 @@ D0Productions/*
 !D0Productions/skim2D.C
 !D0Productions/run2D.C
 !D0Productions/D0HM?_pPb.list
+!D0Productions/skimMCNtuple.C
 !Utilities/bin/*
 *log*
 */test/*list*
