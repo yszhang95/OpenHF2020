@@ -4,7 +4,8 @@ void run2D(std::string dspat, int istart=1, int nds=0)
   if (nds==0) {
     gROOT->ProcessLine(::Form("skim2D(\"%s\")", dspat.c_str()));
   }
-  for (int i=istart; i<nds+1; ++i) {
+  int iend = istart + nds;
+  for (int i=istart; i<iend; ++i) {
     // std::cout << ::Form(dspat.c_str(), i) << "\n";
     std::string ds = ::Form(dspat.c_str(), i);
     std::cout << ds << "\n";
